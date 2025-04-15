@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - English Learning Center</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: #1e40af;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+        }
+        
+        .logo {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo-circle {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e40af;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 18px;
+        }
+        
+        .menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 0;
+        }
+        
+        .menu-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #1e40af;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .notifications {
+            position: relative;
+            margin-right: 15px;
+        }
+        
+        .notifications i {
+            font-size: 20px;
+            color: #666;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #e53e3e;
+            color: white;
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .welcome-card {
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-card h2 {
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .card-header h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .view-all {
+            color: #1e40af;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .view-all:hover {
+            text-decoration: underline;
+        }
+        
+        .class-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .class-item:last-child {
+            border-bottom: none;
+        }
+        
+        .class-info {
+            flex: 1;
+        }
+        
+        .class-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .class-details {
+            display: flex;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .class-time, .class-teacher, .class-room {
+            margin-right: 15px;
+        }
+        
+        .class-status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .status-upcoming {
+            background-color: #ebf5ff;
+            color: #1e40af;
+        }
+        
+        .status-active {
+            background-color: #f0fff4;
+            color: #22c55e;
+        }
+        
+        .assignment-item {
+            padding: 15px;
+            border-left: 4px solid;
+            margin-bottom: 10px;
+            background-color: #f9fafb;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .assignment-pending {
+            border-left-color: #eab308;
+        }
+        
+        .assignment-completed {
+            border-left-color: #22c55e;
+        }
+        
+        .assignment-overdue {
+            border-left-color: #ef4444;
+        }
+        
+        .assignment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .assignment-title {
+            font-weight: bold;
+        }
+        
+        .assignment-status {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .status-pending {
+            color: #eab308;
+        }
+        
+        .status-completed {
+            color: #22c55e;
+        }
+        
+        .status-overdue {
+            color: #ef4444;
+        }
+        
+        .assignment-due {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .progress-section {
+            margin-top: 15px;
+        }
+        
+        .progress-item {
+            margin-bottom: 15px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #1e40af;
+            border-radius: 4px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-circle">E</div>
+                <h1>English Center</h1>
+            </div>
+            
+            <div class="menu">
+                <a href="#" class="menu-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-calendar"></i>
+                    <span>Schedule</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-book"></i>
+                    <span>Courses</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Materials</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-tasks"></i>
+                    <span>Assignments</span>
+                </a>
+                <a href="#" class="menu-item">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat Support</span>
+                </a>
+            </div>
+            
+            <div class="menu" style="margin-top: auto;">
+                <a href="#" class="menu-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="login.html" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>Student Dashboard</h1>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="user-avatar">S</div>
+                    <div>
+                        <div>John Smith</div>
+                        <small>Student</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="welcome-card">
+                <h2>Welcome back, John!</h2>
+                <p>Your next class "Conversational English" starts in 2 hours. Don't forget to complete your pending assignments.</p>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Upcoming Classes</h3>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="class-item">
+                        <div class="class-info">
+                            <div class="class-name">Conversational English</div>
+                            <div class="class-details">
+                                <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
+                                <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
+                                <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
+                            </div>
+                        </div>
+                        <div class="class-status status-upcoming">Today</div>
+                    </div>
+                    <div class="class-item">
+                        <div class="class-info">
+                            <div class="class-name">IELTS Preparation</div>
+                            <div class="class-details">
+                                <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
+                                <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
+                                <div class="class-room"><i class="fas fa-door-open"></i> Room 103</div>
+                            </div>
+                        </div>
+                        <div class="class-status status-upcoming">Tomorrow</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Assignments</h3>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="assignment-item assignment-pending">
+                        <div class="assignment-header">
+                            <div class="assignment-title">Writing Essay</div>
+                            <div class="assignment-status status-pending">Pending</div>
+                        </div>
+                        <div class="assignment-due">Due: Apr 18, 2025</div>
+                    </div>
+                    <div class="assignment-item assignment-completed">
+                        <div class="assignment-header">
+                            <div class="assignment-title">Grammar Quiz</div>
+                            <div class="assignment-status status-completed">Completed</div>
+                        </div>
+                        <div class="assignment-due">Due: Apr 20, 2025</div>
+                    </div>
+                    <div class="assignment-item assignment-overdue">
+                        <div class="assignment-header">
+                            <div class="assignment-title">Vocabulary Test</div>
+                            <div class="assignment-status status-overdue">Overdue</div>
+                        </div>
+                        <div class="assignment-due">Due: Apr 10, 2025</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Course Progress</h3>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <div>Conversational English</div>
+                            <div>75%</div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <div>IELTS Preparation</div>
+                            <div>40%</div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Announcements</h3>
+                </div>
+                <div class="announcement-item">
+                    <h4>Holiday Schedule</h4>
+                    <div class="announcement-date">Apr 12, 2025</div>
+                    <p>Center will be closed on April 30 for public holiday.</p>
+                </div>
+                <div class="announcement-item">
+                    <h4>New Learning Resources</h4>
+                    <div class="announcement-date">Apr 10, 2025</div>
+                    <p>Additional practice materials have been uploaded for IELTS courses.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // JavaScript code can be added here
+    </script>
+</body>
+</html>
