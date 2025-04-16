@@ -1,9 +1,8 @@
+// server/middleware/auth.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-/**
- * Middleware for protecting routes - verifies JWT token
- */
+// Middleware for protecting routes - verifies JWT token
 exports.protect = async (req, res, next) => {
     let token;
 
@@ -30,7 +29,10 @@ exports.protect = async (req, res, next) => {
 
     try {
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(
+            token, 
+            process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app'
+        );
 
         // Check if user still exists
         const user = await User.findById(decoded.id);
@@ -53,10 +55,7 @@ exports.protect = async (req, res, next) => {
     }
 };
 
-/**
- * Middleware for authorizing specific roles
- * @param  {...string} roles - The roles authorized to access the route
- */
+// Middleware for authorizing specific roles
 exports.authorize = (...roles) => {
     return (req, res, next) => {
         // Check if user has required role

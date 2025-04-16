@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>English Learning Center - Login</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/components/common.js"></script>
+    <script src="js/pages/login.js"></script>
     <style>
         * {
             margin: 0;
@@ -148,34 +150,5 @@
             <a href="#">Forgot Password?</a>
         </div>
     </div>
-    
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
-            
-            // Normally, you would send this data to your server for authentication
-            // For demo purposes, we'll just redirect based on the role
-            switch(role) {
-                case 'student':
-                    window.location.href = 'student.html';
-                    break;
-                case 'receptionist':
-                    window.location.href = 'receptionist.html';
-                    break;
-                case 'teacher':
-                    window.location.href = 'teacher.html';
-                    break;
-                case 'manager':
-                    window.location.href = 'admin.html';
-                    break;
-                default:
-                    alert('Invalid role selected');
-            }
-        });
-    </script>
 </body>
 </html>

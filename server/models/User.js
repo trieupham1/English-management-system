@@ -1,3 +1,4 @@
+// server/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -60,10 +61,6 @@ const UserSchema = new mongoose.Schema({
             enum: ['active', 'inactive', 'pending'],
             default: 'pending'
         },
-        assignments: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Assignment'
-        }],
         progress: {
             type: Number,
             default: 0
@@ -135,11 +132,18 @@ UserSchema.pre('save', async function(next) {
     }
 });
 
-// Method to compare passwords
 UserSchema.methods.comparePassword = async function(candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+    try {
+        console.log('Candidate password:', candidatePassword);
+        console.log('Stored hashed password:', this.password);
+        const result = await bcrypt.compare(candidatePassword, this.password);
+        console.log('Comparison result:', result);
+        return result;
+    } catch (error) {
+        console.error('Error comparing passwords:', error);
+        return false;
+    }
 };
-
 // Method to return user info without sensitive data
 UserSchema.methods.toJSON = function() {
     const user = this.toObject();

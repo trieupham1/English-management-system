@@ -1,15 +1,18 @@
+// server/controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
 // Register new user
 exports.register = async (req, res) => {
     try {
+        console.log('Register attempt with:', req.body);
         const { username, password, fullName, email, phone, role } = req.body;
         
         // Check if user already exists
         const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         
         if (existingUser) {
+            console.log('User already exists:', existingUser.username);
             return res.status(400).json({ 
                 success: false, 
                 message: 'User with this email or username already exists' 
@@ -44,6 +47,7 @@ exports.register = async (req, res) => {
         }
         
         await user.save();
+        console.log('User created successfully:', user.username);
         
         // Return success response without password
         const userResponse = user.toJSON();
@@ -51,7 +55,7 @@ exports.register = async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
+            process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app',
             { expiresIn: '1d' }
         );
         
@@ -70,11 +74,10 @@ exports.register = async (req, res) => {
         });
     }
 };
-
-// Login user
 exports.login = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        console.log('Login attempt with:', req.body);
+        const { username, password, role } = req.body;
         
         // Find user by username
         const user = await User.findOne({ username });
@@ -86,7 +89,15 @@ exports.login = async (req, res) => {
             });
         }
         
-        // Check if password matches
+        // Check if role matches (if specified)
+        if (role && user.role !== role) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid role for this user'
+            });
+        }
+        
+        // Check password
         const isMatch = await user.comparePassword(password);
         
         if (!isMatch) {
@@ -96,10 +107,6 @@ exports.login = async (req, res) => {
             });
         }
         
-        // Update last login time
-        user.lastLogin = Date.now();
-        await user.save();
-        
         // Generate token
         const token = jwt.sign(
             { id: user._id, role: user.role },
@@ -108,24 +115,24 @@ exports.login = async (req, res) => {
         );
         
         // Return user data and token
-        const userResponse = user.toJSON();
-        
         res.status(200).json({
             success: true,
             message: 'Login successful',
-            data: { user: userResponse, token }
+            data: { 
+                user: user.toJSON(), 
+                token 
+            }
         });
         
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({
             success: false,
-            message: 'Error logging in',
+            message: 'Server error during login',
             error: error.message
         });
     }
 };
-
 // Get current user
 exports.getCurrentUser = async (req, res) => {
     try {
@@ -224,7 +231,7 @@ exports.forgotPassword = async (req, res) => {
         // Generate reset token
         const resetToken = jwt.sign(
             { id: user._id },
-            process.env.JWT_RESET_SECRET,
+            process.env.JWT_RESET_SECRET || 'reset_password_secret_key_for_english_center',
             { expiresIn: '15m' }
         );
         
@@ -253,7 +260,10 @@ exports.resetPassword = async (req, res) => {
         const { token, newPassword } = req.body;
         
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+        const decoded = jwt.verify(
+            token, 
+            process.env.JWT_RESET_SECRET || 'reset_password_secret_key_for_english_center'
+        );
         
         // Find user
         const user = await User.findById(decoded.id);
