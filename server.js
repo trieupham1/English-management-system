@@ -1,5 +1,3 @@
-// server.js - Main entry point for English Learning Center Management System
-
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -9,6 +7,7 @@ const session = require('express-session');
 const socketIo = require('socket.io');
 const http = require('http');
 const dotenv = require('dotenv');
+const colors = require('colors');
 
 // Load environment variables
 dotenv.config();
@@ -25,15 +24,18 @@ const teacherRoutes = require('./server/routes/teachers');
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+
+// Initialize Socket.io
+const { initializeSocket } = require('./server/config/socket');
+const io = initializeSocket(server);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => console.log('Connected to MongoDB'.cyan.underline.bold))
+.catch(err => console.error('MongoDB connection error:'.red, err));
 
 // Middleware
 app.use(cors());
@@ -41,7 +43,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'your_session_secret_for_english_center_app',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: process.env.NODE_ENV === 'production' }
@@ -59,11 +61,12 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
 
-// Serve HTML files
+// Route for the root path - redirect to login page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/index.html'));
+    res.redirect('/login');
 });
 
+// HTML Routes
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/login.html'));
 });
@@ -88,33 +91,52 @@ app.get('/chatbot', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/chatbot.html'));
 });
 
-// Socket.io setup for real-time features (chat support and notifications)
-io.on('connection', (socket) => {
-    console.log('New client connected');
+// Serve index.html from views directory if the route exists
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/index.html'));
+});
+
+// Catch all other routes and redirect to login
+app.get('*', (req, res) => {
+    // Don't redirect API routes
+    if (req.url.startsWith('/api/')) {
+        return res.status(404).json({
+            success: false,
+            message: 'API endpoint not found'
+        });
+    }
     
-    // Chat support
-    socket.on('chat message', (data) => {
-        io.emit('chat message', data);
-    });
+    // Don't redirect CSS, JS, and image requests
+    const extensions = ['.css', '.js', '.jpg', '.png', '.gif', '.svg'];
+    if (extensions.some(ext => req.url.endsWith(ext))) {
+        return res.status(404).send('File not found');
+    }
     
-    // Real-time notifications
-    socket.on('notification', (data) => {
-        io.emit('notification', data);
-    });
-    
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
-    });
+    // Redirect to login
+    res.redirect('/login');
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    console.error('Error:'.red, err.stack);
+    
+    // Return JSON error for API requests
+    if (req.url.startsWith('/api/')) {
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: process.env.NODE_ENV === 'production' ? null : err.message
+        });
+    }
+    
+    // Return HTML error for web requests
+    res.status(500).send('Something went wrong. Please try again later.');
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`.yellow.bold);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`.blue);
+    console.log(`Visit: http://localhost:${PORT}`.green);
 });
