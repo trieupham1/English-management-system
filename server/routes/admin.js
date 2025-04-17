@@ -23,7 +23,7 @@ router.get('/dashboard/progress-summary', adminController.generateProgressSummar
 router.get('/dashboard/analytics', adminController.getSystemAnalytics);
 
 // ======================================================
-// USER MANAGEMENT ROUTES (Quản lý nhân sự)
+// USER MANAGEMENT ROUTES
 // ======================================================
 // General user routes
 router.get('/users', adminController.getAllUsers);

@@ -46,10 +46,10 @@ const roleCheck = async (req, res, next) => {
         
         // Define route access based on roles
         const roleRouteAccess = {
-            student: ['/student.html', '/chatbot.html', '/index.html'],
-            teacher: ['/teacher.html', '/chatbot.html', '/index.html'],
-            receptionist: ['/receptionist.html', '/chatbot.html', '/index.html'],
-            manager: ['/admin.html', '/chatbot.html', '/index.html']
+            student: ['/student.html', '/chatbot.html'],
+            teacher: ['/teacher.html', '/chatbot.html'],
+            receptionist: ['/receptionist.html', '/chatbot.html'],
+            manager: ['/admin.html', '/chatbot.html']
         };
         
         // Check if user has access to the requested route
