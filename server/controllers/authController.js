@@ -76,13 +76,26 @@ exports.register = async (req, res) => {
 };
 exports.login = async (req, res) => {
     try {
-        console.log('Login attempt with:', req.body);
+        console.log('Detailed Login Attempt:', {
+            username: req.body.username,
+            role: req.body.role,
+            passwordLength: req.body.password.length
+        });
+        
         const { username, password, role } = req.body;
         
-        // Find user by username
+        // Find user by username with more detailed logging
         const user = await User.findOne({ username });
         
+        console.log('User Found:', user ? {
+            id: user._id,
+            username: user.username,
+            role: user.role,
+            storedPasswordHash: user.password
+        } : 'No user found');
+        
         if (!user) {
+            console.log(`No user found with username: ${username}`);
             return res.status(401).json({
                 success: false,
                 message: 'Invalid username or password'
@@ -91,14 +104,22 @@ exports.login = async (req, res) => {
         
         // Check if role matches (if specified)
         if (role && user.role !== role) {
+            console.log(`Role mismatch. User role: ${user.role}, Requested role: ${role}`);
             return res.status(401).json({
                 success: false,
                 message: 'Invalid role for this user'
             });
         }
         
-        // Check password
+        // More detailed password checking
+        console.log('Attempting password comparison');
         const isMatch = await user.comparePassword(password);
+        
+        console.log('Password Comparison Result:', {
+            username: user.username,
+            isMatch,
+            expectedRole: role
+        });
         
         if (!isMatch) {
             return res.status(401).json({
@@ -125,7 +146,12 @@ exports.login = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('Comprehensive Login Error:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        
         res.status(500).json({
             success: false,
             message: 'Server error during login',

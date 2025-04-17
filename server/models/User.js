@@ -131,16 +131,38 @@ UserSchema.pre('save', async function(next) {
         next(error);
     }
 });
-
+/// In server/models/User.js
 UserSchema.methods.comparePassword = async function(candidatePassword) {
     try {
-        console.log('Candidate password:', candidatePassword);
-        console.log('Stored hashed password:', this.password);
-        const result = await bcrypt.compare(candidatePassword, this.password);
-        console.log('Comparison result:', result);
-        return result;
+        console.log('Detailed Password Debugging:');
+        console.log('Username:', this.username);
+        console.log('Candidate Password (raw):', candidatePassword);
+        console.log('Stored Hashed Password:', this.password);
+
+        // Log the type of inputs
+        console.log('Candidate Password Type:', typeof candidatePassword);
+        console.log('Stored Hash Type:', typeof this.password);
+
+        // Perform comparison using synchronous method for more control
+        const isMatch = bcrypt.compareSync(candidatePassword, this.password);
+        
+        console.log('Synchronous Comparison Result:', isMatch);
+
+        // Additional manual checks
+        console.log('Bcrypt Compare Details:', {
+            candidateLength: candidatePassword.length,
+            storedHashLength: this.password.length,
+            firstChar: candidatePassword[0],
+            storedFirstChar: this.password[0]
+        });
+
+        return isMatch;
     } catch (error) {
-        console.error('Error comparing passwords:', error);
+        console.error('Comprehensive Password Comparison Error:', {
+            username: this.username,
+            error: error.message,
+            stack: error.stack
+        });
         return false;
     }
 };
