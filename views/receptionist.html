@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/receptionist.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .content-section {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -18,27 +23,27 @@
             </div>
             
             <div class="menu">
-                <a href="#" class="menu-item active">
+                <a href="#" class="menu-item active" data-section="dashboard">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="registration">
                     <i class="fas fa-user-plus"></i>
                     <span>Student Registration</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="schedule">
                     <i class="fas fa-calendar"></i>
                     <span>Class Schedule</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="students">
                     <i class="fas fa-users"></i>
                     <span>Manage Students</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="classes">
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>Manage Classes</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="payments">
                     <i class="fas fa-money-check-alt"></i>
                     <span>Payments</span>
                 </a>
@@ -69,89 +74,386 @@
                 </div>
             </div>
             
-            <div class="welcome-card">
-                <h2>Welcome back, Lisa!</h2>
-                <p>You have 3 new student registrations waiting for approval and 2 class assignments pending.</p>
-            </div>
-            
-            <!-- Dashboard Stats -->
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <div class="stat-icon stat-blue">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div class="stat-value">248</div>
-                    <div class="stat-label">Total Students</div>
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="welcome-card">
+                    <h2>Welcome back, Lisa!</h2>
+                    <p>You have 3 new student registrations waiting for approval and 2 class assignments pending.</p>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon stat-green">
-                        <i class="fas fa-chalkboard"></i>
+                <!-- Dashboard Stats -->
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon stat-blue">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-value">248</div>
+                        <div class="stat-label">Total Students</div>
                     </div>
-                    <div class="stat-value">15</div>
-                    <div class="stat-label">Active Classes</div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon stat-green">
+                            <i class="fas fa-chalkboard"></i>
+                        </div>
+                        <div class="stat-value">15</div>
+                        <div class="stat-label">Active Classes</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon stat-yellow">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-value">28</div>
+                        <div class="stat-label">Today's Classes</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon stat-purple">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">New Registrations</div>
+                    </div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon stat-yellow">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-value">28</div>
-                    <div class="stat-label">Today's Classes</div>
+                <!-- Tabs Navigation -->
+                <div class="tabs">
+                    <div class="tab active" data-tab="registration">Student Registration</div>
+                    <div class="tab" data-tab="assignment">Class Assignment</div>
+                    <div class="tab" data-tab="schedule">Today's Schedule</div>
+                    <div class="tab" data-tab="students">Student Management</div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-icon stat-purple">
-                        <i class="fas fa-user-plus"></i>
+                <!-- Tab Contents -->
+                <div id="registration" class="tab-content active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Register New Student</h3>
+                        </div>
+                        <form id="registrationForm">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name</label>
+                                    <input type="text" id="fullName" class="form-control" placeholder="Enter student's full name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email">Email Address</label>
+                                    <input type="email" id="email" class="form-control" placeholder="Enter email address" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone" class="form-control" placeholder="Enter phone number" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="dob">Date of Birth</label>
+                                    <input type="date" id="dob" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="level">English Level</label>
+                                    <select id="level" class="form-control" required>
+                                        <option value="">Select level</option>
+                                        <option value="beginner">Beginner (A1)</option>
+                                        <option value="elementary">Elementary (A2)</option>
+                                        <option value="intermediate">Intermediate (B1)</option>
+                                        <option value="upper-intermediate">Upper Intermediate (B2)</option>
+                                        <option value="advanced">Advanced (C1)</option>
+                                        <option value="proficient">Proficient (C2)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="source">How did they hear about us?</label>
+                                    <select id="source" class="form-control">
+                                        <option value="">Select source</option>
+                                        <option value="website">Website</option>
+                                        <option value="social">Social Media</option>
+                                        <option value="friend">Friend Referral</option>
+                                        <option value="advertisement">Advertisement</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="notes">Additional Notes</label>
+                                <textarea id="notes" class="form-control" placeholder="Any additional information about the student"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Register Student</button>
+                        </form>
                     </div>
-                    <div class="stat-value">5</div>
-                    <div class="stat-label">New Registrations</div>
                 </div>
-            </div>
+                
+                <div id="assignment" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Class Assignment</h3>
+                        </div>
+                        <form id="assignmentForm">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="studentSelect">Select Student</label>
+                                    <select id="studentSelect" class="form-control" required>
+                                        <option value="">Choose a student</option>
+                                        <option value="1">Emily Parker (ST10045)</option>
+                                        <option value="2">Michael Johnson (ST10046)</option>
+                                        <option value="3">Sarah Williams (ST10047)</option>
+                                        <option value="4">David Chen (ST10048)</option>
+                                        <option value="5">Jessica Lee (ST10049)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="courseSelect">Select Course</label>
+                                    <select id="courseSelect" class="form-control" required>
+                                        <option value="">Choose a course</option>
+                                        <option value="1">Conversational English (3 months)</option>
+                                        <option value="2">Business English (4 months)</option>
+                                        <option value="3">IELTS Preparation (2 months)</option>
+                                        <option value="4">TOEFL Preparation (2 months)</option>
+                                        <option value="5">Grammar Fundamentals (1 month)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="classSelect">Select Class</label>
+                                    <select id="classSelect" class="form-control" required>
+                                        <option value="">Choose a class</option>
+                                        <option value="1">Morning Class (9:00 - 10:30)</option>
+                                        <option value="2">Afternoon Class (14:00 - 15:30)</option>
+                                        <option value="3">Evening Class (18:00 - 19:30)</option>
+                                        <option value="4">Weekend Class (Sat 10:00 - 13:00)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="startDate">Start Date</label>
+                                    <input type="date" id="startDate" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="paymentStatus">Payment Status</label>
+                                <select id="paymentStatus" class="form-control" required>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="installment">Installment Plan</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success" style="width: 100%;">Assign to Class</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div id="schedule" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Today's Class Schedule</h3>
+                        </div>
+                        <div class="class-list">
+                            <div class="class-item">
+                                <div class="class-name">Conversational English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 09:00 - 10:30</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 15/20 Students</div>
+                                </div>
+                            </div>
+                            
+                            <div class="class-item">
+                                <div class="class-name">Business English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 11:00 - 12:30</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 301</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 12/15 Students</div>
+                                </div>
+                            </div>
+                            
+                            <div class="class-item">
+                                <div class="class-name">IELTS Preparation</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 16:00</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 105</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> Emma Wilson</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 18/20 Students</div>
+                                </div>
+                            </div>
+                            
+                            <div class="class-item">
+                                <div class="class-name">Beginner English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> A16:30 - 18:00</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 102</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> Robert Brown</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 10/15 Students</div>
+                                </div>
+                            </div>
+                            
+                            <div class="class-item">
+                                <div class="class-name">Conversation Club</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 18:30 - 20:00</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 201</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> Maria Garcia</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 8/12 Students</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="students" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Student Management</h3>
+                            <div class="search-bar">
+                                <input type="text" placeholder="Search students..." id="studentSearch">
+                                <button><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                        <div class="student-list">
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">Emily Parker</div>
+                                    <div class="student-details">
+                                        <div class="student-id"><i class="fas fa-id-card"></i> ST10045</div>
+                                        <div class="student-email"><i class="fas fa-envelope"></i> emily.parker@email.com</div>
+                                        <div class="student-phone"><i class="fas fa-phone"></i> +84 987 654 321</div>
+                                    </div>
+                                </div>
+                                <div class="student-status">
+                                    <span class="badge badge-success">Active</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn"><i class="fas fa-user-plus"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">Michael Johnson</div>
+                                    <div class="student-details">
+                                        <div class="student-id"><i class="fas fa-id-card"></i> ST10046</div>
+                                        <div class="student-email"><i class="fas fa-envelope"></i> michael.j@email.com</div>
+                                        <div class="student-phone"><i class="fas fa-phone"></i> +84 912 345 678</div>
+                                    </div>
+                                </div>
+                                <div class="student-status">
+                                    <span class="badge badge-success">Active</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn"><i class="fas fa-user-plus"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">Sarah Williams</div>
+                                    <div class="student-details">
+                                        <div class="student-id"><i class="fas fa-id-card"></i> ST10047</div>
+                                        <div class="student-email"><i class="fas fa-envelope"></i> sarah.w@email.com</div>
+                                        <div class="student-phone"><i class="fas fa-phone"></i> +84 978 123 456</div>
+                                    </div>
+                                </div>
+                                <div class="student-status">
+                                    <span class="badge badge-warning">Pending</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn"><i class="fas fa-check"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">David Chen</div>
+                                    <div class="student-details">
+                                        <div class="student-id"><i class="fas fa-id-card"></i> ST10048</div>
+                                        <div class="student-email"><i class="fas fa-envelope"></i> david.chen@email.com</div>
+                                        <div class="student-phone"><i class="fas fa-phone"></i> +84 934 567 890</div>
+                                    </div>
+                                </div>
+                                <div class="student-status">
+                                    <span class="badge badge-danger">Inactive</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn"><i class="fas fa-redo"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-name">Jessica Lee</div>
+                                    <div class="student-details">
+                                        <div class="student-id"><i class="fas fa-id-card"></i> ST10049</div>
+                                        <div class="student-email"><i class="fas fa-envelope"></i> jessica.lee@email.com</div>
+                                        <div class="student-phone"><i class="fas fa-phone"></i> +84 921 876 543</div>
+                                    </div>
+                                </div>
+                                <div class="student-status">
+                                    <span class="badge badge-warning">Pending</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="action-btn"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn"><i class="fas fa-check"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
             
-            <!-- Tabs Navigation -->
-            <div class="tabs">
-                <div class="tab active" data-tab="registration">Student Registration</div>
-                <div class="tab" data-tab="assignment">Class Assignment</div>
-                <div class="tab" data-tab="schedule">Today's Schedule</div>
-                <div class="tab" data-tab="students">Student Management</div>
-            </div>
-            
-            <!-- Tab Contents -->
-            <div id="registration" class="tab-content active">
+            <!-- Student Registration Section -->
+            <section id="registration-section" class="content-section" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Register New Student</h3>
+                        <h3>Student Registration</h3>
                     </div>
-                    <form id="registrationForm">
+                    <form id="registrationFormFull">
                         <div class="grid">
                             <div class="form-group">
-                                <label for="fullName">Full Name</label>
-                                <input type="text" id="fullName" class="form-control" placeholder="Enter student's full name" required>
+                                <label for="fullNameFull">Full Name</label>
+                                <input type="text" id="fullNameFull" class="form-control" placeholder="Enter student's full name" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" class="form-control" placeholder="Enter email address" required>
+                                <label for="emailFull">Email Address</label>
+                                <input type="email" id="emailFull" class="form-control" placeholder="Enter email address" required>
                             </div>
                         </div>
                         
                         <div class="grid">
                             <div class="form-group">
-                                <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" class="form-control" placeholder="Enter phone number" required>
+                                <label for="phoneFull">Phone Number</label>
+                                <input type="tel" id="phoneFull" class="form-control" placeholder="Enter phone number" required>
                             </div>
                             
                             <div class="form-group">
-                                <label for="dob">Date of Birth</label>
-                                <input type="date" id="dob" class="form-control" required>
+                                <label for="dobFull">Date of Birth</label>
+                                <input type="date" id="dobFull" class="form-control" required>
                             </div>
                         </div>
                         
                         <div class="grid">
                             <div class="form-group">
-                                <label for="level">English Level</label>
-                                <select id="level" class="form-control" required>
+                                <label for="levelFull">English Level</label>
+                                <select id="levelFull" class="form-control" required>
                                     <option value="">Select level</option>
                                     <option value="beginner">Beginner (A1)</option>
                                     <option value="elementary">Elementary (A2)</option>
@@ -163,8 +465,8 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="source">How did they hear about us?</label>
-                                <select id="source" class="form-control">
+                                <label for="sourceFull">How did they hear about us?</label>
+                                <select id="sourceFull" class="form-control">
                                     <option value="">Select source</option>
                                     <option value="website">Website</option>
                                     <option value="social">Social Media</option>
@@ -176,291 +478,144 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="notes">Additional Notes</label>
-                            <textarea id="notes" class="form-control" placeholder="Any additional information about the student"></textarea>
+                            <label for="addressFull">Address</label>
+                            <textarea id="addressFull" class="form-control" placeholder="Enter student's address"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notesFull">Additional Notes</label>
+                            <textarea id="notesFull" class="form-control" placeholder="Any additional information about the student"></textarea>
                         </div>
                         
                         <button type="submit" class="btn btn-primary" style="width: 100%;">Register Student</button>
                     </form>
                 </div>
-            </div>
+            </section>
             
-            <div id="assignment" class="tab-content">
+            <!-- Schedule Section -->
+            <section id="schedule-section" class="content-section" style="display: none;">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Class Assignment</h3>
-                    </div>
-                    <form id="assignmentForm">
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="studentSelect">Select Student</label>
-                                <select id="studentSelect" class="form-control" required>
-                                    <option value="">Choose a student</option>
-                                    <option value="1">Emily Parker (ST10045)</option>
-                                    <option value="2">Michael Johnson (ST10046)</option>
-                                    <option value="3">Sarah Williams (ST10047)</option>
-                                    <option value="4">David Chen (ST10048)</option>
-                                    <option value="5">Jessica Lee (ST10049)</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="courseSelect">Select Course</label>
-                                <select id="courseSelect" class="form-control" required>
-                                    <option value="">Choose a course</option>
-                                    <option value="1">Conversational English (3 months)</option>
-                                    <option value="2">Business English (4 months)</option>
-                                    <option value="3">IELTS Preparation (2 months)</option>
-                                    <option value="4">TOEFL Preparation (2 months)</option>
-                                    <option value="5">Grammar Fundamentals (1 month)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="classSelect">Select Class</label>
-                                <select id="classSelect" class="form-control" required>
-                                    <option value="">Choose a class</option>
-                                    <option value="1">Morning Class (9:00 - 10:30)</option>
-                                    <option value="2">Afternoon Class (14:00 - 15:30)</option>
-                                    <option value="3">Evening Class (18:00 - 19:30)</option>
-                                    <option value="4">Weekend Class (Sat 10:00 - 13:00)</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="startDate">Start Date</label>
-                                <input type="date" id="startDate" class="form-control" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="paymentStatus">Payment Status</label>
-                            <select id="paymentStatus" class="form-control" required>
-                                <option value="paid">Paid</option>
-                                <option value="pending">Pending</option>
-                                <option value="installment">Installment Plan</option>
+                        <h3>Class Schedule</h3>
+                        <div class="filter-dropdown">
+                            <select id="schedule-filter" class="form-control">
+                                <option value="today">Today</option>
+                                <option value="tomorrow">Tomorrow</option>
+                                <option value="week">This Week</option>
+                                <option value="all">All Classes</option>
                             </select>
                         </div>
-                        
-                        <button type="submit" class="btn btn-success" style="width: 100%;">Assign to Class</button>
-                    </form>
-                </div>
-            </div>
-            
-            <div id="schedule" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Today's Class Schedule</h3>
                     </div>
-                    <div class="class-list">
-                        <div class="class-item">
-                            <div class="class-name">Conversational English</div>
-                            <div class="class-details">
-                                <div class="class-time"><i class="fas fa-clock"></i> 09:00 - 10:30</div>
-                                <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
-                                <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                                <div class="class-students"><i class="fas fa-users"></i> 15/20 Students</div>
-                            </div>
+                    <div class="schedule-container">
+                        <!-- Schedule content will be dynamically loaded here -->
+                        <div class="day-header">
+                            <h4>Today - April 20, 2025</h4>
                         </div>
-                        
-                        <div class="class-item">
-                            <div class="class-name">Business English</div>
-                            <div class="class-details">
-                                <div class="class-time"><i class="fas fa-clock"></i> 11:00 - 12:30</div>
-                                <div class="class-room"><i class="fas fa-door-open"></i> Room 301</div>
-                                <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
-                                <div class="class-students"><i class="fas fa-users"></i> 12/15 Students</div>
+                        <div class="class-list">
+                            <div class="class-item">
+                                <div class="class-name">Conversational English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 09:00 - 10:30</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
+                                    <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 15/20 Students</div>
+                                </div>
+                                <div class="class-actions">
+                                    <button class="btn btn-primary">View Details</button>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="class-item">
-                            <div class="class-name">IELTS Preparation</div>
-                            <div class="class-details">
-                                <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 16:00</div>
-                                <div class="class-room"><i class="fas fa-door-open"></i> Room 105</div>
-                                <div class="class-teacher"><i class="fas fa-user"></i> Emma Wilson</div>
-                                <div class="class-students"><i class="fas fa-users"></i> 18/20 Students</div>
-                            </div>
-                        </div>
-                        
-                        <div class="class-item">
-                            <div class="class-name">Beginner English</div>
-                            <div class="class-details">
-                                <div class="class-time"><i class="fas fa-clock"></i> 16:30 - 18:00</div>
-                                <div class="class-room"><i class="fas fa-door-open"></i> Room 102</div>
-                                <div class="class-teacher"><i class="fas fa-user"></i> Robert Brown</div>
-                                <div class="class-students"><i class="fas fa-users"></i> 10/15 Students</div>
-                            </div>
-                        </div>
-                        
-                        <div class="class-item">
-                            <div class="class-name">Conversation Club</div>
-                            <div class="class-details">
-                                <div class="class-time"><i class="fas fa-clock"></i> 18:30 - 20:00</div>
-                                <div class="class-room"><i class="fas fa-door-open"></i> Room 201</div>
-                                <div class="class-teacher"><i class="fas fa-user"></i> Maria Garcia</div>
-                                <div class="class-students"><i class="fas fa-users"></i> 8/12 Students</div>
-                            </div>
+                            
+                            <!-- More classes would be listed here -->
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
             
-            <div id="students" class="tab-content">
+            <!-- Students Section -->
+            <section id="students-section" class="content-section" style="display: none;">
                 <div class="card">
                     <div class="card-header">
                         <h3>Student Management</h3>
-                        <div class="search-bar">
-                            <input type="text" placeholder="Search students..." id="studentSearch">
-                            <button><i class="fas fa-search"></i></button>
+                        <div class="header-actions">
+                            <div class="search-bar">
+                                <input type="text" placeholder="Search students..." id="studentSearchFull">
+                                <button><i class="fas fa-search"></i></button>
+                            </div>
+                            <button class="btn btn-primary">Add New Student</button>
                         </div>
                     </div>
-                    <div class="student-list">
-                        <div class="student-item">
-                            <div class="student-info">
-                                <div class="student-name">Emily Parker</div>
-                                <div class="student-details">
-                                    <div class="student-id"><i class="fas fa-id-card"></i> ST10045</div>
-                                    <div class="student-email"><i class="fas fa-envelope"></i> emily.parker@email.com</div>
-                                    <div class="student-phone"><i class="fas fa-phone"></i> +84 987 654 321</div>
-                                </div>
-                            </div>
-                            <div class="student-status">
-                                <span class="badge badge-success">Active</span>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn"><i class="fas fa-user-plus"></i></button>
-                            </div>
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Status:</label>
+                            <select id="status-filter" class="form-control">
+                                <option value="all">All</option>
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
                         </div>
-                        
-                        <div class="student-item">
-                            <div class="student-info">
-                                <div class="student-name">Michael Johnson</div>
-                                <div class="student-details">
-                                    <div class="student-id"><i class="fas fa-id-card"></i> ST10046</div>
-                                    <div class="student-email"><i class="fas fa-envelope"></i> michael.j@email.com</div>
-                                    <div class="student-phone"><i class="fas fa-phone"></i> +84 912 345 678</div>
-                                </div>
-                            </div>
-                            <div class="student-status">
-                                <span class="badge badge-success">Active</span>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn"><i class="fas fa-user-plus"></i></button>
-                            </div>
+                        <div class="filter-group">
+                            <label>Course:</label>
+                            <select id="course-filter" class="form-control">
+                                <option value="all">All Courses</option>
+                                <option value="conversational">Conversational English</option>
+                                <option value="business">Business English</option>
+                                <option value="ielts">IELTS Preparation</option>
+                                <option value="beginner">Beginner English</option>
+                            </select>
                         </div>
-                        
-                        <div class="student-item">
-                            <div class="student-info">
-                                <div class="student-name">Sarah Williams</div>
-                                <div class="student-details">
-                                    <div class="student-id"><i class="fas fa-id-card"></i> ST10047</div>
-                                    <div class="student-email"><i class="fas fa-envelope"></i> sarah.w@email.com</div>
-                                    <div class="student-phone"><i class="fas fa-phone"></i> +84 978 123 456</div>
-                                </div>
-                            </div>
-                            <div class="student-status">
-                                <span class="badge badge-warning">Pending</span>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn"><i class="fas fa-check"></i></button>
-                            </div>
-                        </div>
-                        
-                        <div class="student-item">
-                            <div class="student-info">
-                                <div class="student-name">David Chen</div>
-                                <div class="student-details">
-                                    <div class="student-id"><i class="fas fa-id-card"></i> ST10048</div>
-                                    <div class="student-email"><i class="fas fa-envelope"></i> david.chen@email.com</div>
-                                    <div class="student-phone"><i class="fas fa-phone"></i> +84 934 567 890</div>
-                                </div>
-                            </div>
-                            <div class="student-status">
-                                <span class="badge badge-danger">Inactive</span>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn"><i class="fas fa-redo"></i></button>
-                            </div>
-                        </div>
-                        
-                        <div class="student-item">
-                            <div class="student-info">
-                                <div class="student-name">Jessica Lee</div>
-                                <div class="student-details">
-                                    <div class="student-id"><i class="fas fa-id-card"></i> ST10049</div>
-                                    <div class="student-email"><i class="fas fa-envelope"></i> jessica.lee@email.com</div>
-                                    <div class="student-phone"><i class="fas fa-phone"></i> +84 921 876 543</div>
-                                </div>
-                            </div>
-                            <div class="student-status">
-                                <span class="badge badge-warning">Pending</span>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn"><i class="fas fa-edit"></i></button>
-                                <button class="action-btn"><i class="fas fa-check"></i></button>
-                            </div>
-                        </div>
+                    </div>
+                    <div class="student-list-full">
+                        <!-- Student list content would be dynamically loaded here -->
+                    </div>
+                    <div class="pagination">
+                        <button class="pagination-prev">&laquo; Previous</button>
+                        <div class="pagination-info">Page 1 of 5</div>
+                        <button class="pagination-next">Next &raquo;</button>
                     </div>
                 </div>
-            </div>
+            </section>
+            
+            <!-- Classes Section -->
+            <section id="classes-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Class Management</h3>
+                        <button class="btn btn-primary">Add New Class</button>
+                    </div>
+                    <div class="class-management-container">
+                        <!-- Class management content would be dynamically loaded here -->
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Payments Section -->
+            <section id="payments-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Payment Management</h3>
+                        <button class="btn btn-primary">Record New Payment</button>
+                    </div>
+                    <div class="payment-container">
+                        <!-- Payment management content would be dynamically loaded here -->
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
     
     <script src="js/script.js"></script>
+    <script src="js/components/common.js"></script>
+    <script src="js/pages/receptionist.js"></script>
     <script>
-        // Tab switching functionality
         document.addEventListener('DOMContentLoaded', function() {
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
+            if (typeof ELC !== 'undefined' && ELC.isAuthenticated()) {
+                ELC.initUserProfile();
+            } else {
+                console.log('User not authenticated or ELC not defined');
+            }
             
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    
-                    // Remove active class from all tabs and contents
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    
-                    // Add active class to selected tab and content
-                    tab.classList.add('active');
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
-            
-            // Form submission handling
-            document.getElementById('registrationForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Student registered successfully!');
-            });
-            
-            document.getElementById('assignmentForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Student assigned to class successfully!');
-            });
-            
-            // Search functionality
-            document.getElementById('studentSearch').addEventListener('input', function(e) {
-                const searchText = e.target.value.toLowerCase();
-                const studentItems = document.querySelectorAll('.student-item');
-                
-                studentItems.forEach(item => {
-                    const studentName = item.querySelector('.student-name').textContent.toLowerCase();
-                    const studentId = item.querySelector('.student-id').textContent.toLowerCase();
-                    
-                    if (studentName.includes(searchText) || studentId.includes(searchText)) {
-                        item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            });
+            // Tab switching functionality - this is now handled in receptionist.js
         });
     </script>
 </body>

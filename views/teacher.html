@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/teacher.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .content-section {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -18,27 +23,27 @@
             </div>
             
             <div class="menu">
-                <a href="#" class="menu-item active">
+                <a href="#" class="menu-item active" data-section="dashboard">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="schedule">
                     <i class="fas fa-calendar"></i>
                     <span>Class Schedule</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="materials">
                     <i class="fas fa-book"></i>
                     <span>Course Materials</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="assignments">
                     <i class="fas fa-tasks"></i>
                     <span>Assignments</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="students">
                     <i class="fas fa-users"></i>
                     <span>Students</span>
                 </a>
-                <a href="#" class="menu-item">
+                <a href="#" class="menu-item" data-section="progress">
                     <i class="fas fa-chart-bar"></i>
                     <span>Progress Reports</span>
                 </a>
@@ -69,303 +74,570 @@
                 </div>
             </div>
             
-            <div class="welcome-card">
-                <h2>Welcome back, Sarah!</h2>
-                <p>You have 8 assignments to grade and 2 classes today. Your next class "Conversational English" starts in 45 minutes.</p>
-            </div>
-            
-            <!-- Today's Classes -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>Today's Classes</h3>
-                    <a href="#" class="view-all">View Full Schedule</a>
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="welcome-card">
+                    <h2>Welcome back, Sarah!</h2>
+                    <p>You have 8 assignments to grade and 2 classes today. Your next class "Conversational English" starts in 45 minutes.</p>
                 </div>
-                <div class="class-item">
-                    <div class="class-info">
-                        <div class="class-name">Conversational English</div>
-                        <div class="class-details">
-                            <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
-                            <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
-                            <div class="class-students"><i class="fas fa-users"></i> 15 students</div>
-                        </div>
-                    </div>
-                    <div class="class-status status-upcoming">Upcoming</div>
-                </div>
-                <div class="class-item">
-                    <div class="class-info">
-                        <div class="class-name">Business English</div>
-                        <div class="class-details">
-                            <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
-                            <div class="class-room"><i class="fas fa-door-open"></i> Room 301</div>
-                            <div class="class-students"><i class="fas fa-users"></i> 12 students</div>
-                        </div>
-                    </div>
-                    <div class="class-status status-upcoming">Today</div>
-                </div>
-                <div class="class-item">
-                    <div class="class-info">
-                        <div class="class-name">Beginner English</div>
-                        <div class="class-details">
-                            <div class="class-time"><i class="fas fa-clock"></i> 09:30 - 11:00</div>
-                            <div class="class-room"><i class="fas fa-door-open"></i> Room 104</div>
-                            <div class="class-students"><i class="fas fa-users"></i> 18 students</div>
-                        </div>
-                    </div>
-                    <div class="class-status status-completed">Completed</div>
-                </div>
-            </div>
-            
-            <div class="grid">
-                <!-- Upload Materials -->
+                
+                <!-- Today's Classes -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>Upload Course Materials</h3>
+                        <h3>Today's Classes</h3>
+                        <a href="#" class="view-all">View Full Schedule</a>
                     </div>
-                    <form id="uploadMaterialForm">
-                        <div class="form-group">
-                            <label for="materialClass">Select Class</label>
-                            <select id="materialClass" class="form-control" required>
-                                <option value="">Choose a class</option>
-                                <option value="1">Conversational English</option>
-                                <option value="2">Business English</option>
-                                <option value="3">Beginner English</option>
-                                <option value="4">IELTS Preparation</option>
+                    <div class="class-item">
+                        <div class="class-info">
+                            <div class="class-name">Conversational English</div>
+                            <div class="class-details">
+                                <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
+                                <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
+                                <div class="class-students"><i class="fas fa-users"></i> 15 students</div>
+                            </div>
+                        </div>
+                        <div class="class-status status-upcoming">Upcoming</div>
+                    </div>
+                    <div class="class-item">
+                        <div class="class-info">
+                            <div class="class-name">Business English</div>
+                            <div class="class-details">
+                                <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
+                                <div class="class-room"><i class="fas fa-door-open"></i> Room 301</div>
+                                <div class="class-students"><i class="fas fa-users"></i> 12 students</div>
+                            </div>
+                        </div>
+                        <div class="class-status status-upcoming">Today</div>
+                    </div>
+                    <div class="class-item">
+                        <div class="class-info">
+                            <div class="class-name">Beginner English</div>
+                            <div class="class-details">
+                                <div class="class-time"><i class="fas fa-clock"></i> 09:30 - 11:00</div>
+                                <div class="class-room"><i class="fas fa-door-open"></i> Room 104</div>
+                                <div class="class-students"><i class="fas fa-users"></i> 18 students</div>
+                            </div>
+                        </div>
+                        <div class="class-status status-completed">Completed</div>
+                    </div>
+                </div>
+                
+                <div class="grid">
+                    <!-- Upload Materials -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Upload Course Materials</h3>
+                        </div>
+                        <form id="uploadMaterialForm">
+                            <div class="form-group">
+                                <label for="materialClass">Select Class</label>
+                                <select id="materialClass" class="form-control" required>
+                                    <option value="">Choose a class</option>
+                                    <option value="1">Conversational English</option>
+                                    <option value="2">Business English</option>
+                                    <option value="3">Beginner English</option>
+                                    <option value="4">IELTS Preparation</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="materialTitle">Material Title</label>
+                                <input type="text" id="materialTitle" class="form-control" placeholder="Enter title for the material" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="materialType">Material Type</label>
+                                <select id="materialType" class="form-control" required>
+                                    <option value="">Select type</option>
+                                    <option value="slides">Slides</option>
+                                    <option value="document">Document</option>
+                                    <option value="video">Video Link</option>
+                                    <option value="audio">Audio</option>
+                                    <option value="exercise">Exercise</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Upload File</label>
+                                <div class="file-upload">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Drag & drop files here or click to browse</p>
+                                    <input type="file" id="materialFile" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="materialDescription">Description</label>
+                                <textarea id="materialDescription" class="form-control" placeholder="Add description or instructions"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Upload Material</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Student Management -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Conversational English - Students</h3>
+                            <select style="max-width: 200px;">
+                                <option>Conversational English</option>
+                                <option>Business English</option>
+                                <option>Beginner English</option>
+                                <option>IELTS Preparation</option>
                             </select>
                         </div>
+                        <div class="tabs">
+                            <div class="tab active">Attendance</div>
+                            <div class="tab">Grades</div>
+                            <div class="tab">Progress</div>
+                        </div>
+                        <div class="tabbed-content">
+                            <div class="student-list">
+                                <div class="student-item">
+                                    <div class="student-name">John Smith</div>
+                                    <div class="student-attendance">Attendance: 92%</div>
+                                    <div class="student-actions">
+                                        <button title="Present"><i class="fas fa-check text-green-500"></i></button>
+                                        <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
+                                        <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
+                                    </div>
+                                </div>
+                                <div class="student-item">
+                                    <div class="student-name">Emily Johnson</div>
+                                    <div class="student-attendance">Attendance: 88%</div>
+                                    <div class="student-actions">
+                                        <button title="Present"><i class="fas fa-check text-green-500"></i></button>
+                                        <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
+                                        <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
+                                    </div>
+                                </div>
+                                <div class="student-item">
+                                    <div class="student-name">David Lee</div>
+                                    <div class="student-attendance">Attendance: 100%</div>
+                                    <div class="student-actions">
+                                        <button title="Present"><i class="fas fa-check text-green-500"></i></button>
+                                        <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
+                                        <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
+                                    </div>
+                                </div>
+                                <div class="student-item">
+                                    <div class="student-name">Sophie Chen</div>
+                                    <div class="student-attendance">Attendance: 96%</div>
+                                    <div class="student-actions">
+                                        <button title="Present"><i class="fas fa-check text-green-500"></i></button>
+                                        <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
+                                        <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
+                                    </div>
+                                </div>
+                                <div class="student-item">
+                                    <div class="student-name">Michael Park</div>
+                                    <div class="student-attendance">Attendance: 76%</div>
+                                    <div class="student-actions">
+                                        <button title="Present"><i class="fas fa-check text-green-500"></i></button>
+                                        <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
+                                        <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Assignments to Grade -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Assignments to Grade</h3>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="assignment-item">
+                        <div class="assignment-info">
+                            <div class="assignment-title">Writing Essay</div>
+                            <div class="assignment-details">
+                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 18, 2025</div>
+                                <div class="assignment-class"><i class="fas fa-book"></i> Conversational English</div>
+                                <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 12/15 submitted</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">Grade</button>
+                    </div>
+                    <div class="assignment-item">
+                        <div class="assignment-info">
+                            <div class="assignment-title">Grammar Quiz</div>
+                            <div class="assignment-details">
+                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 20, 2025</div>
+                                <div class="assignment-class"><i class="fas fa-book"></i> Beginner English</div>
+                                <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 15/18 submitted</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">Grade</button>
+                    </div>
+                    <div class="assignment-item">
+                        <div class="assignment-info">
+                            <div class="assignment-title">Business Proposal</div>
+                            <div class="assignment-details">
+                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 15, 2025</div>
+                                <div class="assignment-class"><i class="fas fa-book"></i> Business English</div>
+                                <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 10/12 submitted</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary">Grade</button>
+                    </div>
+                </div>
+                
+                <!-- Create Assignment -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Create New Assignment</h3>
+                    </div>
+                    <form id="createAssignmentForm">
+                        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group">
+                                <label for="assignmentTitle">Assignment Title</label>
+                                <input type="text" id="assignmentTitle" class="form-control" placeholder="Enter assignment title" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="assignmentClass">Select Class</label>
+                                <select id="assignmentClass" class="form-control" required>
+                                    <option value="">Choose a class</option>
+                                    <option value="1">Conversational English</option>
+                                    <option value="2">Business English</option>
+                                    <option value="3">Beginner English</option>
+                                    <option value="4">IELTS Preparation</option>
+                                </select>
+                            </div>
+                        </div>
                         
-                        <div class="form-group">
-                            <label for="materialTitle">Material Title</label>
-                            <input type="text" id="materialTitle" class="form-control" placeholder="Enter title for the material" required>
+                        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="form-group">
+                                <label for="assignmentDueDate">Due Date</label>
+                                <input type="date" id="assignmentDueDate" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="assignmentPoints">Total Points</label>
+                                <input type="number" id="assignmentPoints" class="form-control" placeholder="Enter total points" min="1" max="100" required>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="materialType">Material Type</label>
-                            <select id="materialType" class="form-control" required>
-                                <option value="">Select type</option>
-                                <option value="slides">Slides</option>
-                                <option value="document">Document</option>
-                                <option value="video">Video Link</option>
-                                <option value="audio">Audio</option>
-                                <option value="exercise">Exercise</option>
-                            </select>
+                            <label for="assignmentInstructions">Instructions</label>
+                            <textarea id="assignmentInstructions" class="form-control" placeholder="Provide detailed instructions for students" rows="4" required></textarea>
                         </div>
                         
                         <div class="form-group">
-                            <label>Upload File</label>
+                            <label>Attachment (Optional)</label>
                             <div class="file-upload">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p>Drag & drop files here or click to browse</p>
-                                <input type="file" id="materialFile" style="display: none;">
+                                <input type="file" id="assignmentFile" style="display: none;">
                             </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="materialDescription">Description</label>
-                            <textarea id="materialDescription" class="form-control" placeholder="Add description or instructions"></textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Upload Material</button>
+                        <button type="submit" class="btn btn-primary">Create Assignment</button>
                     </form>
                 </div>
-                
-                <!-- Student Management -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Conversational English - Students</h3>
-                        <select style="max-width: 200px;">
-                            <option>Conversational English</option>
-                            <option>Business English</option>
-                            <option>Beginner English</option>
-                            <option>IELTS Preparation</option>
-                        </select>
-                    </div>
-                    <div class="tabs">
-                        <div class="tab active">Attendance</div>
-                        <div class="tab">Grades</div>
-                        <div class="tab">Progress</div>
-                    </div>
-                    <div class="tabbed-content">
-                        <div class="student-list">
-                            <div class="student-item">
-                                <div class="student-name">John Smith</div>
-                                <div class="student-attendance">Attendance: 92%</div>
-                                <div class="student-actions">
-                                    <button title="Present"><i class="fas fa-check text-green-500"></i></button>
-                                    <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
-                                    <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
-                                </div>
-                            </div>
-                            <div class="student-item">
-                                <div class="student-name">Emily Johnson</div>
-                                <div class="student-attendance">Attendance: 88%</div>
-                                <div class="student-actions">
-                                    <button title="Present"><i class="fas fa-check text-green-500"></i></button>
-                                    <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
-                                    <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
-                                </div>
-                            </div>
-                            <div class="student-item">
-                                <div class="student-name">David Lee</div>
-                                <div class="student-attendance">Attendance: 100%</div>
-                                <div class="student-actions">
-                                    <button title="Present"><i class="fas fa-check text-green-500"></i></button>
-                                    <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
-                                    <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
-                                </div>
-                            </div>
-                            <div class="student-item">
-                                <div class="student-name">Sophie Chen</div>
-                                <div class="student-attendance">Attendance: 96%</div>
-                                <div class="student-actions">
-                                    <button title="Present"><i class="fas fa-check text-green-500"></i></button>
-                                    <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
-                                    <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
-                                </div>
-                            </div>
-                            <div class="student-item">
-                                <div class="student-name">Michael Park</div>
-                                <div class="student-attendance">Attendance: 76%</div>
-                                <div class="student-actions">
-                                    <button title="Present"><i class="fas fa-check text-green-500"></i></button>
-                                    <button title="Absent"><i class="fas fa-times text-red-500"></i></button>
-                                    <button title="Late"><i class="fas fa-clock text-yellow-500"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Assignments to Grade -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>Assignments to Grade</h3>
-                    <a href="#" class="view-all">View All</a>
-                </div>
-                <div class="assignment-item">
-                    <div class="assignment-info">
-                        <div class="assignment-title">Writing Essay</div>
-                        <div class="assignment-details">
-                            <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 18, 2025</div>
-                            <div class="assignment-class"><i class="fas fa-book"></i> Conversational English</div>
-                            <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 12/15 submitted</div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary">Grade</button>
-                </div>
-                <div class="assignment-item">
-                    <div class="assignment-info">
-                        <div class="assignment-title">Grammar Quiz</div>
-                        <div class="assignment-details">
-                            <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 20, 2025</div>
-                            <div class="assignment-class"><i class="fas fa-book"></i> Beginner English</div>
-                            <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 15/18 submitted</div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary">Grade</button>
-                </div>
-                <div class="assignment-item">
-                    <div class="assignment-info">
-                        <div class="assignment-title">Business Proposal</div>
-                        <div class="assignment-details">
-                            <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 15, 2025</div>
-                            <div class="assignment-class"><i class="fas fa-book"></i> Business English</div>
-                            <div class="assignment-submissions"><i class="fas fa-file-alt"></i> 10/12 submitted</div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary">Grade</button>
-                </div>
-            </div>
-            
-            <!-- Create Assignment -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>Create New Assignment</h3>
-                </div>
-                <form id="createAssignmentForm">
-                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
-                        <div class="form-group">
-                            <label for="assignmentTitle">Assignment Title</label>
-                            <input type="text" id="assignmentTitle" class="form-control" placeholder="Enter assignment title" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="assignmentClass">Select Class</label>
-                            <select id="assignmentClass" class="form-control" required>
-                                <option value="">Choose a class</option>
-                                <option value="1">Conversational English</option>
-                                <option value="2">Business English</option>
-                                <option value="3">Beginner English</option>
-                                <option value="4">IELTS Preparation</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="grid" style="grid-template-columns: 1fr 1fr;">
-                        <div class="form-group">
-                            <label for="assignmentDueDate">Due Date</label>
-                            <input type="date" id="assignmentDueDate" class="form-control" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="assignmentPoints">Total Points</label>
-                            <input type="number" id="assignmentPoints" class="form-control" placeholder="Enter total points" min="1" max="100" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="assignmentInstructions">Instructions</label>
-                        <textarea id="assignmentInstructions" class="form-control" placeholder="Provide detailed instructions for students" rows="4" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Attachment (Optional)</label>
-                        <div class="file-upload">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Drag & drop files here or click to browse</p>
-                            <input type="file" id="assignmentFile" style="display: none;">
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Create Assignment</button>
-                </form>
-            </div>
+            </section>
         </div>
     </div>
     
+    <script src="js/components/common.js"></script>
+    <script src="js/pages/teacher.js"></script>
     <script>
-        // File upload interaction
-        document.querySelectorAll('.file-upload').forEach(upload => {
-            const fileInput = upload.querySelector('input[type="file"]');
-            
-            upload.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            fileInput.addEventListener('change', e => {
-                if (e.target.files.length > 0) {
-                    const fileName = e.target.files[0].name;
-                    upload.querySelector('p').textContent = fileName;
-                }
-            });
-        });
-        
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                // In a real app, you would show/hide different content based on the active tab
-            });
-        });
-        
-        // Prevent form submission (for demo)
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', e => {
-                e.preventDefault();
-                alert('Form submitted!');
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof ELC !== 'undefined' && ELC.isAuthenticated()) {
+                ELC.initUserProfile();
+            } else {
+                console.log('User not authenticated or ELC not defined');
+            }
         });
     </script>
 </body>
-</html>
+</html>            
+            <!-- Schedule Section -->
+            <section id="schedule-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Class Schedule</h3>
+                    </div>
+                    <div class="schedule-container">
+                        <div class="day-header">
+                            <h4>Monday</h4>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-info">
+                                <div class="class-name">Conversational English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 15 students</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="day-header">
+                            <h4>Tuesday</h4>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-info">
+                                <div class="class-name">Business English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 301</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 12 students</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="day-header">
+                            <h4>Thursday</h4>
+                        </div>
+                        <div class="class-item">
+                            <div class="class-info">
+                                <div class="class-name">Beginner English</div>
+                                <div class="class-details">
+                                    <div class="class-time"><i class="fas fa-clock"></i> 09:30 - 11:00</div>
+                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 104</div>
+                                    <div class="class-students"><i class="fas fa-users"></i> 18 students</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Materials Section -->
+            <section id="materials-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Course Materials</h3>
+                        <button class="btn btn-primary">Upload New Material</button>
+                    </div>
+                    <div class="filter-bar">
+                        <select class="form-control">
+                            <option value="">All Classes</option>
+                            <option value="conversational">Conversational English</option>
+                            <option value="business">Business English</option>
+                            <option value="beginner">Beginner English</option>
+                            <option value="ielts">IELTS Preparation</option>
+                        </select>
+                        <select class="form-control">
+                            <option value="">All Types</option>
+                            <option value="slides">Slides</option>
+                            <option value="document">Documents</option>
+                            <option value="video">Videos</option>
+                            <option value="audio">Audio</option>
+                            <option value="exercise">Exercises</option>
+                        </select>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search materials...">
+                            <button><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="materials-list">
+                        <div class="material-item">
+                            <div class="material-icon">
+                                <i class="fas fa-file-powerpoint"></i>
+                            </div>
+                            <div class="material-info">
+                                <div class="material-title">Speaking Practice Slides</div>
+                                <div class="material-details">
+                                    <div><i class="fas fa-book"></i> Conversational English</div>
+                                    <div><i class="fas fa-calendar"></i> Apr 15, 2025</div>
+                                    <div><i class="fas fa-user"></i> Uploaded by you</div>
+                                </div>
+                            </div>
+                            <div class="material-actions">
+                                <button class="btn btn-secondary">Preview</button>
+                                <button class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="material-item">
+                            <div class="material-icon">
+                                <i class="fas fa-file-word"></i>
+                            </div>
+                            <div class="material-info">
+                                <div class="material-title">Business Writing Guidelines</div>
+                                <div class="material-details">
+                                    <div><i class="fas fa-book"></i> Business English</div>
+                                    <div><i class="fas fa-calendar"></i> Apr 12, 2025</div>
+                                    <div><i class="fas fa-user"></i> Uploaded by you</div>
+                                </div>
+                            </div>
+                            <div class="material-actions">
+                                <button class="btn btn-secondary">Preview</button>
+                                <button class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Assignments Section -->
+            <section id="assignments-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Assignments</h3>
+                        <button class="btn btn-primary">Create New Assignment</button>
+                    </div>
+                    <div class="filter-bar">
+                        <select class="form-control">
+                            <option value="">All Classes</option>
+                            <option value="conversational">Conversational English</option>
+                            <option value="business">Business English</option>
+                            <option value="beginner">Beginner English</option>
+                            <option value="ielts">IELTS Preparation</option>
+                        </select>
+                        <select class="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="past">Past</option>
+                        </select>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search assignments...">
+                            <button><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="assignments-list">
+                        <div class="assignment-item">
+                            <div class="assignment-header">
+                                <div class="assignment-title">Writing Essay</div>
+                                <div class="assignment-status status-active">Active</div>
+                            </div>
+                            <div class="assignment-details">
+                                <div><i class="fas fa-book"></i> Conversational English</div>
+                                <div><i class="fas fa-calendar"></i> Due: Apr 18, 2025</div>
+                                <div><i class="fas fa-file-alt"></i> 12/15 submitted</div>
+                            </div>
+                            <div class="assignment-actions">
+                                <button class="btn btn-primary">Grade</button>
+                                <button class="btn btn-secondary">Edit</button>
+                                <button class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="assignment-item">
+                            <div class="assignment-header">
+                                <div class="assignment-title">Grammar Quiz</div>
+                                <div class="assignment-status status-active">Active</div>
+                            </div>
+                            <div class="assignment-details">
+                                <div><i class="fas fa-book"></i> Beginner English</div>
+                                <div><i class="fas fa-calendar"></i> Due: Apr 20, 2025</div>
+                                <div><i class="fas fa-file-alt"></i> 15/18 submitted</div>
+                            </div>
+                            <div class="assignment-actions">
+                                <button class="btn btn-primary">Grade</button>
+                                <button class="btn btn-secondary">Edit</button>
+                                <button class="btn btn-danger">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Students Section -->
+            <section id="students-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Students</h3>
+                    </div>
+                    <div class="filter-bar">
+                        <select class="form-control">
+                            <option value="">All Classes</option>
+                            <option value="conversational">Conversational English</option>
+                            <option value="business">Business English</option>
+                            <option value="beginner">Beginner English</option>
+                            <option value="ielts">IELTS Preparation</option>
+                        </select>
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search students...">
+                            <button><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="students-list">
+                        <div class="student-item">
+                            <div class="student-info">
+                                <div class="student-name">John Smith</div>
+                                <div class="student-details">
+                                    <div><i class="fas fa-book"></i> Classes: Conversational English</div>
+                                    <div><i class="fas fa-chart-line"></i> Average Grade: 85%</div>
+                                    <div><i class="fas fa-clock"></i> Attendance: 92%</div>
+                                </div>
+                            </div>
+                            <div class="student-actions">
+                                <button class="btn btn-primary">View Profile</button>
+                                <button class="btn btn-secondary">Contact</button>
+                            </div>
+                        </div>
+                        
+                        <div class="student-item">
+                            <div class="student-info">
+                                <div class="student-name">Emily Johnson</div>
+                                <div class="student-details">
+                                    <div><i class="fas fa-book"></i> Classes: Conversational English, Business English</div>
+                                    <div><i class="fas fa-chart-line"></i> Average Grade: 92%</div>
+                                    <div><i class="fas fa-clock"></i> Attendance: 88%</div>
+                                </div>
+                            </div>
+                            <div class="student-actions">
+                                <button class="btn btn-primary">View Profile</button>
+                                <button class="btn btn-secondary">Contact</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Progress Reports Section -->
+            <section id="progress-section" class="content-section" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Progress Reports</h3>
+                    </div>
+                    <div class="filter-bar">
+                        <select class="form-control">
+                            <option value="">All Classes</option>
+                            <option value="conversational">Conversational English</option>
+                            <option value="business">Business English</option>
+                            <option value="beginner">Beginner English</option>
+                            <option value="ielts">IELTS Preparation</option>
+                        </select>
+                        <select class="form-control">
+                            <option value="individual">Individual Reports</option>
+                            <option value="class">Class Reports</option>
+                        </select>
+                    </div>
+                    <div class="reports-list">
+                        <div class="report-item">
+                            <div class="report-info">
+                                <div class="report-title">Conversational English - Mid-term Progress</div>
+                                <div class="report-details">
+                                    <div><i class="fas fa-calendar"></i> Generated: Apr 15, 2025</div>
+                                    <div><i class="fas fa-users"></i> 15 students</div>
+                                </div>
+                            </div>
+                            <div class="report-actions">
+                                <button class="btn btn-primary">View Report</button>
+                                <button class="btn btn-secondary">Download PDF</button>
+                            </div>
+                        </div>
+                        
+                        <div class="report-item">
+                            <div class="report-info">
+                                <div class="report-title">Business English - Weekly Assessment</div>
+                                <div class="report-details">
+                                    <div><i class="fas fa-calendar"></i> Generated: Apr 12, 2025</div>
+                                    <div><i class="fas fa-users"></i> 12 students</div>
+                                </div>
+                            </div>
+                            <div class="report-actions">
+                                <button class="btn btn-primary">View Report</button>
+                                <button class="btn btn-secondary">Download PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
