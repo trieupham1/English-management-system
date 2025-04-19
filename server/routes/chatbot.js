@@ -3,25 +3,21 @@ const router = express.Router();
 const chatbotController = require('../controllers/chatbotController');
 const { protect, authorize } = require('../middleware/auth');
 
-// Get chat history for a user
-router.get('/history/:userId', protect, chatbotController.getChatHistory);
+// Student-only routes
+// Get chat history for a student
+router.get('/history/:userId', protect, authorize('student'), chatbotController.getChatHistory);
 
 // Save a chat message
-router.post('/message/:userId', protect, chatbotController.saveMessage);
+router.post('/message/:userId', protect, authorize('student'), chatbotController.saveMessage);
 
 // Process a user message and generate a response
-router.post('/process/:userId', protect, chatbotController.processMessage);
+router.post('/process/:userId', protect, authorize('student'), chatbotController.processMessage);
 
 // Clear chat history
-router.delete('/history/:userId', protect, chatbotController.clearChatHistory);
+router.delete('/history/:userId', protect, authorize('student'), chatbotController.clearChatHistory);
 
-// Train chatbot with new responses (admin/manager only)
-router.post('/train', protect, authorize('manager'), chatbotController.trainChatbot);
-
-// Get FAQ responses
-router.get('/faq', chatbotController.getFAQResponses);
-
-// Get chatbot statistics (admin/manager only)
-router.get('/stats', protect, authorize('manager'), chatbotController.getChatbotStats);
+// Admin/teacher routes
+// Get chatbot statistics (admin/manager/teacher only)
+router.get('/stats', protect, authorize('manager', 'teacher'), chatbotController.getChatbotStats);
 
 module.exports = router;

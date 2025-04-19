@@ -18,17 +18,19 @@ const ChatbotMessageSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    relatedTo: {
+    category: {
         type: String,
-        enum: ['general', 'course', 'assignment', 'schedule', 'payment', 'technical']
+        enum: ['schedule', 'assignment', 'course', 'progress', 'general'],
+        default: 'general'
     },
-    relevantIds: [{
+    relatedIds: [{
         type: mongoose.Schema.Types.ObjectId,
-        refPath: 'relevantModel'
+        refPath: 'relatedModel'
     }],
-    relevantModel: {
+    relatedModel: {
         type: String,
-        enum: ['Course', 'Lesson', 'Assignment', 'User']
+        enum: ['Course', 'Assignment', 'None'],
+        default: 'None'
     },
     metadata: {
         type: Map,

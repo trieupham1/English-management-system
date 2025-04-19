@@ -1,15 +1,34 @@
 const ChatbotMessage = require('../models/ChatbotMessage');
 const User = require('../models/User');
 const Course = require('../models/Course');
+const Assignment = require('../models/Assignment');
 const mongoose = require('mongoose');
 
-// Get chat history for a user
+// Get chat history for a student
 exports.getChatHistory = async (req, res) => {
     try {
         const { userId } = req.params;
         
+        // Verify it's a student user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        if (user.role !== 'student') {
+            return res.status(403).json({
+                success: false,
+                message: 'This chatbot is only for student users'
+            });
+        }
+        
+        // Get chat history for the student
         const chatHistory = await ChatbotMessage.find({ user: userId })
-            .sort({ timestamp: 1 });
+            .sort({ timestamp: 1 })
+            .limit(50); // Limit to last 50 messages
         
         res.status(200).json({
             success: true,
@@ -32,7 +51,7 @@ exports.saveMessage = async (req, res) => {
         const { userId } = req.params;
         const { message, isUserMessage } = req.body;
         
-        // Check if user exists
+        // Check if user exists and is a student
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({
@@ -41,11 +60,32 @@ exports.saveMessage = async (req, res) => {
             });
         }
         
+        if (user.role !== 'student') {
+            return res.status(403).json({
+                success: false,
+                message: 'This chatbot is only for student users'
+            });
+        }
+        
+        // Determine message category
+        let category = 'general';
+        if (message.toLowerCase().includes('schedule') || message.toLowerCase().includes('class time')) {
+            category = 'schedule';
+        } else if (message.toLowerCase().includes('assignment') || message.toLowerCase().includes('homework')) {
+            category = 'assignment';
+        } else if (message.toLowerCase().includes('course') || message.toLowerCase().includes('class')) {
+            category = 'course';
+        } else if (message.toLowerCase().includes('progress') || message.toLowerCase().includes('grade')) {
+            category = 'progress';
+        }
+        
+        // Create the message
         const chatMessage = await ChatbotMessage.create({
             user: userId,
             message,
             isUserMessage,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            category
         });
         
         res.status(201).json({
@@ -62,14 +102,14 @@ exports.saveMessage = async (req, res) => {
     }
 };
 
-// Process a user message and generate a response
+// Process a student message and generate a response
 exports.processMessage = async (req, res) => {
     try {
         const { userId } = req.params;
         const { message } = req.body;
         
-        // Check if user exists
-        const user = await User.findById(userId);
+        // Check if user exists and is a student
+        const user = await User.findById(userId).populate('studentInfo.courses');
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -77,102 +117,327 @@ exports.processMessage = async (req, res) => {
             });
         }
         
+        if (user.role !== 'student') {
+            return res.status(403).json({
+                success: false,
+                message: 'This chatbot is only for student users'
+            });
+        }
+        
+        // Determine message category
+        let category = 'general';
+        let relatedIds = [];
+        let relatedModel = 'None';
+        
+        const lowerMessage = message.toLowerCase();
+        
+        // Process the message and generate a response
+        let response = '';
+        
+        // Handle schedule related queries
+        if (lowerMessage.includes('schedule') || lowerMessage.includes('class time') || 
+            lowerMessage.includes('when') || (lowerMessage.includes('class') && lowerMessage.includes('time'))) {
+            
+            category = 'schedule';
+            
+            // Get user's class schedule if they have enrolled courses
+            if (user.studentInfo && user.studentInfo.courses && user.studentInfo.courses.length > 0) {
+                // Extract course IDs
+                const courseIds = user.studentInfo.courses.map(course => 
+                    course._id || course
+                );
+                
+                // Get course details with schedule
+                const courses = await Course.find({
+                    _id: { $in: courseIds }
+                }).select('name schedule');
+                
+                if (courses && courses.length > 0) {
+                    relatedIds = courseIds;
+                    relatedModel = 'Course';
+                    
+                    response = 'Here is your class schedule:\n\n';
+                    courses.forEach(course => {
+                        response += `${course.name}:\n`;
+                        
+                        if (course.schedule && course.schedule.length > 0) {
+                            course.schedule.forEach(sch => {
+                                const dayName = sch.day.charAt(0).toUpperCase() + sch.day.slice(1);
+                                response += `- ${dayName}: ${sch.startTime} - ${sch.endTime}, Room: ${sch.room}\n`;
+                            });
+                        } else {
+                            response += `- Schedule not set\n`;
+                        }
+                        
+                        response += '\n';
+                    });
+                } else {
+                    response = "I couldn't find any schedule information for your courses. Please check with your teacher or the reception.";
+                }
+            } else {
+                response = "You don't seem to be enrolled in any courses yet. Please visit the Courses section to browse available courses.";
+            }
+        } 
+        // Handle assignment related queries
+        else if (lowerMessage.includes('assignment') || lowerMessage.includes('homework') || 
+                lowerMessage.includes('due') || lowerMessage.includes('deadline')) {
+            
+            category = 'assignment';
+            
+            // Get user's assignments if they have enrolled courses
+            if (user.studentInfo && user.studentInfo.courses && user.studentInfo.courses.length > 0) {
+                // Extract course IDs
+                const courseIds = user.studentInfo.courses.map(course => 
+                    course._id || course
+                );
+                
+                // Get assignments for these courses
+                const assignments = await Assignment.find({
+                    course: { $in: courseIds },
+                    dueDate: { $gte: new Date() } // Only upcoming assignments
+                }).populate('course', 'name').sort({ dueDate: 1 });
+                
+                if (assignments && assignments.length > 0) {
+                    relatedIds = assignments.map(a => a._id);
+                    relatedModel = 'Assignment';
+                    
+                    response = 'Here are your upcoming assignments:\n\n';
+                    assignments.forEach(assignment => {
+                        const dueDate = new Date(assignment.dueDate).toLocaleDateString('en-US', {
+                            year: 'numeric', month: 'short', day: 'numeric'
+                        });
+                        
+                        response += `- ${assignment.title} for ${assignment.course.name}\n`;
+                        response += `  Due: ${dueDate}\n`;
+                        if (assignment.description) {
+                            response += `  ${assignment.description.substring(0, 50)}${assignment.description.length > 50 ? '...' : ''}\n`;
+                        }
+                        response += '\n';
+                    });
+                    
+                    response += 'To view assignment details and submit your work, please go to the Assignments section.';
+                } else {
+                    // Check for past assignments
+                    const pastAssignments = await Assignment.find({
+                        course: { $in: courseIds },
+                        dueDate: { $lt: new Date() }
+                    }).countDocuments();
+                    
+                    if (pastAssignments > 0) {
+                        response = "You don't have any upcoming assignments due right now. You can check your past assignments in the Assignments section.";
+                    } else {
+                        response = "You don't have any assignments yet. Check back later or ask your teacher for more information.";
+                    }
+                }
+            } else {
+                response = "You don't seem to be enrolled in any courses yet. Please visit the Courses section to browse available courses.";
+            }
+        } 
+        // Handle course related queries
+        else if (lowerMessage.includes('course') || lowerMessage.includes('enroll') || 
+                (lowerMessage.includes('class') && !lowerMessage.includes('schedule'))) {
+            
+            category = 'course';
+            
+            // Get user's enrolled courses
+            if (user.studentInfo && user.studentInfo.courses && user.studentInfo.courses.length > 0) {
+                // Extract course IDs
+                const courseIds = user.studentInfo.courses.map(course => 
+                    course._id || course
+                );
+                
+                // Get course details
+                const courses = await Course.find({
+                    _id: { $in: courseIds }
+                }).populate('teacher', 'fullName');
+                
+                if (courses && courses.length > 0) {
+                    relatedIds = courseIds;
+                    relatedModel = 'Course';
+                    
+                    response = 'You are currently enrolled in these courses:\n\n';
+                    courses.forEach(course => {
+                        response += `- ${course.name}`;
+                        if (course.level) {
+                            response += ` (${course.level})`;
+                        }
+                        
+                        if (course.teacher && course.teacher.fullName) {
+                            response += `, Teacher: ${course.teacher.fullName}`;
+                        }
+                        
+                        response += '\n';
+                    });
+                    
+                    response += '\nTo view course details and materials, please go to the Courses section.';
+                } else {
+                    response = "I couldn't find information about your enrolled courses. Please check with reception.";
+                }
+            } else {
+                response = "You don't seem to be enrolled in any courses yet. Please visit the Courses section to browse available courses.";
+            }
+        }
+        // Handle progress related queries
+        else if (lowerMessage.includes('progress') || lowerMessage.includes('grade') || 
+                lowerMessage.includes('score') || lowerMessage.includes('performance')) {
+            
+            category = 'progress';
+            
+            // Get user's progress if they have enrolled courses
+            if (user.studentInfo && user.studentInfo.courses && user.studentInfo.courses.length > 0 && 
+                user.studentInfo.progress && Object.keys(user.studentInfo.progress).length > 0) {
+                
+                // Extract course IDs
+                const courseIds = user.studentInfo.courses.map(course => 
+                    course._id || course
+                );
+                
+                // Get course details
+                const courses = await Course.find({
+                    _id: { $in: courseIds }
+                }).select('name');
+                
+                if (courses && courses.length > 0) {
+                    relatedIds = courseIds;
+                    relatedModel = 'Course';
+                    
+                    response = 'Here is your current progress in your courses:\n\n';
+                    
+                    courses.forEach(course => {
+                        const courseId = course._id.toString();
+                        if (user.studentInfo.progress[courseId]) {
+                            const progressPercent = user.studentInfo.progress[courseId];
+                            response += `- ${course.name}: ${progressPercent}% complete\n`;
+                        } else {
+                            response += `- ${course.name}: No progress recorded yet\n`;
+                        }
+                    });
+                    
+                    response += '\nTo view detailed progress and grades, please go to the Progress section in your dashboard.';
+                } else {
+                    response = "I couldn't find information about your course progress. Please check the Progress section in your dashboard.";
+                }
+            } else {
+                response = "I don't have any progress information for you yet. This may be because you're newly enrolled or haven't completed any assessments yet.";
+            }
+        }
+        // Handle learning tips queries
+        else if (lowerMessage.includes('tip') || lowerMessage.includes('advice') || 
+                lowerMessage.includes('improve') || lowerMessage.includes('study') || lowerMessage.includes('help me')) {
+            
+            response = "Here are some tips to improve your English learning:\n\n" +
+                "1. Practice consistently for at least 15-30 minutes every day\n" +
+                "2. Use the online resources in your course materials section\n" +
+                "3. Join conversation practice sessions with classmates\n" +
+                "4. Complete all assignments on time\n" +
+                "5. Watch English videos and listen to podcasts to improve comprehension\n" +
+                "6. Use vocabulary flashcards for regular review\n" +
+                "7. Read English news articles daily\n\n" +
+                "For specific help with your courses, please speak with your teachers during office hours.";
+        }
+        // Handle teacher contact information
+        else if (lowerMessage.includes('teacher') || lowerMessage.includes('contact') || 
+                lowerMessage.includes('instructor') || lowerMessage.includes('professor')) {
+            
+            // Get user's courses and teacher information
+            if (user.studentInfo && user.studentInfo.courses && user.studentInfo.courses.length > 0) {
+                // Extract course IDs
+                const courseIds = user.studentInfo.courses.map(course => 
+                    course._id || course
+                );
+                
+                // Get course details with teachers
+                const courses = await Course.find({
+                    _id: { $in: courseIds }
+                }).populate('teacher', 'fullName email officeHours');
+                
+                if (courses && courses.length > 0) {
+                    relatedIds = courses.map(c => c.teacher._id).filter(id => id);
+                    relatedModel = 'User';
+                    
+                    response = 'Here is how to contact your teachers:\n\n';
+                    
+                    // Create a map to avoid duplicates
+                    const teacherMap = new Map();
+                    
+                    courses.forEach(course => {
+                        if (course.teacher && course.teacher.fullName) {
+                            const teacherId = course.teacher._id.toString();
+                            
+                            if (!teacherMap.has(teacherId)) {
+                                const teacherInfo = {
+                                    name: course.teacher.fullName,
+                                    email: course.teacher.email || 'No email provided',
+                                    officeHours: course.teacher.officeHours || 'No office hours specified',
+                                    courses: [course.name]
+                                };
+                                
+                                teacherMap.set(teacherId, teacherInfo);
+                            } else {
+                                // Add this course to existing teacher's courses
+                                const teacherInfo = teacherMap.get(teacherId);
+                                teacherInfo.courses.push(course.name);
+                                teacherMap.set(teacherId, teacherInfo);
+                            }
+                        }
+                    });
+                    
+                    // Generate response from the map
+                    teacherMap.forEach(teacher => {
+                        response += `- ${teacher.name}:\n`;
+                        response += `  Email: ${teacher.email}\n`;
+                        response += `  Office Hours: ${teacher.officeHours}\n`;
+                        response += `  Courses: ${teacher.courses.join(', ')}\n\n`;
+                    });
+                    
+                    response += 'You can also contact teachers through the Messages section in your dashboard.';
+                } else {
+                    response = "I couldn't find information about your teachers. Please check with reception.";
+                }
+            } else {
+                response = "You don't seem to be enrolled in any courses yet, so I don't have teacher contact information to provide.";
+            }
+        }
+        // Handle greeting
+        else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
+            response = `Hello ${user.fullName || 'there'}! I'm your Student Learning Assistant. I can help you with information about your classes, assignments, schedule, and learning tips. What would you like to know?`;
+        }
+        // Handle help request
+        else if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
+            response = "I can help you with:\n\n" +
+                "- Your class schedule and upcoming classes\n" +
+                "- Information about your enrolled courses\n" +
+                "- Updates on your assignments and due dates\n" +
+                "- Your learning progress in each course\n" +
+                "- Tips to improve your language learning\n" +
+                "- Contact information for your teachers\n\n" +
+                "What would you like to know about?";
+        }
+        // Default fallback response
+        else {
+            response = "I'm not sure I understand your question. I can help with your schedule, assignments, courses, progress, or provide learning tips. Could you please rephrase your question?";
+        }
+        
         // Save user message
         await ChatbotMessage.create({
             user: userId,
             message,
             isUserMessage: true,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            category,
+            relatedIds: relatedIds.length > 0 ? relatedIds : undefined,
+            relatedModel: relatedIds.length > 0 ? relatedModel : 'None'
         });
-        
-        // Process the message and generate a response
-        let response = '';
-        
-        // Simple keyword-based response generator
-        const lowerMessage = message.toLowerCase();
-        
-        if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-            response = `Hello ${user.fullName}! How can I help you today?`;
-        } else if (lowerMessage.includes('class') && lowerMessage.includes('schedule')) {
-            // Get user's class schedule
-            if (user.role === 'student' && user.studentInfo && user.studentInfo.courses.length > 0) {
-                const courses = await Course.find({
-                    _id: { $in: user.studentInfo.courses }
-                }).select('name schedule');
-                
-                response = 'Here is your class schedule:\n\n';
-                courses.forEach(course => {
-                    response += `${course.name}:\n`;
-                    course.schedule.forEach(sch => {
-                        response += `- ${sch.day.charAt(0).toUpperCase() + sch.day.slice(1)}: ${sch.startTime} - ${sch.endTime}, Room: ${sch.room}\n`;
-                    });
-                    response += '\n';
-                });
-            } else if (user.role === 'teacher' && user.teacherInfo && user.teacherInfo.classes.length > 0) {
-                const courses = await Course.find({
-                    _id: { $in: user.teacherInfo.classes }
-                }).select('name schedule');
-                
-                response = 'Here is your teaching schedule:\n\n';
-                courses.forEach(course => {
-                    response += `${course.name}:\n`;
-                    course.schedule.forEach(sch => {
-                        response += `- ${sch.day.charAt(0).toUpperCase() + sch.day.slice(1)}: ${sch.startTime} - ${sch.endTime}, Room: ${sch.room}\n`;
-                    });
-                    response += '\n';
-                });
-            } else {
-                response = "I don't have any schedule information for you at the moment.";
-            }
-        } else if (lowerMessage.includes('assignment') || lowerMessage.includes('homework')) {
-            if (user.role === 'student') {
-                response = "To check your assignments, please go to the 'Assignments' section in your student dashboard.";
-            } else if (user.role === 'teacher') {
-                response = "To manage assignments, please go to the 'Assignments' section in your teacher dashboard.";
-            } else {
-                response = "I can't provide assignment information for your user role.";
-            }
-        } else if (lowerMessage.includes('course') || lowerMessage.includes('class')) {
-            if (user.role === 'student' && user.studentInfo && user.studentInfo.courses.length > 0) {
-                const courses = await Course.find({
-                    _id: { $in: user.studentInfo.courses }
-                }).select('name level teacher')
-                .populate('teacher', 'fullName');
-                
-                response = 'You are currently enrolled in the following courses:\n\n';
-                courses.forEach(course => {
-                    response += `- ${course.name} (${course.level}), Teacher: ${course.teacher.fullName}\n`;
-                });
-            } else if (user.role === 'teacher' && user.teacherInfo && user.teacherInfo.classes.length > 0) {
-                const courses = await Course.find({
-                    _id: { $in: user.teacherInfo.classes }
-                }).select('name level');
-                
-                response = 'You are currently teaching the following courses:\n\n';
-                courses.forEach(course => {
-                    response += `- ${course.name} (${course.level})\n`;
-                });
-            } else {
-                response = "I don't have any course information for you at the moment.";
-            }
-        } else if (lowerMessage.includes('help')) {
-            response = `I can help you with information about:
-- Your class schedule
-- Your courses
-- Assignments
-- General questions about the English Learning Center
-
-What would you like to know about?`;
-        } else {
-            response = "I'm sorry, I don't understand your question. Can you please rephrase or ask something else?";
-        }
         
         // Save bot response
         const botMessage = await ChatbotMessage.create({
             user: userId,
             message: response,
             isUserMessage: false,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            category,
+            relatedIds: relatedIds.length > 0 ? relatedIds : undefined,
+            relatedModel: relatedIds.length > 0 ? relatedModel : 'None'
         });
         
         res.status(200).json({
@@ -194,6 +459,22 @@ exports.clearChatHistory = async (req, res) => {
     try {
         const { userId } = req.params;
         
+        // Verify it's a student user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        if (user.role !== 'student') {
+            return res.status(403).json({
+                success: false,
+                message: 'This chatbot is only for student users'
+            });
+        }
+        
         await ChatbotMessage.deleteMany({ user: userId });
         
         res.status(200).json({
@@ -210,75 +491,7 @@ exports.clearChatHistory = async (req, res) => {
     }
 };
 
-// Train chatbot with new responses (for admin use)
-exports.trainChatbot = async (req, res) => {
-    try {
-        const { keywords, response } = req.body;
-        
-        // In a real implementation, this would add entries to a knowledge base
-        // that the chatbot uses to generate responses. Here, we'll simulate this
-        // with a success response.
-        
-        // Normally, you would save this to a ChatbotTraining model or similar
-        res.status(200).json({
-            success: true,
-            message: 'Chatbot trained successfully',
-            data: { keywords, response }
-        });
-    } catch (error) {
-        console.error('Error training chatbot:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server Error',
-            error: error.message
-        });
-    }
-};
-
-// Get FAQ responses
-exports.getFAQResponses = async (req, res) => {
-    try {
-        // In a real implementation, this would fetch from a database
-        // Here, we'll return some hardcoded FAQs
-        const faqs = [
-            {
-                question: "What are the center's operating hours?",
-                answer: "Our center is open Monday to Friday from 8:00 AM to 8:00 PM, and Saturday from 9:00 AM to 5:00 PM. We are closed on Sundays and public holidays."
-            },
-            {
-                question: "How do I enroll in a course?",
-                answer: "To enroll in a course, please visit our receptionist desk or log in to your student account and go to the 'Courses' section."
-            },
-            {
-                question: "How can I check my progress?",
-                answer: "Students can check their progress by logging into their account and visiting the 'Progress' section in the dashboard."
-            },
-            {
-                question: "What payment methods do you accept?",
-                answer: "We accept cash, credit/debit cards, and bank transfers. For installment plans, please speak with our reception staff."
-            },
-            {
-                question: "How do I reset my password?",
-                answer: "You can reset your password by clicking on the 'Forgot Password' link on the login page."
-            }
-        ];
-        
-        res.status(200).json({
-            success: true,
-            count: faqs.length,
-            data: faqs
-        });
-    } catch (error) {
-        console.error('Error fetching FAQs:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server Error',
-            error: error.message
-        });
-    }
-};
-
-// Get chatbot statistics
+// Get chatbot statistics (for admin/teacher use)
 exports.getChatbotStats = async (req, res) => {
     try {
         // Total number of messages
@@ -290,7 +503,7 @@ exports.getChatbotStats = async (req, res) => {
         // Bot messages
         const botMessages = await ChatbotMessage.countDocuments({ isUserMessage: false });
         
-        // Number of unique users who have used the chatbot
+        // Number of unique students who have used the chatbot
         const uniqueUsers = await ChatbotMessage.distinct('user');
         
         // Most recent conversations (last 24 hours)
@@ -301,6 +514,13 @@ exports.getChatbotStats = async (req, res) => {
             timestamp: { $gte: recentDate }
         });
         
+        // Category statistics
+        const categoryStats = await ChatbotMessage.aggregate([
+            { $match: { isUserMessage: true } },
+            { $group: { _id: '$category', count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+        
         res.status(200).json({
             success: true,
             data: {
@@ -308,7 +528,8 @@ exports.getChatbotStats = async (req, res) => {
                 userMessages,
                 botMessages,
                 uniqueUsers: uniqueUsers.length,
-                recentConversations
+                recentConversations,
+                categoryBreakdown: categoryStats
             }
         });
     } catch (error) {
