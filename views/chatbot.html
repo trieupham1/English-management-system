@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chatbot Support - English Learning Center</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chatbot.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -167,8 +168,6 @@
                         case 'manager':
                             dashboardLink.href = 'admin.html';
                             break;
-                        default:
-                            dashboardLink.href = 'index.html';
                     }
                 }
             }
@@ -347,72 +346,5 @@
             loadFAQs();
         });
     </script>
-    
-    <style>
-        .faq-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .faq-item:last-child {
-            border-bottom: none;
-        }
-        
-        .faq-item h4 {
-            margin-bottom: 5px;
-            color: var(--primary-color);
-            cursor: pointer;
-        }
-        
-        .faq-item p {
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
-        .quick-links {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-        }
-        
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            background: #606060;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 1px;
-            animation: typing 1s infinite ease-in-out;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.1s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.2s;
-        }
-        
-        @keyframes typing {
-            0% {
-                transform: translateY(0px);
-                background: #606060;
-            }
-            28% {
-                transform: translateY(-7px);
-                background: #1e40af;
-            }
-            44% {
-                transform: translateY(0px);
-                background: #606060;
-            }
-        }
-    </style>
 </body>
 </html>
