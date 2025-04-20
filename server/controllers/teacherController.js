@@ -224,7 +224,213 @@ exports.getTeacherSchedule = async (req, res) => {
         });
     }
 };
+// Get assignments to grade
+exports.getAssignmentsToGrade = async (req, res) => {
+    try {
+        const teacherId = req.params.id;
+        
+        // Find courses taught by this teacher
+        const teacher = await Teacher.findById(teacherId).select('classes');
+        
+        if (!teacher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Teacher not found'
+            });
+        }
+        
+        // Find assignments from courses taught by this teacher
+        const assignments = await Assignment.find({
+            course: { $in: teacher.classes },
+            status: 'submitted'
+        }).populate({
+            path: 'course',
+            select: 'name'
+        }).populate({
+            path: 'student',
+            select: 'studentInfo.studentId name'
+        });
+        
+        res.status(200).json({
+            success: true,
+            count: assignments.length,
+            data: assignments
+        });
+    } catch (error) {
+        console.error('Error fetching assignments to grade:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
 
-// Additional methods from the original controller can be similarly adapted
+// Add lesson material
+exports.addLessonMaterial = async (req, res) => {
+    try {
+        const { courseId, lessonId } = req.params;
+        const teacherId = req.params.id;
+        
+        // Check if teacher exists and teaches this course
+        const teacher = await Teacher.findById(teacherId);
+        if (!teacher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Teacher not found'
+            });
+        }
+        
+        // Check if teacher is assigned to this course
+        if (!teacher.classes.includes(courseId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to add materials to this course'
+            });
+        }
+        
+        // Check if lesson exists and belongs to the course
+        const lesson = await Lesson.findOne({
+            _id: lessonId,
+            course: courseId
+        });
+        
+        if (!lesson) {
+            return res.status(404).json({
+                success: false,
+                message: 'Lesson not found or does not belong to this course'
+            });
+        }
+        
+        // Create a new lesson material
+        let materialData = {
+            title: req.body.title,
+            description: req.body.description,
+            type: req.body.type,
+            lesson: lessonId,
+            course: courseId,
+            addedBy: teacherId
+        };
+        
+        // Add file path if file was uploaded
+        if (req.file) {
+            materialData.filePath = req.file.path;
+            materialData.fileName = req.file.originalname;
+        } else if (req.body.link) {
+            materialData.link = req.body.link;
+        }
+        
+        const material = await LessonMaterial.create(materialData);
+        
+        // Update the lesson with the new material
+        lesson.materials.push(material._id);
+        await lesson.save();
+        
+        res.status(201).json({
+            success: true,
+            data: material
+        });
+    } catch (error) {
+        console.error('Error adding lesson material:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Update teacher's schedule
+exports.updateSchedule = async (req, res) => {
+    try {
+        const teacherId = req.params.id;
+        
+        // Check if teacher exists
+        const teacher = await Teacher.findById(teacherId);
+        if (!teacher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Teacher not found'
+            });
+        }
+        
+        // Validate that the user is authorized (should be the teacher themselves or an admin)
+        if (req.user.id !== teacherId && req.user.role !== 'manager') {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to update this teacher\'s schedule'
+            });
+        }
+        
+        // Update the schedule
+        teacher.schedule = req.body.schedule;
+        await teacher.save();
+        
+        res.status(200).json({
+            success: true,
+            data: teacher.schedule
+        });
+    } catch (error) {
+        console.error('Error updating teacher schedule:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Get students by course
+exports.getStudentsByCourse = async (req, res) => {
+    try {
+        const { id, courseId } = req.params;
+        
+        // Check if teacher exists and teaches this course
+        const teacher = await Teacher.findById(id);
+        if (!teacher) {
+            return res.status(404).json({
+                success: false,
+                message: 'Teacher not found'
+            });
+        }
+        
+        // Check if teacher is assigned to this course
+        if (!teacher.classes.includes(courseId)) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to view students for this course'
+            });
+        }
+        
+        // Get the course with enrolled students
+        const course = await Course.findById(courseId)
+            .populate({
+                path: 'students',
+                select: 'name email studentInfo'
+            });
+        
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            count: course.students.length,
+            data: course.students
+        });
+    } catch (error) {
+        console.error('Error fetching students by course:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+
 
 module.exports = exports;

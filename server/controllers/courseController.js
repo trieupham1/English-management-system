@@ -1,5 +1,6 @@
 const Course = require('../models/Course');
-const User = require('../models/User');
+const Teacher = require('../models/Teacher');
+const Student = require('../models/Student');
 const mongoose = require('mongoose');
 
 // Get all courses
@@ -59,9 +60,9 @@ exports.getCourse = async (req, res) => {
 // Create a new course
 exports.createCourse = async (req, res) => {
     try {
-        // Check if teacher exists and is a teacher
-        const teacher = await User.findById(req.body.teacher);
-        if (!teacher || teacher.role !== 'teacher') {
+        // Check if teacher exists 
+        const teacher = await Teacher.findById(req.body.teacher);
+        if (!teacher) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid teacher'
@@ -71,7 +72,7 @@ exports.createCourse = async (req, res) => {
         const course = await Course.create(req.body);
         
         // Add course to teacher's classes
-        teacher.teacherInfo.classes.push(course._id);
+        teacher.classes.push(course._id);
         await teacher.save();
         
         res.status(201).json({
@@ -103,18 +104,18 @@ exports.updateCourse = async (req, res) => {
         // If teacher is being changed, update teacher references
         if (req.body.teacher && req.body.teacher !== course.teacher.toString()) {
             // Remove course from old teacher's classes
-            const oldTeacher = await User.findById(course.teacher);
+            const oldTeacher = await Teacher.findById(course.teacher);
             if (oldTeacher) {
-                oldTeacher.teacherInfo.classes = oldTeacher.teacherInfo.classes.filter(
+                oldTeacher.classes = oldTeacher.classes.filter(
                     id => id.toString() !== course._id.toString()
                 );
                 await oldTeacher.save();
             }
             
             // Add course to new teacher's classes
-            const newTeacher = await User.findById(req.body.teacher);
-            if (newTeacher && newTeacher.role === 'teacher') {
-                newTeacher.teacherInfo.classes.push(course._id);
+            const newTeacher = await Teacher.findById(req.body.teacher);
+            if (newTeacher) {
+                newTeacher.classes.push(course._id);
                 await newTeacher.save();
             } else {
                 return res.status(400).json({
@@ -157,9 +158,9 @@ exports.deleteCourse = async (req, res) => {
         }
         
         // Remove course from teacher's classes
-        const teacher = await User.findById(course.teacher);
+        const teacher = await Teacher.findById(course.teacher);
         if (teacher) {
-            teacher.teacherInfo.classes = teacher.teacherInfo.classes.filter(
+            teacher.classes = teacher.classes.filter(
                 id => id.toString() !== course._id.toString()
             );
             await teacher.save();
@@ -167,7 +168,7 @@ exports.deleteCourse = async (req, res) => {
         
         // Remove course from all enrolled students
         for (const studentObj of course.students) {
-            const student = await User.findById(studentObj.student);
+            const student = await Student.findById(studentObj.student);
             if (student) {
                 student.studentInfo.courses = student.studentInfo.courses.filter(
                     id => id.toString() !== course._id.toString()
@@ -213,9 +214,9 @@ exports.enrollStudent = async (req, res) => {
             });
         }
         
-        // Check if student exists and is a student
-        const student = await User.findById(studentId);
-        if (!student || student.role !== 'student') {
+        // Check if student exists
+        const student = await Student.findById(studentId);
+        if (!student) {
             return res.status(400).json({
                 success: false,
                 message: 'Invalid student'
@@ -295,7 +296,7 @@ exports.removeStudent = async (req, res) => {
         await course.save();
         
         // Remove course from student's courses
-        const student = await User.findById(studentId);
+        const student = await Student.findById(studentId);
         if (student) {
             student.studentInfo.courses = student.studentInfo.courses.filter(
                 id => id.toString() !== course._id.toString()

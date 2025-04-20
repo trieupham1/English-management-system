@@ -1,7 +1,6 @@
 const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Assignment = require('../models/Assignment');
-const mongoose = require('mongoose');
 
 // Get all students
 exports.getAllStudents = async (req, res) => {
@@ -25,8 +24,8 @@ exports.getAllStudents = async (req, res) => {
     }
 };
 
-// Get a single student by ID
-exports.getStudentById = async (req, res) => {
+// Get a single student
+exports.getStudent = async (req, res) => {
     try {
         const student = await Student.findById(req.params.id)
             .select('-password')
@@ -56,14 +55,14 @@ exports.getStudentById = async (req, res) => {
 // Create a new student
 exports.createStudent = async (req, res) => {
     try {
-        // Check if student with this email or username already exists
+        // Check if student with this email already exists
         const existingStudent = await Student.findOne({ 
             $or: [
                 { email: req.body.email },
                 { username: req.body.username }
             ]
         });
-
+        
         if (existingStudent) {
             return res.status(400).json({
                 success: false,
@@ -71,59 +70,48 @@ exports.createStudent = async (req, res) => {
             });
         }
         
-        // Generate unique student ID
+        // Generate student ID
         const studentId = 'ST' + Math.floor(10000 + Math.random() * 90000);
         
-        // Create student with default status as pending
-        const studentData = {
+        // Create student
+        const student = new Student({
             ...req.body,
             studentInfo: {
                 ...req.body.studentInfo,
-                studentId: studentId,
+                studentId,
                 status: 'pending',
                 enrollmentDate: new Date()
             }
-        };
-
-        const student = await Student.create(studentData);
+        });
+        
+        await student.save();
         
         res.status(201).json({
             success: true,
-            message: 'Student registered successfully',
-            data: {
-                student: student.toJSON(),
-                studentId: studentId
-            }
+            message: 'Student created successfully',
+            data: student
         });
     } catch (error) {
         console.error('Error creating student:', error);
         res.status(500).json({
             success: false,
-            message: 'Error registering student',
+            message: 'Server Error',
             error: error.message
         });
     }
 };
 
-// Update student profile
+// Update a student
 exports.updateStudent = async (req, res) => {
     try {
-        const { studentInfo, ...updateData } = req.body;
-        
         const student = await Student.findByIdAndUpdate(
             req.params.id,
-            {
-                ...updateData,
-                studentInfo: {
-                    ...studentInfo,
-                    updatedAt: new Date()
-                }
-            },
+            req.body,
             { 
                 new: true, 
                 runValidators: true 
             }
-        ).select('-password');
+        );
         
         if (!student) {
             return res.status(404).json({
@@ -134,20 +122,20 @@ exports.updateStudent = async (req, res) => {
         
         res.status(200).json({
             success: true,
-            message: 'Student profile updated successfully',
+            message: 'Student updated successfully',
             data: student
         });
     } catch (error) {
         console.error('Error updating student:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating student profile',
+            message: 'Server Error',
             error: error.message
         });
     }
 };
 
-// Delete student account
+// Delete a student
 exports.deleteStudent = async (req, res) => {
     try {
         const student = await Student.findByIdAndDelete(req.params.id);
@@ -159,24 +147,21 @@ exports.deleteStudent = async (req, res) => {
             });
         }
         
-        // Remove student from all courses
+        // Remove student from courses
         await Course.updateMany(
-            { 'students.student': student._id },
-            { $pull: { students: { student: student._id } } }
+            { 'students.student': req.params.id },
+            { $pull: { students: { student: req.params.id } } }
         );
-        
-        // Remove student's assignments
-        await Assignment.deleteMany({ 'submissions.student': student._id });
         
         res.status(200).json({
             success: true,
-            message: 'Student account deleted successfully'
+            message: 'Student deleted successfully'
         });
     } catch (error) {
         console.error('Error deleting student:', error);
         res.status(500).json({
             success: false,
-            message: 'Error deleting student account',
+            message: 'Server Error',
             error: error.message
         });
     }
@@ -188,7 +173,7 @@ exports.getStudentCourses = async (req, res) => {
         const student = await Student.findById(req.params.id)
             .populate({
                 path: 'studentInfo.courses',
-                select: 'name description level category startDate endDate teacher'
+                select: 'name description level category'
             });
         
         if (!student) {
@@ -207,7 +192,7 @@ exports.getStudentCourses = async (req, res) => {
         console.error('Error fetching student courses:', error);
         res.status(500).json({
             success: false,
-            message: 'Error retrieving student courses',
+            message: 'Server Error',
             error: error.message
         });
     }
@@ -225,36 +210,21 @@ exports.getStudentAssignments = async (req, res) => {
             });
         }
         
+        // Get assignments for student's courses
         const assignments = await Assignment.find({
-            'course': { $in: student.studentInfo.courses }
+            course: { $in: student.studentInfo.courses }
         }).populate('course', 'name');
-        
-        // Annotate assignments with submission status
-        const assignmentsWithStatus = assignments.map(assignment => {
-            const submission = assignment.submissions.find(
-                sub => sub.student.toString() === student._id.toString()
-            );
-            
-            return {
-                _id: assignment._id,
-                title: assignment.title,
-                course: assignment.course,
-                dueDate: assignment.dueDate,
-                status: submission ? 'Submitted' : 'Not Submitted',
-                grade: submission ? submission.grade : null
-            };
-        });
         
         res.status(200).json({
             success: true,
-            count: assignmentsWithStatus.length,
-            data: assignmentsWithStatus
+            count: assignments.length,
+            data: assignments
         });
     } catch (error) {
         console.error('Error fetching student assignments:', error);
         res.status(500).json({
             success: false,
-            message: 'Error retrieving student assignments',
+            message: 'Server Error',
             error: error.message
         });
     }
@@ -307,7 +277,106 @@ exports.getStudentProgress = async (req, res) => {
         console.error('Error fetching student progress:', error);
         res.status(500).json({
             success: false,
-            message: 'Error retrieving student progress',
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Update student attendance
+exports.updateAttendance = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const { courseId, date, status } = req.body;
+        
+        const student = await Student.findById(studentId);
+        
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        // Find the course
+        const course = await Course.findById(courseId);
+        
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found'
+            });
+        }
+        
+        // Find student's enrollment in the course
+        const studentEnrollment = course.students.find(
+            s => s.student.toString() === studentId
+        );
+        
+        if (!studentEnrollment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not enrolled in this course'
+            });
+        }
+        
+        // Update or add attendance record
+        const attendanceIndex = studentEnrollment.attendance.findIndex(
+            a => new Date(a.date).toDateString() === new Date(date).toDateString()
+        );
+        
+        if (attendanceIndex !== -1) {
+            // Update existing record
+            studentEnrollment.attendance[attendanceIndex].status = status;
+        } else {
+            // Add new record
+            studentEnrollment.attendance.push({ date, status });
+        }
+        
+        // Calculate attendance percentage
+        const totalClasses = studentEnrollment.attendance.length;
+        const presentClasses = studentEnrollment.attendance.filter(
+            a => a.status === 'present'
+        ).length;
+        
+        studentEnrollment.attendancePercentage = totalClasses > 0
+            ? Math.round((presentClasses / totalClasses) * 100)
+            : 0;
+        
+        await course.save();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Attendance updated successfully',
+            data: studentEnrollment
+        });
+    } catch (error) {
+        console.error('Error updating attendance:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Get pending student registrations
+exports.getPendingRegistrations = async (req, res) => {
+    try {
+        const pendingStudents = await Student.find({
+            'studentInfo.status': 'pending'
+        }).select('-password');
+        
+        res.status(200).json({
+            success: true,
+            count: pendingStudents.length,
+            data: pendingStudents
+        });
+    } catch (error) {
+        console.error('Error fetching pending registrations:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
             error: error.message
         });
     }
@@ -337,10 +406,8 @@ exports.approveRegistration = async (req, res) => {
         console.error('Error approving registration:', error);
         res.status(500).json({
             success: false,
-            message: 'Error approving student registration',
+            message: 'Server Error',
             error: error.message
         });
     }
 };
-
-module.exports = exports;

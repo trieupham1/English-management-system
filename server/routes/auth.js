@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 // Public routes (no authentication required)
 router.post('/register', authController.register);
@@ -14,5 +14,26 @@ router.post('/reset-password', authController.resetPassword);
 router.get('/current', protect, authController.getCurrentUser);
 router.post('/logout', protect, authController.logout);
 router.put('/change-password', protect, authController.changePassword);
+
+// Role-specific routes
+router.post('/student/register', 
+    authorize('manager', 'receptionist'), 
+    authController.registerStudent
+);
+
+router.post('/teacher/register', 
+    authorize('manager'), 
+    authController.registerTeacher
+);
+
+router.post('/receptionist/register', 
+    authorize('manager'), 
+    authController.registerReceptionist
+);
+
+router.post('/manager/register', 
+    authorize('manager'), 
+    authController.registerManager
+);
 
 module.exports = router;

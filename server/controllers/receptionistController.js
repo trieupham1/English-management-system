@@ -1,4 +1,4 @@
-const Receptionist = require('../models/receptionist');
+const Receptionist = require('../models/Receptionist');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
 const jwt = require('jsonwebtoken');

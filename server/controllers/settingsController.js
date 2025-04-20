@@ -2,7 +2,7 @@ const Settings = require('../models/Settings');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/receptionist');
+const Receptionist = require('../models/Receptionist');
 const mongoose = require('mongoose');
 
 // Get all settings

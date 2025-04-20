@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/receptionist');
+const Receptionist = require('../models/Receptionist');
 
 // Utility function to get model based on role
 const getUserModel = (role) => {
