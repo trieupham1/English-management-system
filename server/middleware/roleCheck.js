@@ -1,6 +1,19 @@
-// server/middleware/roleCheck.js
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
+const Manager = require('../models/Manager');
+const Receptionist = require('../models/receptionist');
+
+// Utility function to get model based on role
+const getUserModel = (role) => {
+    switch(role) {
+        case 'student': return Student;
+        case 'teacher': return Teacher;
+        case 'manager': return Manager;
+        case 'receptionist': return Receptionist;
+        default: throw new Error('Invalid role');
+    }
+};
 
 const roleCheck = async (req, res, next) => {
     let token;
@@ -16,7 +29,15 @@ const roleCheck = async (req, res, next) => {
     const route = req.path;
     
     // Allow access to login and static resources without a token
-    const publicRoutes = ['/login.html', '/api/auth/login', '/api/auth/register', '/css', '/js', '/images'];
+    const publicRoutes = [
+        '/login.html', 
+        '/api/auth/login', 
+        '/api/auth/register', 
+        '/css', 
+        '/js', 
+        '/images', 
+        '/register.html'
+    ];
     const isPublicRoute = publicRoutes.some(publicRoute => route.startsWith(publicRoute));
     
     if (isPublicRoute) {
@@ -35,32 +56,61 @@ const roleCheck = async (req, res, next) => {
             process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app'
         );
         
+        // Get the appropriate model based on role
+        const UserModel = getUserModel(decoded.role);
+        
         // Fetch user from database
-        const user = await User.findById(decoded.id);
+        const user = await UserModel.findById(decoded.id);
         if (!user) {
             return res.redirect('/login.html');
         }
         
-        // Set user in request
-        req.user = user;
+        // Set user in request with role
+        req.user = {
+            ...user.toJSON(),
+            role: decoded.role
+        };
         
         // Define route access based on roles
         const roleRouteAccess = {
-            student: ['/student.html', '/chatbot.html'],
-            teacher: ['/teacher.html', '/chatbot.html'],
-            receptionist: ['/receptionist.html', '/chatbot.html'],
-            manager: ['/admin.html', '/chatbot.html']
+            student: ['/student', '/student.html', '/chatbot.html', '/profile', '/courses'],
+            teacher: ['/teacher', '/teacher.html', '/chatbot.html', '/classes', '/assignments'],
+            receptionist: ['/receptionist', '/receptionist.html', '/chatbot.html', '/students', '/registrations'],
+            manager: ['/admin', '/admin.html', '/chatbot.html', '/dashboard', '/reports', '/settings']
         };
         
         // Check if user has access to the requested route
-        const userRole = user.role;
+        const userRole = decoded.role;
+        
+        // Additional account status check
+        switch(userRole) {
+            case 'student':
+                if (user.studentInfo.status !== 'active') {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Your account is not active. Please contact administration.'
+                    });
+                }
+                break;
+            case 'teacher':
+            case 'receptionist':
+            case 'manager':
+                if (!user.isActive) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Your account is currently inactive.'
+                    });
+                }
+                break;
+        }
         
         // Check role-specific access
         const allowedRoutes = roleRouteAccess[userRole] || [];
         const hasAccess = allowedRoutes.some(allowedRoute => {
             // Check for exact match or if the path starts with the allowed route
             return route === allowedRoute || 
-                  (allowedRoute.endsWith('.html') && route.startsWith(allowedRoute.replace('.html', '')));
+                   route.startsWith(allowedRoute) ||
+                   (allowedRoute.endsWith('.html') && route.startsWith(allowedRoute.replace('.html', '')));
         });
         
         if (hasAccess) {
@@ -76,24 +126,14 @@ const roleCheck = async (req, res, next) => {
         }
         
         // If no access, redirect to appropriate dashboard based on role
-        let redirectUrl;
-        switch (userRole) {
-            case 'student':
-                redirectUrl = '/student.html';
-                break;
-            case 'teacher':
-                redirectUrl = '/teacher.html';
-                break;
-            case 'receptionist':
-                redirectUrl = '/receptionist.html';
-                break;
-            case 'manager':
-                redirectUrl = '/admin.html';
-                break;
-            default:
-                redirectUrl = '/login.html';
-        }
+        const roleRedirects = {
+            student: '/student.html',
+            teacher: '/teacher.html',
+            receptionist: '/receptionist.html',
+            manager: '/admin.html'
+        };
         
+        const redirectUrl = roleRedirects[userRole] || '/login.html';
         return res.redirect(redirectUrl);
     } catch (error) {
         console.error('Role check error:', error);

@@ -1,6 +1,19 @@
-// server/controllers/authController.js
-const User = require('../models/User');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
+const Manager = require('../models/Manager');
+const Receptionist = require('../models/receptionist');
 const jwt = require('jsonwebtoken');
+
+// Utility function to get model based on role
+const getUserModel = (role) => {
+    switch(role) {
+        case 'student': return Student;
+        case 'teacher': return Teacher;
+        case 'manager': return Manager;
+        case 'receptionist': return Receptionist;
+        default: throw new Error('Invalid role');
+    }
+};
 
 // Register new user
 exports.register = async (req, res) => {
@@ -8,8 +21,13 @@ exports.register = async (req, res) => {
         console.log('Register attempt with:', req.body);
         const { username, password, fullName, email, phone, role } = req.body;
         
+        // Get appropriate model
+        const UserModel = getUserModel(role);
+        
         // Check if user already exists
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        const existingUser = await UserModel.findOne({ 
+            $or: [{ email }, { username }] 
+        });
         
         if (existingUser) {
             console.log('User already exists:', existingUser.username);
@@ -19,31 +37,72 @@ exports.register = async (req, res) => {
             });
         }
         
-        // Create new user
-        const user = new User({
-            username,
-            password,
-            fullName,
-            email,
-            phone,
-            role
-        });
-        
-        // Add additional fields based on role
-        if (role === 'student') {
-            const { dateOfBirth, currentLevel } = req.body;
-            user.studentInfo = {
-                dateOfBirth,
-                currentLevel,
-                studentId: 'ST' + Math.floor(10000 + Math.random() * 90000) // Generate random student ID
-            };
-        } else if (role === 'teacher') {
-            const { specialization, qualifications } = req.body;
-            user.teacherInfo = {
-                specialization,
-                qualifications,
-                teacherId: 'T' + Math.floor(10000 + Math.random() * 90000) // Generate random teacher ID
-            };
+        // Create new user with role-specific logic
+        let user;
+        switch(role) {
+            case 'student':
+                const { dateOfBirth, currentLevel } = req.body;
+                user = new UserModel({
+                    username,
+                    password,
+                    fullName,
+                    email,
+                    phone,
+                    studentInfo: {
+                        dateOfBirth,
+                        currentLevel,
+                        studentId: 'ST' + Math.floor(10000 + Math.random() * 90000),
+                        status: 'pending'
+                    }
+                });
+                break;
+            
+            case 'teacher':
+                const { specialization, qualifications } = req.body;
+                user = new UserModel({
+                    username,
+                    password,
+                    fullName,
+                    email,
+                    phone,
+                    teacherInfo: {
+                        specialization,
+                        qualifications,
+                        teacherId: 'T' + Math.floor(10000 + Math.random() * 90000)
+                    }
+                });
+                break;
+            
+            case 'manager':
+                const { department } = req.body;
+                user = new UserModel({
+                    username,
+                    password,
+                    fullName,
+                    email,
+                    phone,
+                    department
+                });
+                break;
+            
+            case 'receptionist':
+                const { employeeId, shift } = req.body;
+                user = new UserModel({
+                    username,
+                    password,
+                    fullName,
+                    email,
+                    phone,
+                    employeeId,
+                    shift
+                });
+                break;
+            
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user role'
+                });
         }
         
         await user.save();
@@ -54,7 +113,7 @@ exports.register = async (req, res) => {
         
         // Generate token
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            { id: user._id, role: role },
             process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app',
             { expiresIn: '1d' }
         );
@@ -74,6 +133,8 @@ exports.register = async (req, res) => {
         });
     }
 };
+
+// Login user
 exports.login = async (req, res) => {
     try {
         console.log('Detailed Login Attempt:', {
@@ -84,13 +145,15 @@ exports.login = async (req, res) => {
         
         const { username, password, role } = req.body;
         
-        // Find user by username with more detailed logging
-        const user = await User.findOne({ username });
+        // Get appropriate model
+        const UserModel = getUserModel(role);
+        
+        // Find user by username
+        const user = await UserModel.findOne({ username });
         
         console.log('User Found:', user ? {
             id: user._id,
             username: user.username,
-            role: user.role,
             storedPasswordHash: user.password
         } : 'No user found');
         
@@ -102,23 +165,13 @@ exports.login = async (req, res) => {
             });
         }
         
-        // Check if role matches (if specified)
-        if (role && user.role !== role) {
-            console.log(`Role mismatch. User role: ${user.role}, Requested role: ${role}`);
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid role for this user'
-            });
-        }
-        
         // More detailed password checking
         console.log('Attempting password comparison');
         const isMatch = await user.comparePassword(password);
         
         console.log('Password Comparison Result:', {
             username: user.username,
-            isMatch,
-            expectedRole: role
+            isMatch
         });
         
         if (!isMatch) {
@@ -130,10 +183,14 @@ exports.login = async (req, res) => {
         
         // Generate token
         const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
+            { id: user._id, role: role },
+            process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app',
             { expiresIn: '1d' }
         );
+        
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
         
         // Return user data and token
         res.status(200).json({
@@ -159,10 +216,14 @@ exports.login = async (req, res) => {
         });
     }
 };
+
 // Get current user
 exports.getCurrentUser = async (req, res) => {
     try {
-        const user = await User.findById(req.user.id)
+        const { role } = req.user;
+        const UserModel = getUserModel(role);
+        
+        const user = await UserModel.findById(req.user.id)
             .select('-password');
             
         if (!user) {
@@ -199,9 +260,12 @@ exports.logout = (req, res) => {
 exports.changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
+        const { role } = req.user;
+        
+        const UserModel = getUserModel(role);
         
         // Find user
-        const user = await User.findById(req.user.id);
+        const user = await UserModel.findById(req.user.id);
         
         if (!user) {
             return res.status(404).json({
@@ -242,10 +306,13 @@ exports.changePassword = async (req, res) => {
 // Forgot password - generates reset token
 exports.forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, role } = req.body;
+        
+        // Get appropriate model
+        const UserModel = getUserModel(role);
         
         // Find user by email
-        const user = await User.findOne({ email });
+        const user = await UserModel.findOne({ email });
         
         if (!user) {
             return res.status(404).json({
@@ -256,7 +323,7 @@ exports.forgotPassword = async (req, res) => {
         
         // Generate reset token
         const resetToken = jwt.sign(
-            { id: user._id },
+            { id: user._id, role },
             process.env.JWT_RESET_SECRET || 'reset_password_secret_key_for_english_center',
             { expiresIn: '15m' }
         );
@@ -291,8 +358,11 @@ exports.resetPassword = async (req, res) => {
             process.env.JWT_RESET_SECRET || 'reset_password_secret_key_for_english_center'
         );
         
+        // Get appropriate model
+        const UserModel = getUserModel(decoded.role);
+        
         // Find user
-        const user = await User.findById(decoded.id);
+        const user = await UserModel.findById(decoded.id);
         
         if (!user) {
             return res.status(404).json({

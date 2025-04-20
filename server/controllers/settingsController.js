@@ -1,6 +1,8 @@
-// server/controllers/settingsController.js
 const Settings = require('../models/Settings');
-const User = require('../models/User');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
+const Manager = require('../models/Manager');
+const Receptionist = require('../models/receptionist');
 const mongoose = require('mongoose');
 
 // Get all settings
@@ -92,20 +94,18 @@ exports.updateSettings = async (req, res) => {
 exports.getSystemStats = async (req, res) => {
     try {
         // Get total number of students
-        const totalStudents = await User.countDocuments({ role: 'student' });
+        const totalStudents = await Student.countDocuments();
         
         // Get total number of teachers
-        const totalTeachers = await User.countDocuments({ role: 'teacher' });
+        const totalTeachers = await Teacher.countDocuments();
         
         // Get total number of active students
-        const activeStudents = await User.countDocuments({
-            role: 'student',
+        const activeStudents = await Student.countDocuments({
             'studentInfo.status': 'active'
         });
         
         // Get total number of pending students
-        const pendingStudents = await User.countDocuments({
-            role: 'student',
+        const pendingStudents = await Student.countDocuments({
             'studentInfo.status': 'pending'
         });
         
@@ -113,16 +113,21 @@ exports.getSystemStats = async (req, res) => {
         const lastMonth = new Date();
         lastMonth.setMonth(lastMonth.getMonth() - 1);
         
-        const newStudents = await User.countDocuments({
-            role: 'student',
+        const newStudents = await Student.countDocuments({
             createdAt: { $gte: lastMonth }
         });
+        
+        // Get number of managers and receptionists
+        const totalManagers = await Manager.countDocuments();
+        const totalReceptionists = await Receptionist.countDocuments();
         
         res.status(200).json({
             success: true,
             data: {
                 totalStudents,
                 totalTeachers,
+                totalManagers,
+                totalReceptionists,
                 activeStudents,
                 pendingStudents,
                 newStudents
@@ -138,13 +143,35 @@ exports.getSystemStats = async (req, res) => {
     }
 };
 
-// Update user settings
+// Update user settings (now with separate models)
 exports.updateUserSettings = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const { userId, role } = req.params;
         const { notificationPreferences, theme, language } = req.body;
         
-        const user = await User.findById(userId);
+        // Select the appropriate model based on role
+        let UserModel;
+        switch(role) {
+            case 'student':
+                UserModel = Student;
+                break;
+            case 'teacher':
+                UserModel = Teacher;
+                break;
+            case 'manager':
+                UserModel = Manager;
+                break;
+            case 'receptionist':
+                UserModel = Receptionist;
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user role'
+                });
+        }
+        
+        const user = await UserModel.findById(userId);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -189,9 +216,31 @@ exports.updateUserSettings = async (req, res) => {
 // Get user settings
 exports.getUserSettings = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const { userId, role } = req.params;
         
-        const user = await User.findById(userId).select('settings');
+        // Select the appropriate model based on role
+        let UserModel;
+        switch(role) {
+            case 'student':
+                UserModel = Student;
+                break;
+            case 'teacher':
+                UserModel = Teacher;
+                break;
+            case 'manager':
+                UserModel = Manager;
+                break;
+            case 'receptionist':
+                UserModel = Receptionist;
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid user role'
+                });
+        }
+        
+        const user = await UserModel.findById(userId).select('settings');
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -216,8 +265,13 @@ exports.getUserSettings = async (req, res) => {
 // Backup system data (admin only)
 exports.backupData = async (req, res) => {
     try {
-        // In a real implementation, this would create a database backup
-        // Here, we'll just simulate a successful backup
+        // In a real implementation, this would create a comprehensive database backup
+        const backupData = {
+            students: await Student.countDocuments(),
+            teachers: await Teacher.countDocuments(),
+            managers: await Manager.countDocuments(),
+            receptionists: await Receptionist.countDocuments()
+        };
         
         res.status(200).json({
             success: true,
@@ -225,7 +279,8 @@ exports.backupData = async (req, res) => {
             data: {
                 backupDate: new Date(),
                 backupId: mongoose.Types.ObjectId(),
-                backupSize: '10.5 MB'
+                backupSize: '10.5 MB',
+                collections: backupData
             }
         });
     } catch (error) {

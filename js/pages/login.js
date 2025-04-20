@@ -1,5 +1,3 @@
-// js/pages/login.js
-
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Login page script loaded');
     
@@ -12,9 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             console.log('Login form submitted');
             
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
+            
+            // Input validation
+            if (!username || !password || !role) {
+                showLoginError('Please fill in all fields');
+                return;
+            }
             
             // Logging for debugging
             console.log('Login attempt:', { username, role });
@@ -36,6 +40,12 @@ function login(username, password, role) {
     const originalButtonText = loginButton.textContent;
     loginButton.textContent = 'Logging in...';
     loginButton.disabled = true;
+    
+    // Clear previous error messages
+    const errorElement = document.getElementById('login-error');
+    if (errorElement) {
+        errorElement.textContent = '';
+    }
     
     // Make API request
     fetch('/api/auth/login', {
@@ -62,6 +72,7 @@ function login(username, password, role) {
             // Store auth data in localStorage
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
+            localStorage.setItem('userRole', data.data.user.role);
             
             // Redirect based on user role
             redirectByRole(data.data.user.role);
@@ -87,21 +98,19 @@ function login(username, password, role) {
 function redirectByRole(role) {
     console.log('Redirecting user with role:', role);
     
-    switch(role) {
-        case 'student':
-            window.location.href = '/student';
-            break;
-        case 'receptionist':
-            window.location.href = '/receptionist';
-            break;
-        case 'teacher':
-            window.location.href = '/teacher';
-            break;
-        case 'manager':
-            window.location.href = '/admin';
-            break;
-        default:
-            showLoginError('Invalid user role');
+    const roleRedirects = {
+        'student': '/student',
+        'receptionist': '/receptionist',
+        'teacher': '/teacher',
+        'manager': '/admin'
+    };
+    
+    const redirectUrl = roleRedirects[role];
+    
+    if (redirectUrl) {
+        window.location.href = redirectUrl;
+    } else {
+        showLoginError('Invalid user role');
     }
 }
 
