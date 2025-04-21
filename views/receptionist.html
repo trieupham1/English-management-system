@@ -603,20 +603,9 @@
             </section>
         </div>
     </div>
-    
-    <script src="js/script.js"></script>
-    <script src="js/components/common.js"></script>
-    <script src="js/pages/receptionist.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof ELC !== 'undefined' && ELC.isAuthenticated()) {
-                ELC.initUserProfile();
-            } else {
-                console.log('User not authenticated or ELC not defined');
-            }
-            
-            // Tab switching functionality - this is now handled in receptionist.js
-        });
-    </script>
+ <!-- At the bottom of your receptionist.html file -->
+<script src="js/pages/script.js"></script>  <!-- script.js is in the pages folder -->
+<script src="js/components/common.js"></script>  <!-- common.js is in the components folder -->
+<script src="js/pages/receptionist.js"></script>  <!-- receptionist.js is in the pages folder -->
 </body>
 </html>

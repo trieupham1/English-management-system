@@ -20,6 +20,7 @@ const chatbotRoutes = require('./server/routes/chatbot');
 const settingsRoutes = require('./server/routes/settings');
 const studentRoutes = require('./server/routes/students');
 const teacherRoutes = require('./server/routes/teachers');
+const receptionistRoutes = require('./server/routes/receptionist');
 
 // Initialize Express app
 const app = express();
@@ -60,6 +61,8 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/receptionist', receptionistRoutes);
+
 
 // Route for the root path - redirect to login page
 app.get('/', (req, res) => {

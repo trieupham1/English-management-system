@@ -1,482 +1,394 @@
-/**
- * Main JavaScript file for the English Learning Center
- * This script handles page initialization and common functionality
- */
-
-// Initialize when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize common components if authenticated
-    if (ELC.isAuthenticated()) {
-        initializeAuthenticatedComponents();
-    } else {
-        // Handle login page if not authenticated
-        initializeLoginPage();
-    }
-    
-    // Page-specific initialization
-    initializeCurrentPage();
-});
-
-/**
- * Initialize components that should be available on all authenticated pages
- */
-function initializeAuthenticatedComponents() {
-    // Initialize sidebar toggle
-    ELC.initSidebar();
-    
-    // Initialize user profile in header
-    ELC.initUserProfile();
-    
-    // Initialize logout functionality
-    ELC.initLogout();
-    
-    // Initialize tab switching if present on page
-    ELC.initTabs();
-    
-    // Initialize notifications
-    initializeNotifications();
-}
-
-/**
- * Initialize login page functionality
- */
-function initializeLoginPage() {
-    const loginForm = document.getElementById('loginForm');
-    
-    if (!loginForm) return; // Not on login page
-    
-    // Handle login form submission
-    loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const role = document.getElementById('role').value;
-        
-        try {
-            // Call login API
-            const response = await ELC.apiRequest('/auth/login', 'POST', {
-                username,
-                password,
-                role
-            }, false); // No auth token needed for login
-            
-            if (response.success) {
-                // Store auth token and user data
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-                
-                // Redirect based on role
-                redirectBasedOnRole(response.data.user.role);
-            } else {
-                ELC.showNotification(response.message || 'Login failed', 'error');
-            }
-        } catch (error) {
-            ELC.showNotification('Login failed: ' + (error.message || 'Unknown error'), 'error');
-        }
-    });
-    
-    // Check for URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('error')) {
-        const errorMsg = urlParams.get('error') === 'session_expired'
-            ? 'Your session has expired. Please log in again.'
-            : 'An error occurred. Please log in again.';
-        
-        ELC.showNotification(errorMsg, 'warning');
-    }
-}
-
-/**
- * Redirect user based on their role
- * @param {string} role - The user's role
- */
-function redirectBasedOnRole(role) {
-    switch (role) {
-        case 'student':
-            window.location.href = 'student.html';
-            break;
-        case 'teacher':
-            window.location.href = 'teacher.html';
-            break;
-        case 'receptionist':
-            window.location.href = 'receptionist.html';
-            break;
-        case 'manager':
-            window.location.href = 'admin.html';
-            break;
-        default:
-            window.location.href = 'index.html';
-    }
-}
-
-/**
- * Initialize notifications system
- * This checks for new notifications periodically
- */
-function initializeNotifications() {
-    const notificationBadge = document.querySelector('.notification-badge');
-    const notificationIcon = document.querySelector('.notifications i');
-    
-    if (!notificationBadge || !notificationIcon) return;
-    
-    // Check for notifications every 30 seconds
-    checkNotifications();
-    setInterval(checkNotifications, 30000);
-    
-    // Toggle notifications panel when clicked
-    notificationIcon.addEventListener('click', toggleNotificationsPanel);
-}
-
-/**
- * Check for new notifications
- */
-async function checkNotifications() {
-    try {
-        const user = ELC.getCurrentUser();
-        if (!user) return;
-        
-        // Get notifications count from API
-        const response = await ELC.apiRequest(`/notifications/count/${user._id}`);
-        
-        const badge = document.querySelector('.notification-badge');
-        if (badge) {
-            const count = response.data.count || 0;
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-    } catch (error) {
-        console.error('Error checking notifications:', error);
-    }
-}
-
-/**
- * Toggle the notifications panel
- */
-function toggleNotificationsPanel() {
-    // Check if panel already exists
-    let panel = document.getElementById('notifications-panel');
-    
-    if (panel) {
-        // Toggle visibility
-        if (panel.style.display === 'none') {
-            panel.style.display = 'block';
-            loadNotifications(panel);
-        } else {
-            panel.style.display = 'none';
-        }
+    // Check if ELC is defined
+    if (typeof ELC === 'undefined') {
+        console.error('ELC is not defined. Make sure common.js is loaded properly.');
         return;
     }
     
-    // Create panel if it doesn't exist
-    panel = document.createElement('div');
-    panel.id = 'notifications-panel';
-    panel.className = 'notifications-panel';
-    panel.style.position = 'absolute';
-    panel.style.top = '60px';
-    panel.style.right = '20px';
-    panel.style.width = '300px';
-    panel.style.maxHeight = '400px';
-    panel.style.overflowY = 'auto';
-    panel.style.backgroundColor = 'white';
-    panel.style.border = '1px solid #ddd';
-    panel.style.borderRadius = '4px';
-    panel.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
-    panel.style.zIndex = '1000';
-    
-    // Add header
-    panel.innerHTML = `
-        <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 16px;">Notifications</h3>
-            <button id="mark-all-read" style="background: none; border: none; color: #1e40af; cursor: pointer; font-size: 14px;">Mark all as read</button>
-        </div>
-        <div id="notifications-list" style="padding: 10px;">
-            <p class="text-center">Loading notifications...</p>
-        </div>
-    `;
-    
-    // Add to page
-    document.body.appendChild(panel);
-    
-    // Load notifications
-    loadNotifications(panel);
-    
-    // Add event listener to mark all as read
-    document.getElementById('mark-all-read').addEventListener('click', markAllNotificationsAsRead);
-    
-    // Close panel when clicking outside
-    document.addEventListener('click', function(event) {
-        if (!panel.contains(event.target) && !document.querySelector('.notifications').contains(event.target)) {
-            panel.style.display = 'none';
-        }
-    });
-}
-
-/**
- * Load notifications into the panel
- * @param {HTMLElement} panel - The notifications panel element
- */
-async function loadNotifications(panel) {
-    const notificationsList = panel.querySelector('#notifications-list');
-    
-    try {
-        const user = ELC.getCurrentUser();
-        if (!user) return;
-        
-        // Get notifications from API
-        const response = await ELC.apiRequest(`/notifications/${user._id}`);
-        const notifications = response.data || [];
-        
-        if (notifications.length === 0) {
-            notificationsList.innerHTML = '<p class="text-center">No notifications</p>';
-            return;
-        }
-        
-        // Display notifications
-        notificationsList.innerHTML = notifications.map(notification => `
-            <div class="notification-item" style="padding: 10px; border-bottom: 1px solid #eee; ${notification.read ? 'opacity: 0.7;' : 'background-color: #f0f9ff;'}">
-                <div style="display: flex; justify-content: space-between;">
-                    <strong>${notification.title}</strong>
-                    <small>${ELC.formatDate(notification.createdAt, true)}</small>
-                </div>
-                <p style="margin: 5px 0;">${notification.message}</p>
-                <div style="display: flex; justify-content: flex-end;">
-                    <button class="mark-read-btn" data-id="${notification._id}" style="background: none; border: none; color: #1e40af; cursor: pointer; font-size: 12px;">
-                        ${notification.read ? 'Mark as unread' : 'Mark as read'}
-                    </button>
-                </div>
-            </div>
-        `).join('');
-        
-        // Add event listeners to mark as read buttons
-        const markReadButtons = notificationsList.querySelectorAll('.mark-read-btn');
-        markReadButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                toggleNotificationReadStatus(button.getAttribute('data-id'));
-            });
-        });
-    } catch (error) {
-        console.error('Error loading notifications:', error);
-        notificationsList.innerHTML = '<p class="text-center text-red-500">Error loading notifications</p>';
-    }
-}
-
-/**
- * Toggle the read status of a notification
- * @param {string} notificationId - The ID of the notification
- */
-async function toggleNotificationReadStatus(notificationId) {
-    try {
-        await ELC.apiRequest(`/notifications/toggle-read/${notificationId}`, 'PUT');
-        
-        // Refresh notifications panel
-        const panel = document.getElementById('notifications-panel');
-        if (panel) {
-            loadNotifications(panel);
-        }
-        
-        // Update badge count
-        checkNotifications();
-    } catch (error) {
-        console.error('Error toggling notification status:', error);
-        ELC.showNotification('Error updating notification', 'error');
-    }
-}
-
-/**
- * Mark all notifications as read
- */
-async function markAllNotificationsAsRead() {
-    try {
-        const user = ELC.getCurrentUser();
-        if (!user) return;
-        
-        await ELC.apiRequest(`/notifications/mark-all-read/${user._id}`, 'PUT');
-        
-        // Refresh notifications panel
-        const panel = document.getElementById('notifications-panel');
-        if (panel) {
-            loadNotifications(panel);
-        }
-        
-        // Update badge count
-        checkNotifications();
-    } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-        ELC.showNotification('Error updating notifications', 'error');
-    }
-}
-
-/**
- * Initialize the current page based on its type
- */
-function initializeCurrentPage() {
-    // Get current page name from URL
-    const path = window.location.pathname;
-    const page = path.split('/').pop();
-    
-    switch (page) {
-        case 'index.html':
-            initializeHomePage();
-            break;
-        case 'student.html':
-            initializeStudentDashboard();
-            break;
-        case 'teacher.html':
-            initializeTeacherDashboard();
-            break;
-        case 'receptionist.html':
-            initializeReceptionistDashboard();
-            break;
-        case 'admin.html':
-            initializeAdminDashboard();
-            break;
-        case 'chatbot.html':
-            initializeChatbot();
-            break;
-        // Add more pages as needed
-    }
-}
-
-/**
- * Initialize the home page
- */
-function initializeHomePage() {
-    // Home page specific initialization
-    console.log('Home page initialized');
-}
-
-/**
- * Initialize the student dashboard
- */
-function initializeStudentDashboard() {
-    // Check if user has correct role
-    if (!ELC.hasRole('student')) {
-        window.location.href = 'login.html?error=unauthorized';
+    // Check authentication
+    if (!ELC.isAuthenticated()) {
+        window.location.href = 'login.html';
         return;
     }
     
-    // Load student-specific data
-    loadStudentCourses();
-    loadStudentAssignments();
-    loadStudentProgress();
-}
-
-/**
- * Initialize the teacher dashboard
- */
-function initializeTeacherDashboard() {
-    // Check if user has correct role
-    if (!ELC.hasRole('teacher')) {
-        window.location.href = 'login.html?error=unauthorized';
-        return;
-    }
-    
-    // Load teacher-specific data
-    loadTeacherClasses();
-    loadAssignmentsToGrade();
-}
-
-/**
- * Initialize the receptionist dashboard
- */
-function initializeReceptionistDashboard() {
-    // Check if user has correct role
+    // Check if user has receptionist role
     if (!ELC.hasRole('receptionist')) {
         window.location.href = 'login.html?error=unauthorized';
         return;
     }
     
-    // Load receptionist-specific data
-    loadRecentStudents();
-    loadTodayClasses();
+    // Initialize receptionist dashboard
+    initReceptionistDashboard();
+});
+
+function initReceptionistDashboard() {
+    // Initialize common authenticated components
+    ELC.initUserProfile();
+    ELC.initLogout();
+    ELC.initSidebar();
+    ELC.initTabs();
     
-    // Initialize form handlers
-    initializeRegistrationForm();
-    initializeClassAssignmentForm();
+    // Initialize specific dashboard functionality
+    initTabNavigation();
+    initRegistrationForm();
+    initAssignmentForm();
+    initStudentSearch();
+    loadDashboardStats();
 }
 
-/**
- * Initialize the admin dashboard
- */
-function initializeAdminDashboard() {
-    // Check if user has correct role
-    if (!ELC.hasRole('manager')) {
-        window.location.href = 'login.html?error=unauthorized';
-        return;
+function initTabNavigation() {
+    const menuItems = document.querySelectorAll('.menu-item[data-section]');
+    const sections = document.querySelectorAll('.content-section');
+    
+    if (menuItems.length > 0 && sections.length > 0) {
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetSection = this.getAttribute('data-section');
+                
+                // Remove active class from all menu items
+                menuItems.forEach(mi => mi.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all sections
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Show target section
+                const targetSectionElement = document.getElementById(`${targetSection}-section`);
+                if (targetSectionElement) {
+                    targetSectionElement.style.display = 'block';
+                }
+                
+                // Load section-specific data
+                switch (targetSection) {
+                    case 'dashboard':
+                        loadDashboardStats();
+                        break;
+                    case 'students':
+                        loadStudentsData();
+                        break;
+                    case 'classes':
+                        loadClassesData();
+                        break;
+                    case 'payments':
+                        loadPaymentsData();
+                        break;
+                }
+            });
+        });
+    }
+}
+
+function loadDashboardStats() {
+    ELC.apiRequest('/api/receptionist/dashboard', 'GET')
+        .then(response => {
+            if (response.success) {
+                updateDashboardStats(response.data);
+            } else {
+                console.error('Error loading dashboard stats:', response.message);
+                ELC.showNotification(response.message || 'Failed to load dashboard', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard stats:', error);
+            ELC.showNotification('Error loading dashboard. Please try again.', 'error');
+        });
+}
+
+function updateDashboardStats(data) {
+    if (!data) return;
+    
+    // Update stat cards
+    const statCards = document.querySelectorAll('.stat-card .stat-value');
+    if (statCards.length === 4) {
+        statCards[0].textContent = data.totalStudents || 0;
+        statCards[1].textContent = data.activeClasses || 0;
+        statCards[2].textContent = data.todayClasses || 0;
+        statCards[3].textContent = data.newRegistrations || 0;
     }
     
-    // Load admin-specific data
-    loadSystemStats();
-    loadRecentActivities();
+    // Update welcome message
+    const welcomeCard = document.querySelector('.welcome-card');
+    if (welcomeCard) {
+        const nameElement = welcomeCard.querySelector('h2');
+        const messageElement = welcomeCard.querySelector('p');
+        
+        if (nameElement && data.user) {
+            nameElement.textContent = `Welcome back, ${data.user.fullName.split(' ')[0]}!`;
+        }
+        
+        if (messageElement && data.notifications) {
+            messageElement.textContent = `You have ${data.notifications.newRegistrations || 0} new student registrations and ${data.notifications.pendingAssignments || 0} pending class assignments.`;
+        }
+    }
 }
 
-/**
- * Initialize the chatbot page
- */
-function initializeChatbot() {
-    // Chatbot specific initialization
-    setupChatbotInterface();
+function initRegistrationForm() {
+    ELC.handleFormSubmit(
+        'registrationForm',
+        '/api/receptionist/students/register',
+        'POST',
+        (response) => {
+            ELC.showNotification('Student registered successfully!', 'success');
+            document.getElementById('registrationForm').reset();
+            loadStudentsData(); // Refresh student list
+        },
+        (error) => {
+            ELC.showNotification('Error registering student: ' + error.message, 'error');
+        },
+        (formData) => {
+            // Transform form data to match backend expectations
+            return {
+                fullName: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                dateOfBirth: formData.dob,
+                currentLevel: formData.level,
+                source: formData.source,
+                notes: formData.notes
+            };
+        }
+    );
 }
 
-// Placeholder functions for data loading - these would be implemented with actual API calls
-
-function loadStudentCourses() {
-    // Implementation would load student courses from API
-    console.log('Loading student courses...');
+function initAssignmentForm() {
+    ELC.handleFormSubmit(
+        'assignmentForm',
+        '/api/receptionist/students/assign-class',
+        'POST',
+        (response) => {
+            ELC.showNotification('Student assigned to class successfully!', 'success');
+            document.getElementById('assignmentForm').reset();
+        },
+        (error) => {
+            ELC.showNotification('Error assigning student to class: ' + error.message, 'error');
+        },
+        (formData) => {
+            // Transform form data to match backend expectations
+            return {
+                studentId: formData.studentSelect,
+                courseId: formData.courseSelect,
+                classId: formData.classSelect,
+                startDate: formData.startDate,
+                paymentStatus: formData.paymentStatus
+            };
+        }
+    );
 }
 
-function loadStudentAssignments() {
-    // Implementation would load student assignments from API
-    console.log('Loading student assignments...');
+function loadStudentsData() {
+    ELC.apiRequest('/api/receptionist/students', 'GET')
+        .then(response => {
+            if (response.success) {
+                displayStudents(response.data);
+            } else {
+                console.error('Error loading students:', response.message);
+                ELC.showNotification(response.message || 'Failed to load students', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching students:', error);
+            ELC.showNotification('Error loading students. Please try again.', 'error');
+        });
 }
 
-function loadStudentProgress() {
-    // Implementation would load student progress from API
-    console.log('Loading student progress...');
+function displayStudents(students) {
+    const studentList = document.querySelector('.student-list');
+    if (!studentList) return;
+    
+    studentList.innerHTML = '';
+    
+    students.forEach(student => {
+        const statusClass = 
+            student.studentInfo.status === 'active' ? 'badge-success' :
+            student.studentInfo.status === 'pending' ? 'badge-warning' :
+            'badge-danger';
+        
+        const actionButtons = student.studentInfo.status === 'pending' ? 
+            `<button class="action-btn" data-action="approve"><i class="fas fa-check"></i> Approve</button>` :
+            student.studentInfo.status === 'inactive' ?
+            `<button class="action-btn" data-action="activate"><i class="fas fa-redo"></i> Activate</button>` :
+            `<button class="action-btn" data-action="assign"><i class="fas fa-user-plus"></i> Assign to Class</button>`;
+        
+        const studentHtml = `
+            <div class="student-item" data-id="${student._id}">
+                <div class="student-info">
+                    <div class="student-name">${student.fullName}</div>
+                    <div class="student-details">
+                        <div class="student-id">${student.studentInfo.studentId}</div>
+                        <div class="student-email">${student.email}</div>
+                        <div class="student-phone">${student.phone}</div>
+                    </div>
+                </div>
+                <div class="student-status">
+                    <span class="badge ${statusClass}">${ELC.capitalizeFirstLetter(student.studentInfo.status)}</span>
+                </div>
+                <div class="student-actions">
+                    ${actionButtons}
+                </div>
+            </div>
+        `;
+        
+        studentList.insertAdjacentHTML('beforeend', studentHtml);
+    });
+    
+    // Add event listeners for action buttons
+    addStudentActionListeners();
 }
 
-function loadTeacherClasses() {
-    // Implementation would load teacher classes from API
-    console.log('Loading teacher classes...');
+function addStudentActionListeners() {
+    const actionButtons = document.querySelectorAll('.action-btn');
+    
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentItem = this.closest('.student-item');
+            const studentId = studentItem.dataset.id;
+            const action = this.dataset.action;
+            
+            switch (action) {
+                case 'approve':
+                    approveStudent(studentId);
+                    break;
+                case 'activate':
+                    activateStudent(studentId);
+                    break;
+                case 'assign':
+                    assignToClass(studentId);
+                    break;
+            }
+        });
+    });
 }
 
-function loadAssignmentsToGrade() {
-    // Implementation would load assignments to grade from API
-    console.log('Loading assignments to grade...');
+function approveStudent(studentId) {
+    if (confirm('Are you sure you want to approve this student?')) {
+        ELC.apiRequest(`/api/receptionist/students/${studentId}/approve`, 'PUT')
+            .then(response => {
+                if (response.success) {
+                    ELC.showNotification('Student approved successfully', 'success');
+                    loadStudentsData(); // Refresh student list
+                } else {
+                    ELC.showNotification(response.message || 'Error approving student', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error approving student:', error);
+                ELC.showNotification('Error approving student', 'error');
+            });
+    }
 }
 
-function loadRecentStudents() {
-    // Implementation would load recent students from API
-    console.log('Loading recent students...');
+function activateStudent(studentId) {
+    if (confirm('Are you sure you want to reactivate this student?')) {
+        ELC.apiRequest(`/api/receptionist/students/${studentId}/activate`, 'PUT')
+            .then(response => {
+                if (response.success) {
+                    ELC.showNotification('Student activated successfully', 'success');
+                    loadStudentsData(); // Refresh student list
+                } else {
+                    ELC.showNotification(response.message || 'Error activating student', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error activating student:', error);
+                ELC.showNotification('Error activating student', 'error');
+            });
+    }
 }
 
-function loadTodayClasses() {
-    // Implementation would load today's classes from API
-    console.log('Loading today\'s classes...');
+function assignToClass(studentId) {
+    // Switch to assignment tab
+    const assignmentTab = document.querySelector('.tab[data-tab="assignment"]');
+    if (assignmentTab) {
+        assignmentTab.click();
+    }
+    
+    // Preselect student in assignment form
+    const studentSelect = document.getElementById('studentSelect');
+    if (studentSelect) {
+        studentSelect.value = studentId;
+    }
+    
+    ELC.showNotification('Please complete the class assignment form', 'info');
 }
 
-function initializeRegistrationForm() {
-    // Implementation would set up the student registration form
-    console.log('Initializing registration form...');
+function loadClassesData() {
+    ELC.apiRequest('/api/receptionist/classes/schedule', 'GET')
+        .then(response => {
+            if (response.success) {
+                displayClasses(response.data);
+            } else {
+                console.error('Error loading classes:', response.message);
+                ELC.showNotification(response.message || 'Failed to load classes', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching classes:', error);
+            ELC.showNotification('Error loading classes. Please try again.', 'error');
+        });
 }
 
-function initializeClassAssignmentForm() {
-    // Implementation would set up the class assignment form
-    console.log('Initializing class assignment form...');
+function displayClasses(classes) {
+    const classList = document.querySelector('.class-list');
+    if (!classList) return;
+    
+    classList.innerHTML = '';
+    
+    classes.forEach(course => {
+        const classHtml = `
+            <div class="class-item">
+                <div class="class-name">${course.name}</div>
+                <div class="class-details">
+                    <div class="class-time">${course.schedule.startTime} - ${course.schedule.endTime}</div>
+                    <div class="class-room">${course.schedule.room || 'N/A'}</div>
+                    <div class="class-teacher">${course.teacher?.fullName || 'N/A'}</div>
+                    <div class="class-students">${course.students?.length || 0}/${course.maxStudents || 20} Students</div>
+                </div>
+            </div>
+        `;
+        
+        classList.insertAdjacentHTML('beforeend', classHtml);
+    });
 }
 
-function loadSystemStats() {
-    // Implementation would load system statistics from API
-    console.log('Loading system stats...');
+function loadPaymentsData() {
+    ELC.apiRequest('/api/receptionist/payments', 'GET')
+        .then(response => {
+            if (response.success) {
+                displayPayments(response.data);
+            } else {
+                console.error('Error loading payments:', response.message);
+                ELC.showNotification(response.message || 'Failed to load payments', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching payments:', error);
+            ELC.showNotification('Error loading payments. Please try again.', 'error');
+        });
 }
 
-function loadRecentActivities() {
-    // Implementation would load recent activities from API
-    console.log('Loading recent activities...');
-}
-
-function setupChatbotInterface() {
-    // Implementation would set up the chatbot interface
-    console.log('Setting up chatbot interface...');
+function displayPayments(payments) {
+    const paymentsList = document.querySelector('.payments-list');
+    if (!paymentsList) return;
+    
+    paymentsList.innerHTML = '';
+    
+    payments.forEach(payment => {
+        const paymentHtml = `
+            <div class="payment-item">
+                <div class="payment-student">${payment.student.fullName}</div>
+                <div class="payment-details">
+                    <div class="payment-course">${payment.course.name}</div>
+                    <div class="payment-amount">${payment.amount}</div>
+                    <div class="payment-status">${payment.status}</div>
+                    <div class="payment-date">${ELC.formatDate(payment.date)}</div>
+                </div>
+            </div>
+        `;
+        
+        paymentsList.insertAdjacentHTML('beforeend', paymentHtml);
+    });
 }
