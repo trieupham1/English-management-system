@@ -19,6 +19,60 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initReceptionistDashboard();
 });
+function initTabNavigation() {
+    const menuItems = document.querySelectorAll('.menu-item[data-section]');
+    const sections = document.querySelectorAll('.content-section');
+    
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    if (menuItems.length > 0 && sections.length > 0) {
+        menuItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetSection = this.getAttribute('data-section');
+                
+                menuItems.forEach(mi => mi.classList.remove('active'));
+                this.classList.add('active');
+                
+                sections.forEach(section => {
+                    if (section.id === `${targetSection}-section`) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+                
+                if (targetSection === 'dashboard') {
+                    loadDashboardStats();
+                } else if (targetSection === 'registration') {
+                    // Nothing special needed, form is already initialized
+                } else if (targetSection === 'students') {
+                    loadStudentsData();
+                } else if (targetSection === 'classes') {
+                    loadClassesData();
+                } else if (targetSection === 'payments') {
+                    loadPaymentsData();
+                }
+            });
+        });
+    }
+    
+    if (tabs.length > 0 && tabContents.length > 0) {
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+    }
+}
 
 function initReceptionistDashboard() {
     // Use ELC utility methods
