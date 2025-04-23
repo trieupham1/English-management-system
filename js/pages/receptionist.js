@@ -84,24 +84,6 @@ function initReceptionistDashboard() {
     initStudentSearch();
     loadDashboardStats();
 }
-
-// Most of the existing functions remain the same
-// Just update API requests to use ELC.apiRequest instead of fetch directly
-
-function loadDashboardStats() {
-    // Simplified using ELC.apiRequest
-    ELC.apiRequest('/api/receptionist/dashboard')
-        .then(response => {
-            if (response.success) {
-                updateDashboardStats(response.data);
-            } else {
-                ELC.showNotification(response.message || 'Failed to load dashboard', 'error');
-            }
-        })
-        .catch(error => {
-            ELC.showNotification('Error loading dashboard. Please try again.', 'error');
-        });
-}
 function showStudentRegistrationModal(studentData) {
     // Remove any existing modals first
     const existingModal = document.querySelector('.registration-modal-overlay');
@@ -362,95 +344,99 @@ function initStudentSearch() {
     });
 }
 function loadDashboardStats() {
-    async function getDashboardData() {
-        try {
-            // Get token from localStorage
-            const token = localStorage.getItem('token');
-            
-            // Ensure token is included in request
-            const response = await fetch('/api/receptionist/dashboard', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (!response.ok) {
-                console.error('Error details:', data);
-                throw new Error(data.message || 'Failed to fetch dashboard');
-            }
-            
-            return data;
-        } catch (error) {
-            console.error('Dashboard fetch error:', error);
-            throw error;
+    const token = localStorage.getItem('token');
+    
+    fetch('/api/receptionist/dashboard', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
         }
-    }
-
-    getDashboardData()
-        .then(response => {
-            if (response.success) {
-                updateDashboardStats(response.data);
-            } else {
-                console.error('Error loading dashboard stats:', response.message);
-                ELC.showNotification(response.message || 'Failed to load dashboard', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching dashboard stats:', error);
-            ELC.showNotification('Error loading dashboard. Please try again.', 'error');
-        });
+    })
+    .then(response => response.json())
+    .then(response => {
+        if (response.success) {
+            updateDashboardStats(response.data);
+        } else {
+            ELC.showNotification(response.message || 'Failed to load dashboard', 'error');
+        }
+    })
+    .catch(error => {
+        ELC.showNotification('Error loading dashboard. Please try again.', 'error');
+    });
 }
+
 function updateDashboardStats(data) {
     if (!data) return;
     
+    // Update stat cards
     const statCards = document.querySelectorAll('.stat-card .stat-value');
-    if (statCards.length === 4) {
-        if (data.totalStudents) statCards[0].textContent = data.totalStudents;
-        if (data.activeClasses) statCards[1].textContent = data.activeClasses;
-        if (data.todayClasses) statCards[2].textContent = data.todayClasses;
-        if (data.newRegistrations) statCards[3].textContent = data.newRegistrations;
-    }
-    
-    if (data.user && data.user.fullName) {
-        const welcomeCard = document.querySelector('.welcome-card h2');
-        if (welcomeCard) {
-            welcomeCard.textContent = `Welcome back, ${data.user.fullName.split(' ')[0]}!`;
-        }
-        
-        if (data.notifications) {
-            const welcomeMessage = document.querySelector('.welcome-card p');
-            if (welcomeMessage) {
-                welcomeMessage.textContent = `You have ${data.notifications.newRegistrations || 0} new student registrations waiting for approval and ${data.notifications.pendingAssignments || 0} class assignments pending.`;
-            }
-        }
+    if (statCards.length === 3) {
+        if (data.totalStudents !== undefined) statCards[0].textContent = data.totalStudents;
+        if (data.activeClasses !== undefined) statCards[1].textContent = data.activeClasses;
+        if (data.newRegistrationsToday !== undefined) statCards[2].textContent = data.newRegistrationsToday;
     }
 }
-
-document.addEventListener('click', function(e) {
-    if (e.target.matches('.action-btn, .action-btn *')) {
-        const button = e.target.closest('.action-btn');
-        const studentItem = button.closest('.student-item');
-        
-        if (!studentItem) return;
-        
-        const studentId = studentItem.dataset.id;
-        
-        if (button.querySelector('.fa-edit') || button.title === 'Edit') {
-            editStudent(studentId);
-        } else if (button.querySelector('.fa-check') || button.title === 'Approve') {
-            approveStudent(studentId);
-        } else if (button.querySelector('.fa-redo') || button.title === 'Activate') {
-            activateStudent(studentId);
-        } else if (button.querySelector('.fa-user-plus') || button.title === 'Assign to Class') {
-            assignToClass(studentId);
-        }
+function updateRecentRegistrations(registrations) {
+    // This function would update a section showing recent registrations
+    // You might want to add this to your dashboard HTML
+    const recentRegistrationsContainer = document.querySelector('.recent-registrations-list');
+    if (!recentRegistrationsContainer || !registrations) return;
+    
+    recentRegistrationsContainer.innerHTML = '';
+    
+    if (registrations.length === 0) {
+        recentRegistrationsContainer.innerHTML = '<div class="empty-state">No recent registrations</div>';
+        return;
     }
-});
+    
+    registrations.forEach(student => {
+        const date = new Date(student.createdAt).toLocaleString();
+        const registrationHtml = `
+            <div class="registration-item">
+                <div class="registration-info">
+                    <div class="student-name">${student.fullName}</div>
+                    <div class="student-email">${student.email}</div>
+                </div>
+                <div class="registration-time">${date}</div>
+            </div>
+        `;
+        
+        recentRegistrationsContainer.insertAdjacentHTML('beforeend', registrationHtml);
+    });
+}
 
+function updateUpcomingClasses(classes) {
+    // This function would update a section showing upcoming classes
+    // You might want to add this to your dashboard HTML
+    const upcomingClassesContainer = document.querySelector('.upcoming-classes-list');
+    if (!upcomingClassesContainer || !classes) return;
+    
+    upcomingClassesContainer.innerHTML = '';
+    
+    if (classes.length === 0) {
+        upcomingClassesContainer.innerHTML = '<div class="empty-state">No upcoming classes</div>';
+        return;
+    }
+    
+    classes.forEach(classItem => {
+        const date = new Date(classItem.schedule.date).toLocaleDateString();
+        const classHtml = `
+            <div class="class-item">
+                <div class="class-name">${classItem.name}</div>
+                <div class="class-details">
+                    <div class="class-time"><i class="fas fa-clock"></i> ${classItem.schedule.startTime} - ${classItem.schedule.endTime}</div>
+                    <div class="class-room"><i class="fas fa-door-open"></i> ${classItem.schedule.room}</div>
+                    <div class="class-teacher"><i class="fas fa-user"></i> ${classItem.teacher?.fullName || 'N/A'}</div>
+                    <div class="class-students"><i class="fas fa-users"></i> ${classItem.students?.length || 0}/${classItem.maxStudents || 20} Students</div>
+                </div>
+                <div class="class-date">${date}</div>
+            </div>
+        `;
+        
+        upcomingClassesContainer.insertAdjacentHTML('beforeend', classHtml);
+    });
+}
 function editStudent(studentId) {
     console.log(`Edit student with ID: ${studentId}`);
     alert('Edit student functionality will be implemented here');

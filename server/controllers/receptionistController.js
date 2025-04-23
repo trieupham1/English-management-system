@@ -2,55 +2,38 @@ const Receptionist = require('../models/Receptionist');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Teacher = require('../models/Teacher');
-
-// Get receptionist dashboard data
+const Class = require('../models/Class'); // Add this import
 exports.getDashboardData = async (req, res) => {
     try {
-        // Get receptionist user data
-        const receptionistId = req.user.id;
-        const receptionist = await Receptionist.findById(receptionistId).select('-password');
-        
-        if (!receptionist) {
-            return res.status(404).json({
-                success: false,
-                message: 'Receptionist not found'
-            });
-        }
-        
-        // Get stats for dashboard
-        const totalStudents = await Student.countDocuments();
-        const activeClasses = await Course.countDocuments({ status: 'active' });
-        
-        // Get today's classes
+        // Get today's date range
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         
-        const todayClasses = await Course.countDocuments({
-            'schedule.date': {
+        // Total students
+        const totalStudents = await Student.countDocuments();
+        
+        // Total active classes
+        const activeClasses = await Class.countDocuments({ 
+            status: 'active' 
+        });
+        
+        // New registrations today
+        const newRegistrationsToday = await Student.countDocuments({
+            createdAt: {
                 $gte: today,
                 $lt: tomorrow
             }
         });
         
-        // Get new registrations (pending students)
-        const newRegistrations = await Student.countDocuments({
-            'studentInfo.status': 'pending'
-        });
-        
+        // Prepare response
         res.status(200).json({
             success: true,
             data: {
-                user: receptionist,
                 totalStudents,
                 activeClasses,
-                todayClasses,
-                newRegistrations,
-                notifications: {
-                    newRegistrations,
-                    pendingAssignments: 2 // This could be calculated based on actual data
-                }
+                newRegistrationsToday
             }
         });
     } catch (error) {
@@ -62,6 +45,16 @@ exports.getDashboardData = async (req, res) => {
         });
     }
 };
+
+// Helper function to get pending assignments
+async function getPendingAssignments() {
+    const pendingAssignments = await Class.countDocuments({
+        status: 'active',
+        students: { $size: 0 }
+    });
+    
+    return pendingAssignments;
+}
 exports.registerStudent = async (req, res) => {
     try {
         const { 
