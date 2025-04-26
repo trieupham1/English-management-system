@@ -93,49 +93,45 @@ function showStudentRegistrationModal(studentData) {
 
     // Create modal container
     const modalContainer = document.createElement('div');
-    modalContainer.className = 'registration-modal-overlay';
-    
-    // Ensure it's added directly to the body and positioned correctly
-    document.body.appendChild(modalContainer);
-    
-    // Prevent body scrolling
-    document.body.style.overflow = 'hidden';
+    modalContainer.className = 'modal';
+    modalContainer.style.display = 'block';
 
     modalContainer.innerHTML = `
-        <div class="registration-modal">
-            <div class="modal-header">
-                <h2>Student Registration Successful</h2>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-content">
-                <div class="registration-details">
-                    <h3>Student Account Created</h3>
-                    <div class="detail-item">
-                        <strong>Name:</strong> 
-                        <span>${studentData.fullName}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Student ID:</strong> 
-                        <span>${studentData.studentId}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Login Username:</strong> 
-                        <span>${studentData.username}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Temporary Password:</strong> 
-                        <span class="temp-password">${studentData.tempPassword}</span>
-                    </div>
-                    <div class="modal-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Please advise the student to change their password upon first login.</p>
-                    </div>
+        <div class="modal-header">
+            <h3>Student Registration Successful</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" value="${studentData.fullName}" readonly>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary copy-credentials">Copy Credentials</button>
-                <button class="btn btn-secondary modal-close">Close</button>
-            </div>
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" value="${studentData.studentId}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" value="${studentData.email}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" value="${studentData.username}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Temporary Password</label>
+                    <input type="text" value="${studentData.tempPassword}" readonly>
+                </div>
+                <div class="note">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Please advise the student to change their password upon first login.
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary modal-close">Close</button>
+            <button class="primary" id="copy-credentials">Copy Credentials</button>
         </div>
     `;
 
@@ -143,23 +139,18 @@ function showStudentRegistrationModal(studentData) {
     document.body.appendChild(modalContainer);
 
     // Close modal functionality
-    const closeModal = () => {
-        document.body.removeChild(modalContainer);
-        document.body.style.overflow = 'auto'; // Restore scrolling
-    };
-    // Add event listeners to close buttons
     const closeButtons = modalContainer.querySelectorAll('.modal-close');
     closeButtons.forEach(btn => {
-        btn.addEventListener('click', closeModal);
+        btn.addEventListener('click', () => {
+            modalContainer.style.display = 'none';
+            document.body.removeChild(modalContainer);
+        });
     });
 
     // Copy credentials functionality
-    const copyButton = modalContainer.querySelector('.copy-credentials');
+    const copyButton = modalContainer.querySelector('#copy-credentials');
     copyButton.addEventListener('click', () => {
-        const username = modalContainer.querySelector('.detail-item:nth-child(3) span').textContent;
-        const password = modalContainer.querySelector('.temp-password').textContent;
-        
-        const credentials = `Username: ${username}\nTemporary Password: ${password}`;
+        const credentials = `Username: ${studentData.username}\nTemporary Password: ${studentData.tempPassword}`;
         
         navigator.clipboard.writeText(credentials).then(() => {
             ELC.showNotification('Credentials copied to clipboard', 'success');
@@ -169,17 +160,19 @@ function showStudentRegistrationModal(studentData) {
         });
     });
 
-    // Close modal when clicking outside
+    // Close modal when clicking outside (optional)
     modalContainer.addEventListener('click', (event) => {
         if (event.target === modalContainer) {
-            closeModal();
+            modalContainer.style.display = 'none';
+            document.body.removeChild(modalContainer);
         }
     });
 
     // Add keyboard support (Escape key to close)
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
-            closeModal();
+            modalContainer.style.display = 'none';
+            document.body.removeChild(modalContainer);
             document.removeEventListener('keydown', escapeHandler);
         }
     };
@@ -224,14 +217,16 @@ function initRegistrationForm() {
             submitButton.disabled = false;
             
             if (data.success) {
-                // Show registration modal
+                // Ensure modal is shown immediately after successful registration
                 showStudentRegistrationModal({
                     fullName: data.data.student.fullName,
                     studentId: data.data.studentId,
+                    email: data.data.student.email,
                     username: data.data.student.username,
                     tempPassword: data.data.tempPassword
                 });
 
+                // Notification is optional now, as modal provides details
                 ELC.showNotification(
                     `Student registered successfully! 
                     Student ID: ${data.data.studentId}`, 
@@ -240,6 +235,7 @@ function initRegistrationForm() {
 
                 registrationForm.reset();
             } else {
+                // Show error notification if registration fails
                 ELC.showNotification(
                     data.message || 'Failed to register student', 
                     'error'
@@ -256,7 +252,6 @@ function initRegistrationForm() {
         });
     });
 }
-
 // Ensure the function is called when the DOM is loaded
 document.addEventListener('DOMContentLoaded', initRegistrationForm);
 // Optionally add form validation
@@ -365,76 +360,70 @@ function loadDashboardStats() {
         ELC.showNotification('Error loading dashboard. Please try again.', 'error');
     });
 }
-
 function updateDashboardStats(data) {
     if (!data) return;
     
     // Update stat cards
     const statCards = document.querySelectorAll('.stat-card .stat-value');
-    if (statCards.length === 3) {
+    if (statCards.length === 4) {
         if (data.totalStudents !== undefined) statCards[0].textContent = data.totalStudents;
         if (data.activeClasses !== undefined) statCards[1].textContent = data.activeClasses;
         if (data.newRegistrationsToday !== undefined) statCards[2].textContent = data.newRegistrationsToday;
+        if (data.todayClasses !== undefined) statCards[3].textContent = data.todayClasses;
+    }
+    
+    // Update recent registrations section
+    if (data.recentStudents && data.recentStudents.length > 0) {
+        updateRecentRegistrations(data.recentStudents);
+    }
+    
+    // Update upcoming classes section
+    if (data.upcomingClasses && data.upcomingClasses.length > 0) {
+        updateUpcomingClasses(data.upcomingClasses);
     }
 }
+
 function updateRecentRegistrations(registrations) {
-    // This function would update a section showing recent registrations
-    // You might want to add this to your dashboard HTML
-    const recentRegistrationsContainer = document.querySelector('.recent-registrations-list');
-    if (!recentRegistrationsContainer || !registrations) return;
+    const container = document.querySelector('.recent-registrations-list');
+    if (!container) return;
     
-    recentRegistrationsContainer.innerHTML = '';
-    
-    if (registrations.length === 0) {
-        recentRegistrationsContainer.innerHTML = '<div class="empty-state">No recent registrations</div>';
-        return;
-    }
+    container.innerHTML = ''; // Clear existing content
     
     registrations.forEach(student => {
-        const date = new Date(student.createdAt).toLocaleString();
-        const registrationHtml = `
+        const registrationItem = `
             <div class="registration-item">
-                <div class="registration-info">
-                    <div class="student-name">${student.fullName}</div>
-                    <div class="student-email">${student.email}</div>
-                </div>
-                <div class="registration-time">${date}</div>
+                <div class="student-name">${student.fullName}</div>
+                <div class="student-email">${student.email}</div>
+                <div class="student-id">ID: ${student.studentInfo.studentId}</div>
+                <div class="registration-time">${new Date(student.createdAt).toLocaleString()}</div>
             </div>
         `;
         
-        recentRegistrationsContainer.insertAdjacentHTML('beforeend', registrationHtml);
+        container.insertAdjacentHTML('beforeend', registrationItem);
     });
 }
 
 function updateUpcomingClasses(classes) {
-    // This function would update a section showing upcoming classes
-    // You might want to add this to your dashboard HTML
-    const upcomingClassesContainer = document.querySelector('.upcoming-classes-list');
-    if (!upcomingClassesContainer || !classes) return;
+    const container = document.querySelector('.upcoming-classes-list');
+    if (!container) return;
     
-    upcomingClassesContainer.innerHTML = '';
-    
-    if (classes.length === 0) {
-        upcomingClassesContainer.innerHTML = '<div class="empty-state">No upcoming classes</div>';
-        return;
-    }
+    container.innerHTML = ''; // Clear existing content
     
     classes.forEach(classItem => {
-        const date = new Date(classItem.schedule.date).toLocaleDateString();
-        const classHtml = `
+        const classDetails = `
             <div class="class-item">
                 <div class="class-name">${classItem.name}</div>
                 <div class="class-details">
-                    <div class="class-time"><i class="fas fa-clock"></i> ${classItem.schedule.startTime} - ${classItem.schedule.endTime}</div>
-                    <div class="class-room"><i class="fas fa-door-open"></i> ${classItem.schedule.room}</div>
-                    <div class="class-teacher"><i class="fas fa-user"></i> ${classItem.teacher?.fullName || 'N/A'}</div>
-                    <div class="class-students"><i class="fas fa-users"></i> ${classItem.students?.length || 0}/${classItem.maxStudents || 20} Students</div>
+                    <div class="class-time">
+                        ${classItem.schedule.startTime} - ${classItem.schedule.endTime}
+                    </div>
+                    <div class="class-course">${classItem.course?.name || 'N/A'}</div>
+                    <div class="class-teacher">${classItem.teacher?.fullName || 'N/A'}</div>
                 </div>
-                <div class="class-date">${date}</div>
             </div>
         `;
         
-        upcomingClassesContainer.insertAdjacentHTML('beforeend', classHtml);
+        container.insertAdjacentHTML('beforeend', classDetails);
     });
 }
 function editStudent(studentId) {

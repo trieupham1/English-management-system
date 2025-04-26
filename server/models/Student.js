@@ -112,5 +112,7 @@ StudentSchema.methods.toJSON = function() {
     delete student.password;
     return student;
 };
+StudentSchema.index({ username: 1 }, { unique: true });
+
 
 module.exports = mongoose.model('Student', StudentSchema);

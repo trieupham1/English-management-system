@@ -19,7 +19,7 @@ exports.getDashboardData = async (req, res) => {
             status: 'active' 
         });
         
-        // New registrations today
+        // New student registrations in the last 24 hours
         const newRegistrationsToday = await Student.countDocuments({
             createdAt: {
                 $gte: today,
@@ -27,13 +27,44 @@ exports.getDashboardData = async (req, res) => {
             }
         });
         
+        // Classes scheduled for today
+        const todayClasses = await Class.countDocuments({
+            'schedule.date': {
+                $gte: today,
+                $lt: tomorrow
+            },
+            status: 'active'
+        });
+        
+        // Optional: Fetch some additional details for the dashboard
+        const recentStudents = await Student.find({
+            createdAt: {
+                $gte: today,
+                $lt: tomorrow
+            }
+        }).select('fullName email studentInfo.studentId createdAt');
+        
+        const upcomingClasses = await Class.find({
+            'schedule.date': {
+                $gte: today,
+                $lt: tomorrow
+            },
+            status: 'active'
+        })
+        .populate('course', 'name')
+        .populate('teacher', 'fullName')
+        .select('name schedule course teacher');
+        
         // Prepare response
         res.status(200).json({
             success: true,
             data: {
                 totalStudents,
                 activeClasses,
-                newRegistrationsToday
+                newRegistrationsToday,
+                todayClasses,
+                recentStudents,
+                upcomingClasses
             }
         });
     } catch (error) {
@@ -71,32 +102,49 @@ exports.registerStudent = async (req, res) => {
         } = req.body;
         
         // Check if student with this email already exists
-        const existingStudent = await Student.findOne({ email });
-        if (existingStudent) {
+        const existingEmailStudent = await Student.findOne({ email });
+        if (existingEmailStudent) {
             return res.status(400).json({
                 success: false,
                 message: 'Student with this email already exists'
             });
         }
         
+        // Generate base username
+        const baseUsername = email.split('@')[0].toLowerCase();
+        
+        // Find existing usernames that start with the base username
+        const existingUsernames = await Student.find({ 
+            username: { $regex: `^${baseUsername}`, $options: 'i' } 
+        }).select('username');
+        
+        // Generate unique username
+        let username = baseUsername;
+        let counter = 1;
+        
+        while (existingUsernames.some(u => u.username === username)) {
+            username = `${baseUsername}${counter}`;
+            counter++;
+        }
+        
         // Generate student ID
         const studentId = 'ST' + Math.floor(10000 + Math.random() * 90000);
         
-        // Generate a temporary password
-        const tempPassword = 'password123'
+        // Generate a secure temporary password
+        const tempPassword = Math.random().toString(36).slice(-10);
         
         // Prepare student data
         const studentData = {
-            username: email.split('@')[0], // Generate username from email
-            password: tempPassword, // Will be hashed by pre-save middleware
+            username,
+            password: tempPassword,
             fullName,
             email,
             phone,
             studentInfo: {
                 studentId,
-                dateOfBirth,
+                dateOfBirth: new Date(dateOfBirth),
                 currentLevel,
-                status: 'pending', // New registrations are pending by default
+                status: 'pending',
                 guardianInfo: guardianName ? {
                     name: guardianName,
                     contactNumber: guardianContact,
@@ -112,22 +160,39 @@ exports.registerStudent = async (req, res) => {
                 : notes;
         }
         
-        // Create student
+        // Create and save student
         const student = new Student(studentData);
-        
         await student.save();
+        
+        // Log the registration
+        console.log(`New student registered: ${student.fullName} (${student.studentId})`);
         
         res.status(201).json({
             success: true,
             message: 'Student registered successfully',
             data: {
-                student: student.toJSON(),
-                studentId,
-                tempPassword // Consider sending this securely or via email
+                student: {
+                    fullName: student.fullName,
+                    email: student.email,
+                    studentId: student.studentInfo.studentId,
+                    username: student.username
+                },
+                studentId: student.studentInfo.studentId,
+                tempPassword
             }
         });
     } catch (error) {
         console.error('Error registering student:', error);
+        
+        // Handle specific MongoDB duplicate key error
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'A user with this username or email already exists',
+                error: error.message
+            });
+        }
+        
         res.status(500).json({
             success: false,
             message: 'Error registering student',
