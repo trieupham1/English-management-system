@@ -2,7 +2,6 @@ const Settings = require('../models/Settings');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/Receptionist');
 const mongoose = require('mongoose');
 
 // Get all settings
@@ -22,7 +21,7 @@ exports.getAllSettings = async (req, res) => {
                 currencySymbol: '$',
                 language: 'en',
                 maxStudentsPerClass: 20,
-                enableChatbot: true,
+                enableChatbot: false,
                 enableOnlineLearning: true,
                 theme: 'light',
                 notificationSettings: {
@@ -117,9 +116,8 @@ exports.getSystemStats = async (req, res) => {
             createdAt: { $gte: lastMonth }
         });
         
-        // Get number of managers and receptionists
+        // Get number of managers
         const totalManagers = await Manager.countDocuments();
-        const totalReceptionists = await Receptionist.countDocuments();
         
         res.status(200).json({
             success: true,
@@ -127,7 +125,6 @@ exports.getSystemStats = async (req, res) => {
                 totalStudents,
                 totalTeachers,
                 totalManagers,
-                totalReceptionists,
                 activeStudents,
                 pendingStudents,
                 newStudents
@@ -160,9 +157,6 @@ exports.updateUserSettings = async (req, res) => {
                 break;
             case 'manager':
                 UserModel = Manager;
-                break;
-            case 'receptionist':
-                UserModel = Receptionist;
                 break;
             default:
                 return res.status(400).json({
@@ -230,9 +224,6 @@ exports.getUserSettings = async (req, res) => {
             case 'manager':
                 UserModel = Manager;
                 break;
-            case 'receptionist':
-                UserModel = Receptionist;
-                break;
             default:
                 return res.status(400).json({
                     success: false,
@@ -269,8 +260,7 @@ exports.backupData = async (req, res) => {
         const backupData = {
             students: await Student.countDocuments(),
             teachers: await Teacher.countDocuments(),
-            managers: await Manager.countDocuments(),
-            receptionists: await Receptionist.countDocuments()
+            managers: await Manager.countDocuments()
         };
         
         res.status(200).json({

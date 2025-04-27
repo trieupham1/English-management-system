@@ -100,7 +100,6 @@ function redirectByRole(role) {
     
     const roleRedirects = {
         'student': '/student',
-        'receptionist': '/receptionist',
         'teacher': '/teacher',
         'manager': '/admin'
     };

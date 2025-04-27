@@ -1,7 +1,6 @@
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/Receptionist');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -11,7 +10,6 @@ const getUserModel = (role) => {
         case 'student': return Student;
         case 'teacher': return Teacher;
         case 'manager': return Manager;
-        case 'receptionist': return Receptionist;
         default: throw new Error('Invalid role');
     }
 };
@@ -20,8 +18,7 @@ const generateUniqueId = (role) => {
     const prefix = {
         'student': 'ST',
         'teacher': 'T',
-        'manager': 'MG',
-        'receptionist': 'RC'
+        'manager': 'MG'
     };
     return `${prefix[role]}${Math.floor(10000 + Math.random() * 90000)}`;
 };
@@ -31,8 +28,7 @@ const validateRegistrationData = (role, body) => {
         'base': ['username', 'password', 'fullName', 'email', 'phone'],
         'student': ['dateOfBirth', 'currentLevel'],
         'teacher': ['specialization', 'qualifications'],
-        'manager': ['department'],
-        'receptionist': ['shift']
+        'manager': ['department']
     };
 
     // Check base required fields
@@ -127,20 +123,6 @@ const authController = {
                     });
                     break;
                 
-                case 'receptionist':
-                    const { shift } = req.body;
-                    user = new UserModel({
-                        username,
-                        password,
-                        fullName,
-                        email,
-                        phone,
-                        employeeId: generateUniqueId('receptionist'),
-                        shift,
-                        isActive: true
-                    });
-                    break;
-                
                 default:
                     return res.status(400).json({
                         success: false,
@@ -167,7 +149,7 @@ const authController = {
                         role
                     },
                     token,
-                    userId: user[`${role}Info`]?.[`${role}Id`] || user.employeeId || user.managerId
+                    userId: user[`${role}Info`]?.[`${role}Id`] || user.managerId
                 }
             });
             
@@ -236,7 +218,7 @@ const authController = {
                     success: false,
                     message: 'Your account is not active. Please contact administration.'
                 });
-            } else if (['teacher', 'manager', 'receptionist'].includes(role) && user.isActive === false) {
+            } else if (['teacher', 'manager'].includes(role) && user.isActive === false) {
                 return res.status(403).json({
                     success: false,
                     message: 'Your account is currently inactive.'
@@ -265,9 +247,6 @@ const authController = {
                     break;
                 case 'manager':
                     userId = user.managerId;
-                    break;
-                case 'receptionist':
-                    userId = user.employeeId;
                     break;
             }
             
@@ -547,68 +526,6 @@ const authController = {
             res.status(500).json({
                 success: false,
                 message: error.message || 'Error registering teacher',
-                error: error.toString()
-            });
-        }
-    },
-
-    registerReceptionist: async (req, res) => {
-        try {
-            const { username, password, fullName, email, phone, shift } = req.body;
-            
-            // Validate input
-            validateRegistrationData('receptionist', req.body);
-            
-            // Check if receptionist already exists
-            const existingReceptionist = await Receptionist.findOne({ 
-                $or: [{ email }, { username }] 
-            });
-            
-            if (existingReceptionist) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Receptionist with this email or username already exists' 
-                });
-            }
-            
-            // Create new receptionist
-            const receptionist = new Receptionist({
-                username,
-                password,
-                fullName,
-                email,
-                phone,
-                employeeId: generateUniqueId('receptionist'),
-                shift,
-                isActive: true
-            });
-            
-            await receptionist.save();
-            
-            // Generate token
-            const token = jwt.sign(
-                { id: receptionist._id, role: 'receptionist' },
-                process.env.JWT_SECRET || 'your_jwt_secret_key_for_english_center_app',
-                { expiresIn: '1d' }
-            );
-            
-            res.status(201).json({
-                success: true,
-                message: 'Receptionist registered successfully',
-                data: { 
-                    user: {
-                        ...receptionist.toJSON(),
-                        role: 'receptionist'
-                    },
-                    token,
-                    employeeId: receptionist.employeeId
-                }
-            });
-        } catch (error) {
-            console.error('Receptionist registration error:', error);
-            res.status(500).json({
-                success: false,
-                message: error.message || 'Error registering receptionist',
                 error: error.toString()
             });
         }

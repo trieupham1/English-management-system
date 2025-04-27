@@ -17,18 +17,13 @@ router.put('/change-password', protect, authController.changePassword);
 
 // Role-specific routes
 router.post('/student/register', 
-    authorize('manager', 'receptionist'), 
+    authorize('manager'), 
     authController.registerStudent
 );
 
 router.post('/teacher/register', 
     authorize('manager'), 
     authController.registerTeacher
-);
-
-router.post('/receptionist/register', 
-    authorize('manager'), 
-    authController.registerReceptionist
 );
 
 router.post('/manager/register', 

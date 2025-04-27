@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/Receptionist');
 
 // Utility function to get model based on role
 const getUserModel = (role) => {
@@ -10,7 +9,6 @@ const getUserModel = (role) => {
         case 'student': return Student;
         case 'teacher': return Teacher;
         case 'manager': return Manager;
-        case 'receptionist': return Receptionist;
         default: throw new Error('Invalid role');
     }
 };
@@ -108,7 +106,6 @@ const authMiddleware = {
                     break;
                 case 'teacher':
                 case 'manager':
-                case 'receptionist':
                     if (!req.user.isActive) {
                         return res.status(403).json({
                             success: false,
@@ -135,8 +132,7 @@ const authMiddleware = {
         const requestLimits = {
             student: 100,  // requests per hour
             teacher: 200,
-            manager: 300,
-            receptionist: 150
+            manager: 300
         };
 
         const userRole = req.user.role;

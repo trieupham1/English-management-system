@@ -6,7 +6,6 @@
     <title>Student Dashboard - English Learning Center</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/student.css">
-    <link rel="stylesheet" href="css/chatbot.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .content-section {
@@ -43,10 +42,6 @@
                 <a href="#" class="menu-item" data-section="assignments">
                     <i class="fas fa-tasks"></i>
                     <span>Assignments</span>
-                </a>
-                <a href="#" id="chatbot-toggle" class="menu-item">
-                    <i class="fas fa-comments"></i>
-                    <span>Learning Assistant</span>
                 </a>
             </div>
             
@@ -465,59 +460,9 @@
                 </div>
             </section>
         </div>
-        
-        <!-- Chatbot Container (Hidden by Default) -->
-        <div class="student-chatbot" id="student-chatbot">
-            <div class="chatbot-header">
-                <i class="fas fa-robot mr-2"></i>
-                <h2>Learning Assistant</h2>
-                <button id="close-chatbot" class="close-button">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="chatbot-messages" id="chatbot-messages">
-                <div class="message message-bot">
-                    Hello! I'm your Learning Assistant. I can help you with your schedule, assignments, courses, and other student queries. How can I help you today?
-                </div>
-            </div>
-            
-            <div class="chatbot-suggestions" id="chatbot-suggestions">
-                <button class="suggestion-btn" data-message="Show me my class schedule">My Schedule</button>
-                <button class="suggestion-btn" data-message="What assignments are due this week?">Due Assignments</button>
-                <button class="suggestion-btn" data-message="What courses am I enrolled in?">My Courses</button>
-                <button class="suggestion-btn" data-message="How can I improve my progress?">Study Tips</button>
-            </div>
-            
-            <div class="chatbot-input">
-                <input type="text" id="message-input" placeholder="Type your question here..." autofocus>
-                <button id="send-message">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Chatbot Launcher Button -->
-        <button id="chatbot-launcher" class="chatbot-launcher">
-            <i class="fas fa-robot"></i>
-        </button>
     </div>
     
     <script src="js/components/common.js"></script>
     <script src="js/pages/student.js"></script>
-    <script src="js/pages/chatbot.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof ELC !== 'undefined' && ELC.isAuthenticated()) {
-                ELC.initUserProfile();
-                
-                if (typeof initStudentChatbot === 'function') {
-                    initStudentChatbot();
-                }
-            } else {
-                console.log('User not authenticated or ELC not defined');
-            }
-        });
-    </script>
 </body>
 </html>

@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
 const Manager = require('../models/Manager');
-const Receptionist = require('../models/Receptionist');
 
 // Utility function to get model based on role
 const getUserModel = (role) => {
@@ -10,7 +9,6 @@ const getUserModel = (role) => {
         case 'student': return Student;
         case 'teacher': return Teacher;
         case 'manager': return Manager;
-        case 'receptionist': return Receptionist;
         default: throw new Error('Invalid role');
     }
 };
@@ -73,10 +71,9 @@ const roleCheck = async (req, res, next) => {
         
         // Define route access based on roles
         const roleRouteAccess = {
-            student: ['/student', '/student.html', '/chatbot.html', '/profile', '/courses'],
-            teacher: ['/teacher', '/teacher.html', '/chatbot.html', '/classes', '/assignments'],
-            receptionist: ['/receptionist', '/receptionist.html', '/chatbot.html', '/students', '/registrations'],
-            manager: ['/admin', '/admin.html', '/chatbot.html', '/dashboard', '/reports', '/settings']
+            student: ['/student', '/student.html', '/profile', '/courses'],
+            teacher: ['/teacher', '/teacher.html', '/classes', '/assignments'],
+            manager: ['/admin', '/admin.html', '/dashboard', '/reports', '/settings']
         };
         
         // Check if user has access to the requested route
@@ -93,7 +90,6 @@ const roleCheck = async (req, res, next) => {
                 }
                 break;
             case 'teacher':
-            case 'receptionist':
             case 'manager':
                 if (!user.isActive) {
                     return res.status(403).json({
@@ -129,7 +125,6 @@ const roleCheck = async (req, res, next) => {
         const roleRedirects = {
             student: '/student.html',
             teacher: '/teacher.html',
-            receptionist: '/receptionist.html',
             manager: '/admin.html'
         };
         
