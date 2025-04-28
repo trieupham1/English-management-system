@@ -4,6 +4,9 @@ const router = express.Router();
 const studentController = require('../controllers/studentController');
 const { protect, authorize } = require('../middleware/auth');
 
+// Get student dashboard data
+router.get('/dashboard', protect, studentController.getStudentDashboard);
+
 // Get all students (receptionist, teacher, manager only)
 router.get('/', protect, authorize('receptionist', 'teacher', 'manager'), studentController.getAllStudents);
 

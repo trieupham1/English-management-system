@@ -2,6 +2,178 @@ const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Assignment = require('../models/Assignment');
 
+
+
+
+// Get student dashboard data
+exports.getStudentDashboard = async (req, res) => {
+    try {
+        // Get the student ID from the authenticated user
+        const studentId = req.user._id;
+        
+        // Fetch the student with course information
+        const student = await Student.findById(studentId)
+            .populate('studentInfo.courses');
+        
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        // Get student's courses
+        const courseIds = student.studentInfo.courses.map(course => course._id);
+        
+        // Get upcoming classes (assuming you have a Schedule or Class model)
+        const upcomingClasses = await Schedule.find({
+            course: { $in: courseIds },
+            startTime: { $gte: new Date() }
+        })
+        .sort('startTime')
+        .limit(5)
+        .populate('course', 'name')
+        .populate('teacher', 'firstName lastName');
+        
+        // Format classes for frontend
+        const formattedClasses = upcomingClasses.map(cls => {
+            const today = new Date().toDateString();
+            const classDate = new Date(cls.startTime).toDateString();
+            const isToday = today === classDate;
+            
+            return {
+                name: cls.course.name,
+                startTime: formatTime(cls.startTime),
+                endTime: formatTime(cls.endTime),
+                teacher: `${cls.teacher.firstName} ${cls.teacher.lastName}`,
+                room: cls.room,
+                isToday,
+                dayName: isToday ? 'Today' : getDayName(cls.startTime)
+            };
+        });
+        
+        // Get next class
+        const nextClass = formattedClasses.length > 0 ? {
+            name: formattedClasses[0].name,
+            startsIn: getTimeUntil(upcomingClasses[0].startTime)
+        } : null;
+        
+        // Get student's assignments
+        const assignments = await Assignment.find({
+            course: { $in: courseIds }
+        })
+        .sort('dueDate')
+        .limit(5);
+        
+        // Format assignments and determine their status
+        const formattedAssignments = assignments.map(assignment => {
+            let status = 'pending';
+            
+            // Check if assignment is completed by this student
+            const studentSubmission = assignment.submissions.find(
+                sub => sub.student.toString() === studentId.toString()
+            );
+            
+            if (studentSubmission && studentSubmission.submittedAt) {
+                status = 'completed';
+            } else if (new Date(assignment.dueDate) < new Date()) {
+                status = 'overdue';
+            }
+            
+            return {
+                title: assignment.title,
+                dueDate: assignment.dueDate,
+                status
+            };
+        });
+        
+        // Calculate course progress
+        const courseProgress = await Promise.all(
+            student.studentInfo.courses.map(async (course) => {
+                const assignments = await Assignment.find({ course: course._id });
+                
+                const totalAssignments = assignments.length;
+                const completedAssignments = assignments.filter(assignment => 
+                    assignment.submissions.some(
+                        sub => sub.student.toString() === studentId.toString() && sub.submittedAt
+                    )
+                ).length;
+                
+                const progress = totalAssignments > 0
+                    ? Math.round((completedAssignments / totalAssignments) * 100)
+                    : 0;
+                
+                return {
+                    name: course.name,
+                    progress
+                };
+            })
+        );
+        
+        // Get announcements (assuming you have an Announcement model)
+        const announcements = await Announcement.find()
+            .sort('-date')
+            .limit(3);
+        
+        const formattedAnnouncements = announcements.map(announcement => ({
+            title: announcement.title,
+            content: announcement.content,
+            date: announcement.date
+        }));
+        
+        // Return all dashboard data
+        res.status(200).json({
+            success: true,
+            data: {
+                firstName: student.firstName,
+                nextClass,
+                upcomingClasses: formattedClasses,
+                assignments: formattedAssignments,
+                courseProgress,
+                announcements: formattedAnnouncements
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Helper functions
+function formatTime(date) {
+    return new Date(date).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+function getDayName(date) {
+    return new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function getTimeUntil(futureDate) {
+    const now = new Date();
+    const future = new Date(futureDate);
+    const diffMs = future - now;
+    
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHrs < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins} minutes`;
+    } else if (diffHrs < 24) {
+        return `${diffHrs} hours`;
+    } else {
+        const diffDays = Math.floor(diffHrs / 24);
+        return `${diffDays} days`;
+    }
+}
 // Get all students
 exports.getAllStudents = async (req, res) => {
     try {

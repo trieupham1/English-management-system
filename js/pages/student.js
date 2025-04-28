@@ -66,9 +66,8 @@ function initTabNavigation() {
         });
     }
 }
-
 function loadStudentDashboard() {
-    ELC.apiRequest('/api/student/dashboard', 'GET')
+    ELC.apiRequest('/api/students/dashboard', 'GET')
         .then(response => {
             if (response.success) {
                 updateDashboardData(response.data);
