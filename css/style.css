@@ -1349,6 +1349,275 @@ textarea.form-control {
     flex: 1;
 }
 
+/* Loading Animation Styles */
+@keyframes pulse {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }
+  
+  .loading-container {
+    position: relative;
+    width: 100%;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loading-spinner {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(30, 64, 175, 0.2);
+    border-radius: 50%;
+    border-top-color: #1e40af;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .loading-text {
+    color: #1e40af;
+    font-weight: 500;
+    animation: pulse 1.5s infinite;
+  }
+  
+  /* Skeleton loading screens */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 25%,
+      #f8f8f8 50%,
+      #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+  }
+  
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+  
+  .skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  
+  .skeleton-text.sm {
+    width: 30%;
+  }
+  
+  .skeleton-text.md {
+    width: 50%;
+  }
+  
+  .skeleton-text.lg {
+    width: 80%;
+  }
+  
+  .skeleton-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .skeleton-card {
+    display: flex;
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+  }
+  
+  .skeleton-image {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+  }
+  
+  .skeleton-content {
+    flex: 1;
+  }
+  
+  /* Toast notifications */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+  }
+  
+  .toast {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(120%);
+    animation: slide-in 0.3s forwards;
+  }
+  
+  .toast-success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+  }
+  
+  .toast-error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-left: 4px solid #ef4444;
+  }
+  
+  .toast-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+    border-left: 4px solid #f59e0b;
+  }
+  
+  .toast-info {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border-left: 4px solid #0284c7;
+  }
+  
+  .toast-icon {
+    margin-right: 10px;
+    font-size: 18px;
+  }
+  
+  .toast-message {
+    flex: 1;
+  }
+  
+  .toast-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+    opacity: 0.7;
+  }
+  
+  .toast-close:hover {
+    opacity: 1;
+  }
+  
+  @keyframes slide-in {
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  @keyframes slide-out {
+    to {
+      transform: translateX(120%);
+    }
+  }
+  
+  /* Empty state styling with more visual appeal */
+  .empty-state {
+    padding: 60px 40px;
+    text-align: center;
+    background-color: #f9fafc;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px dashed #cbd5e1;
+  }
+  
+  .empty-state i {
+    font-size: 64px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    opacity: 0.7;
+  }
+  
+  .empty-state h3 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #475569;
+  }
+  
+  .empty-state p {
+    color: #64748b;
+    margin-bottom: 25px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Data loading overlay */
+  .data-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  
+  /* Better dropdown select styling */
+  .form-select {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .form-select select {
+    appearance: none;
+    padding-right: 30px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 15px;
+    cursor: pointer;
+    min-width: 200px;
+  }
+  
+  .form-select::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #333;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
 /* Utility Classes */
 .text-center {
     text-align: center;
