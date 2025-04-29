@@ -18,7 +18,6 @@ const getUserModel = (role) => {
     case 'student': return Student;
     case 'teacher': return Teacher;
     case 'manager': return Manager;
-    case 'receptionist': return Receptionist;
     default: throw new Error('Invalid role');
   }
 };
@@ -208,7 +207,7 @@ const initializeSocket = (server) => {
         });
       } else {
         // For managers and receptionists, notify all staff
-        socket.to('role:manager').to('role:receptionist').to('role:teacher').emit('user status', {
+        socket.to('role:manager').to('role:teacher').emit('user status', {
           userId: socket.user._id,
           name: socket.user.fullName,
           role: socket.user.role,
@@ -264,7 +263,7 @@ const initializeSocket = (server) => {
         });
       } else {
         // For managers and receptionists, notify all staff
-        socket.to('role:manager').to('role:receptionist').to('role:teacher').emit('user status', {
+        socket.to('role:manager').to('role:teacher').emit('user status', {
           userId: socket.user._id,
           name: socket.user.fullName,
           role: socket.user.role,
