@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const UserSchema = new mongoose.Schema({
+const StudentSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
@@ -27,16 +27,15 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    role: {
+    avatar: {
         type: String,
-        enum: ['student', 'teacher', 'receptionist', 'manager'],
-        required: true
+        default: 'default-student-avatar.png'
     },
-    // Fields specific to students
     studentInfo: {
         studentId: {
             type: String,
-            sparse: true
+            unique: true,
+            required: true
         },
         dateOfBirth: Date,
         enrollmentDate: {
@@ -45,7 +44,8 @@ const UserSchema = new mongoose.Schema({
         },
         currentLevel: {
             type: String,
-            enum: ['beginner', 'elementary', 'intermediate', 'upper-intermediate', 'advanced', 'proficient']
+            enum: ['beginner', 'elementary', 'intermediate', 'upper-intermediate', 'advanced', 'proficient'],
+            required: true
         },
         courses: [{
             type: mongoose.Schema.Types.ObjectId,
@@ -60,46 +60,15 @@ const UserSchema = new mongoose.Schema({
             enum: ['active', 'inactive', 'pending'],
             default: 'pending'
         },
-        assignments: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Assignment'
-        }],
         progress: {
             type: Number,
             default: 0
+        },
+        guardianInfo: {
+            name: String,
+            contactNumber: String,
+            relationship: String
         }
-    },
-    // Fields specific to teachers
-    teacherInfo: {
-        teacherId: {
-            type: String,
-            sparse: true
-        },
-        specialization: {
-            type: String,
-            enum: ['general', 'business', 'ielts', 'toefl', 'children', 'conversation']
-        },
-        qualifications: [String],
-        classes: [{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Course'
-        }],
-        schedule: [{
-            day: {
-                type: String,
-                enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-            },
-            startTime: String,
-            endTime: String,
-            course: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Course'
-            }
-        }]
-    },
-    avatar: {
-        type: String,
-        default: 'default-avatar.png'
     },
     lastLogin: {
         type: Date,
@@ -120,14 +89,11 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Pre-save middleware to hash password
-UserSchema.pre('save', async function(next) {
-    // Only hash the password if it's modified (or new)
+StudentSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
     
     try {
-        // Generate a salt
         const salt = await bcrypt.genSalt(10);
-        // Hash the password along with the new salt
         this.password = await bcrypt.hash(this.password, salt);
         next();
     } catch (error) {
@@ -135,16 +101,18 @@ UserSchema.pre('save', async function(next) {
     }
 });
 
-// Method to compare passwords
-UserSchema.methods.comparePassword = async function(candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+// Method to compare password
+StudentSchema.methods.comparePassword = async function(candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to return user info without sensitive data
-UserSchema.methods.toJSON = function() {
-    const user = this.toObject();
-    delete user.password;
-    return user;
+StudentSchema.methods.toJSON = function() {
+    const student = this.toObject();
+    delete student.password;
+    return student;
 };
+StudentSchema.index({ username: 1 }, { unique: true });
 
-module.exports = mongoose.model('User', UserSchema);
+
+module.exports = mongoose.model('Student', StudentSchema);

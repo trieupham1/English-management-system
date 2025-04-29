@@ -1,3 +1,4 @@
+
 /**
  * Common utility functions for the English Learning Center frontend
  */

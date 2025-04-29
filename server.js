@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const socketIo = require('socket.io');
 const http = require('http');
 const dotenv = require('dotenv');
 const colors = require('colors');
@@ -16,7 +15,6 @@ dotenv.config();
 const authRoutes = require('./server/routes/auth');
 const courseRoutes = require('./server/routes/courses');
 const lessonRoutes = require('./server/routes/lessons');
-const chatbotRoutes = require('./server/routes/chatbot');
 const settingsRoutes = require('./server/routes/settings');
 const studentRoutes = require('./server/routes/students');
 const teacherRoutes = require('./server/routes/teachers');
@@ -24,10 +22,6 @@ const teacherRoutes = require('./server/routes/teachers');
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
-
-// Initialize Socket.io
-const { initializeSocket } = require('./server/config/socket');
-const io = initializeSocket(server);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -56,7 +50,6 @@ app.use(express.static(path.join(__dirname, '/')));
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
-app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
@@ -79,16 +72,8 @@ app.get('/teacher', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/teacher.html'));
 });
 
-app.get('/receptionist', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/receptionist.html'));
-});
-
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/admin.html'));
-});
-
-app.get('/chatbot', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/chatbot.html'));
 });
 
 // Serve index.html from views directory if the route exists

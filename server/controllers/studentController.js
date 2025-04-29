@@ -1,12 +1,183 @@
-const User = require('../models/User');
+const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Assignment = require('../models/Assignment');
-const mongoose = require('mongoose');
 
+
+
+
+// Get student dashboard data
+exports.getStudentDashboard = async (req, res) => {
+    try {
+        // Get the student ID from the authenticated user
+        const studentId = req.user._id;
+        
+        // Fetch the student with course information
+        const student = await Student.findById(studentId)
+            .populate('studentInfo.courses');
+        
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        // Get student's courses
+        const courseIds = student.studentInfo.courses.map(course => course._id);
+        
+        // Get upcoming classes (assuming you have a Schedule or Class model)
+        const upcomingClasses = await Schedule.find({
+            course: { $in: courseIds },
+            startTime: { $gte: new Date() }
+        })
+        .sort('startTime')
+        .limit(5)
+        .populate('course', 'name')
+        .populate('teacher', 'firstName lastName');
+        
+        // Format classes for frontend
+        const formattedClasses = upcomingClasses.map(cls => {
+            const today = new Date().toDateString();
+            const classDate = new Date(cls.startTime).toDateString();
+            const isToday = today === classDate;
+            
+            return {
+                name: cls.course.name,
+                startTime: formatTime(cls.startTime),
+                endTime: formatTime(cls.endTime),
+                teacher: `${cls.teacher.firstName} ${cls.teacher.lastName}`,
+                room: cls.room,
+                isToday,
+                dayName: isToday ? 'Today' : getDayName(cls.startTime)
+            };
+        });
+        
+        // Get next class
+        const nextClass = formattedClasses.length > 0 ? {
+            name: formattedClasses[0].name,
+            startsIn: getTimeUntil(upcomingClasses[0].startTime)
+        } : null;
+        
+        // Get student's assignments
+        const assignments = await Assignment.find({
+            course: { $in: courseIds }
+        })
+        .sort('dueDate')
+        .limit(5);
+        
+        // Format assignments and determine their status
+        const formattedAssignments = assignments.map(assignment => {
+            let status = 'pending';
+            
+            // Check if assignment is completed by this student
+            const studentSubmission = assignment.submissions.find(
+                sub => sub.student.toString() === studentId.toString()
+            );
+            
+            if (studentSubmission && studentSubmission.submittedAt) {
+                status = 'completed';
+            } else if (new Date(assignment.dueDate) < new Date()) {
+                status = 'overdue';
+            }
+            
+            return {
+                title: assignment.title,
+                dueDate: assignment.dueDate,
+                status
+            };
+        });
+        
+        // Calculate course progress
+        const courseProgress = await Promise.all(
+            student.studentInfo.courses.map(async (course) => {
+                const assignments = await Assignment.find({ course: course._id });
+                
+                const totalAssignments = assignments.length;
+                const completedAssignments = assignments.filter(assignment => 
+                    assignment.submissions.some(
+                        sub => sub.student.toString() === studentId.toString() && sub.submittedAt
+                    )
+                ).length;
+                
+                const progress = totalAssignments > 0
+                    ? Math.round((completedAssignments / totalAssignments) * 100)
+                    : 0;
+                
+                return {
+                    name: course.name,
+                    progress
+                };
+            })
+        );
+        
+        // Get announcements (assuming you have an Announcement model)
+        const announcements = await Announcement.find()
+            .sort('-date')
+            .limit(3);
+        
+        const formattedAnnouncements = announcements.map(announcement => ({
+            title: announcement.title,
+            content: announcement.content,
+            date: announcement.date
+        }));
+        
+        // Return all dashboard data
+        res.status(200).json({
+            success: true,
+            data: {
+                firstName: student.firstName,
+                nextClass,
+                upcomingClasses: formattedClasses,
+                assignments: formattedAssignments,
+                courseProgress,
+                announcements: formattedAnnouncements
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Helper functions
+function formatTime(date) {
+    return new Date(date).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+function getDayName(date) {
+    return new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function getTimeUntil(futureDate) {
+    const now = new Date();
+    const future = new Date(futureDate);
+    const diffMs = future - now;
+    
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHrs < 1) {
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        return `${diffMins} minutes`;
+    } else if (diffHrs < 24) {
+        return `${diffHrs} hours`;
+    } else {
+        const diffDays = Math.floor(diffHrs / 24);
+        return `${diffDays} days`;
+    }
+}
 // Get all students
 exports.getAllStudents = async (req, res) => {
     try {
-        const students = await User.find({ role: 'student' })
+        const students = await Student.find()
             .select('-password')
             .select('-__v');
         
@@ -28,11 +199,11 @@ exports.getAllStudents = async (req, res) => {
 // Get a single student
 exports.getStudent = async (req, res) => {
     try {
-        const student = await User.findById(req.params.id)
+        const student = await Student.findById(req.params.id)
             .select('-password')
             .select('-__v');
         
-        if (!student || student.role !== 'student') {
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
@@ -57,11 +228,17 @@ exports.getStudent = async (req, res) => {
 exports.createStudent = async (req, res) => {
     try {
         // Check if student with this email already exists
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) {
+        const existingStudent = await Student.findOne({ 
+            $or: [
+                { email: req.body.email },
+                { username: req.body.username }
+            ]
+        });
+        
+        if (existingStudent) {
             return res.status(400).json({
                 success: false,
-                message: 'User with this email already exists'
+                message: 'Student with this email or username already exists'
             });
         }
         
@@ -69,17 +246,21 @@ exports.createStudent = async (req, res) => {
         const studentId = 'ST' + Math.floor(10000 + Math.random() * 90000);
         
         // Create student
-        const student = await User.create({
+        const student = new Student({
             ...req.body,
-            role: 'student',
             studentInfo: {
                 ...req.body.studentInfo,
-                studentId
+                studentId,
+                status: 'pending',
+                enrollmentDate: new Date()
             }
         });
         
+        await student.save();
+        
         res.status(201).json({
             success: true,
+            message: 'Student created successfully',
             data: student
         });
     } catch (error) {
@@ -95,19 +276,14 @@ exports.createStudent = async (req, res) => {
 // Update a student
 exports.updateStudent = async (req, res) => {
     try {
-        // Prevent role change
-        if (req.body.role && req.body.role !== 'student') {
-            return res.status(400).json({
-                success: false,
-                message: 'Cannot change role'
-            });
-        }
-        
-        const student = await User.findByIdAndUpdate(
+        const student = await Student.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true }
-        ).select('-password');
+            { 
+                new: true, 
+                runValidators: true 
+            }
+        );
         
         if (!student) {
             return res.status(404).json({
@@ -118,6 +294,7 @@ exports.updateStudent = async (req, res) => {
         
         res.status(200).json({
             success: true,
+            message: 'Student updated successfully',
             data: student
         });
     } catch (error) {
@@ -133,37 +310,24 @@ exports.updateStudent = async (req, res) => {
 // Delete a student
 exports.deleteStudent = async (req, res) => {
     try {
-        const student = await User.findById(req.params.id);
+        const student = await Student.findByIdAndDelete(req.params.id);
         
-        if (!student || student.role !== 'student') {
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
             });
         }
         
-        // Remove student from all enrolled courses
-        if (student.studentInfo && student.studentInfo.courses) {
-            for (const courseId of student.studentInfo.courses) {
-                await Course.findByIdAndUpdate(
-                    courseId,
-                    { $pull: { students: { student: student._id } } }
-                );
-            }
-        }
-        
-        // Delete student submissions from assignments
-        await Assignment.updateMany(
-            { 'submissions.student': student._id },
-            { $pull: { submissions: { student: student._id } } }
+        // Remove student from courses
+        await Course.updateMany(
+            { 'students.student': req.params.id },
+            { $pull: { students: { student: req.params.id } } }
         );
-        
-        // Delete the student
-        await student.remove();
         
         res.status(200).json({
             success: true,
-            data: {}
+            message: 'Student deleted successfully'
         });
     } catch (error) {
         console.error('Error deleting student:', error);
@@ -178,18 +342,13 @@ exports.deleteStudent = async (req, res) => {
 // Get student's courses
 exports.getStudentCourses = async (req, res) => {
     try {
-        const student = await User.findById(req.params.id)
-            .select('studentInfo.courses')
+        const student = await Student.findById(req.params.id)
             .populate({
                 path: 'studentInfo.courses',
-                select: 'name description level category schedule startDate endDate teacher status',
-                populate: {
-                    path: 'teacher',
-                    select: 'fullName email'
-                }
+                select: 'name description level category'
             });
         
-        if (!student || student.role !== 'student') {
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
@@ -214,47 +373,24 @@ exports.getStudentCourses = async (req, res) => {
 // Get student's assignments
 exports.getStudentAssignments = async (req, res) => {
     try {
-        // First get all courses the student is enrolled in
-        const student = await User.findById(req.params.id)
-            .select('studentInfo.courses');
-            
-        if (!student || student.role !== 'student') {
+        const student = await Student.findById(req.params.id);
+        
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
             });
         }
         
-        // Get all assignments for these courses
+        // Get assignments for student's courses
         const assignments = await Assignment.find({
             course: { $in: student.studentInfo.courses }
-        }).populate('course', 'name').populate('lesson', 'title');
-        
-        // Add submission status for the student
-        const assignmentsWithStatus = assignments.map(assignment => {
-            const submission = assignment.submissions.find(
-                sub => sub.student.toString() === req.params.id
-            );
-            
-            return {
-                _id: assignment._id,
-                title: assignment.title,
-                description: assignment.description,
-                course: assignment.course,
-                lesson: assignment.lesson,
-                dueDate: assignment.dueDate,
-                totalPoints: assignment.totalPoints,
-                submissionStatus: submission ? 'Submitted' : 'Not Submitted',
-                grade: submission && submission.grade ? submission.grade : null,
-                feedback: submission && submission.feedback ? submission.feedback : null,
-                isLate: submission && submission.isLate ? true : false
-            };
-        });
+        }).populate('course', 'name');
         
         res.status(200).json({
             success: true,
-            count: assignmentsWithStatus.length,
-            data: assignmentsWithStatus
+            count: assignments.length,
+            data: assignments
         });
     } catch (error) {
         console.error('Error fetching student assignments:', error);
@@ -269,54 +405,41 @@ exports.getStudentAssignments = async (req, res) => {
 // Get student's progress
 exports.getStudentProgress = async (req, res) => {
     try {
-        const student = await User.findById(req.params.id)
-            .select('studentInfo.courses');
-            
-        if (!student || student.role !== 'student') {
+        const student = await Student.findById(req.params.id)
+            .populate('studentInfo.courses');
+        
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
             });
         }
         
-        // Get courses with progress information
-        const courses = await Course.find({
-            _id: { $in: student.studentInfo.courses }
-        }).select('name level category startDate endDate');
-        
-        // Get assignments and calculate completion
-        const courseProgress = await Promise.all(courses.map(async (course) => {
-            // Get all assignments for this course
-            const assignments = await Assignment.find({ course: course._id });
-            
-            // Count total assignments
-            const totalAssignments = assignments.length;
-            
-            // Count completed assignments
-            const completedAssignments = assignments.reduce((count, assignment) => {
-                const submission = assignment.submissions.find(
-                    sub => sub.student.toString() === req.params.id && sub.grade
-                );
-                return submission ? count + 1 : count;
-            }, 0);
-            
-            // Calculate progress percentage
-            const progressPercentage = totalAssignments > 0
-                ? Math.round((completedAssignments / totalAssignments) * 100)
-                : 0;
-            
-            return {
-                _id: course._id,
-                name: course.name,
-                level: course.level,
-                category: course.category,
-                startDate: course.startDate,
-                endDate: course.endDate,
-                totalAssignments,
-                completedAssignments,
-                progressPercentage
-            };
-        }));
+        // Calculate progress for each course
+        const courseProgress = await Promise.all(
+            student.studentInfo.courses.map(async (course) => {
+                const assignments = await Assignment.find({ course: course._id });
+                
+                const totalAssignments = assignments.length;
+                const completedAssignments = assignments.filter(assignment => 
+                    assignment.submissions.some(
+                        sub => sub.student.toString() === student._id.toString() && sub.grade
+                    )
+                ).length;
+                
+                const progressPercentage = totalAssignments > 0
+                    ? Math.round((completedAssignments / totalAssignments) * 100)
+                    : 0;
+                
+                return {
+                    courseId: course._id,
+                    courseName: course.name,
+                    totalAssignments,
+                    completedAssignments,
+                    progressPercentage
+                };
+            })
+        );
         
         res.status(200).json({
             success: true,
@@ -338,16 +461,18 @@ exports.updateAttendance = async (req, res) => {
         const { studentId } = req.params;
         const { courseId, date, status } = req.body;
         
-        const student = await User.findById(studentId);
-        if (!student || student.role !== 'student') {
+        const student = await Student.findById(studentId);
+        
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
             });
         }
         
-        // Check if student is enrolled in the course
+        // Find the course
         const course = await Course.findById(courseId);
+        
         if (!course) {
             return res.status(404).json({
                 success: false,
@@ -355,45 +480,38 @@ exports.updateAttendance = async (req, res) => {
             });
         }
         
-        const enrollment = course.students.find(
+        // Find student's enrollment in the course
+        const studentEnrollment = course.students.find(
             s => s.student.toString() === studentId
         );
         
-        if (!enrollment) {
+        if (!studentEnrollment) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not enrolled in this course'
             });
         }
         
-        // Initialize attendance array if it doesn't exist
-        if (!enrollment.attendance) {
-            enrollment.attendance = [];
-        }
-        
-        // Find existing attendance record for this date
-        const attendanceIndex = enrollment.attendance.findIndex(
+        // Update or add attendance record
+        const attendanceIndex = studentEnrollment.attendance.findIndex(
             a => new Date(a.date).toDateString() === new Date(date).toDateString()
         );
         
         if (attendanceIndex !== -1) {
             // Update existing record
-            enrollment.attendance[attendanceIndex].status = status;
+            studentEnrollment.attendance[attendanceIndex].status = status;
         } else {
             // Add new record
-            enrollment.attendance.push({
-                date,
-                status
-            });
+            studentEnrollment.attendance.push({ date, status });
         }
         
-        // Update attendance percentage
-        const totalClasses = enrollment.attendance.length;
-        const presentClasses = enrollment.attendance.filter(
+        // Calculate attendance percentage
+        const totalClasses = studentEnrollment.attendance.length;
+        const presentClasses = studentEnrollment.attendance.filter(
             a => a.status === 'present'
         ).length;
         
-        enrollment.attendancePercentage = totalClasses > 0
+        studentEnrollment.attendancePercentage = totalClasses > 0
             ? Math.round((presentClasses / totalClasses) * 100)
             : 0;
         
@@ -401,7 +519,8 @@ exports.updateAttendance = async (req, res) => {
         
         res.status(200).json({
             success: true,
-            data: enrollment
+            message: 'Attendance updated successfully',
+            data: studentEnrollment
         });
     } catch (error) {
         console.error('Error updating attendance:', error);
@@ -416,8 +535,7 @@ exports.updateAttendance = async (req, res) => {
 // Get pending student registrations
 exports.getPendingRegistrations = async (req, res) => {
     try {
-        const pendingStudents = await User.find({
-            role: 'student',
+        const pendingStudents = await Student.find({
             'studentInfo.status': 'pending'
         }).select('-password');
         
@@ -439,9 +557,9 @@ exports.getPendingRegistrations = async (req, res) => {
 // Approve student registration
 exports.approveRegistration = async (req, res) => {
     try {
-        const student = await User.findById(req.params.id);
+        const student = await Student.findById(req.params.id);
         
-        if (!student || student.role !== 'student') {
+        if (!student) {
             return res.status(404).json({
                 success: false,
                 message: 'Student not found'
@@ -453,6 +571,7 @@ exports.approveRegistration = async (req, res) => {
         
         res.status(200).json({
             success: true,
+            message: 'Student registration approved',
             data: student
         });
     } catch (error) {
@@ -464,5 +583,3 @@ exports.approveRegistration = async (req, res) => {
         });
     }
 };
-
-module.exports = exports;

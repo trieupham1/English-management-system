@@ -12,10 +12,21 @@ const ChatbotMessage = require('../models/ChatbotMessage');
 // Connect to MongoDB
 const connectDB = require('./db');
 
-// Function to hash password
-const hashPassword = async (password) => {
-  const salt = await bcrypt.genSalt(10);
-  return await bcrypt.hash(password, salt);
+// Function to create user with hashed password
+const createUser = async (userData) => {
+  try {
+    // Use synchronous salt and hash generation for consistency
+    const salt = bcrypt.genSaltSync(12);
+    const hashedPassword = bcrypt.hashSync('password123', salt);
+    
+    return await User.create({
+      ...userData,
+      password: hashedPassword
+    });
+  } catch (error) {
+    console.error(`Error creating user ${userData.username}:`, error);
+    throw error;
+  }
 };
 
 // Seed the database with example data
@@ -34,14 +45,9 @@ const seedDatabase = async () => {
     await ChatbotMessage.deleteMany({});
     
     console.log('Database cleared, starting seed process...');
-    
-    // Create users
-    const hashedPassword = await hashPassword('password123');
-    
     // Create manager
-    const manager = await User.create({
+    const manager = await createUser({
       username: 'admin',
-      password: hashedPassword,
       fullName: 'Admin User',
       email: 'admin@englishcenter.com',
       phone: '+84 901 234 567',
@@ -49,9 +55,8 @@ const seedDatabase = async () => {
     });
     
     // Create receptionist
-    const receptionist = await User.create({
+    const receptionist = await createUser({
       username: 'reception',
-      password: hashedPassword,
       fullName: 'Lisa Chen',
       email: 'reception@englishcenter.com',
       phone: '+84 902 345 678',
@@ -59,9 +64,8 @@ const seedDatabase = async () => {
     });
     
     // Create teachers
-    const teacher1 = await User.create({
+    const teacher1 = await createUser({
       username: 'teacher1',
-      password: hashedPassword,
       fullName: 'Sarah Williams',
       email: 'sarah@englishcenter.com',
       phone: '+84 903 456 789',
@@ -74,9 +78,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const teacher2 = await User.create({
+    const teacher2 = await createUser({
       username: 'teacher2',
-      password: hashedPassword,
       fullName: 'John Davis',
       email: 'john@englishcenter.com',
       phone: '+84 904 567 890',
@@ -89,9 +92,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const teacher3 = await User.create({
+    const teacher3 = await createUser({
       username: 'teacher3',
-      password: hashedPassword,
       fullName: 'Emma Wilson',
       email: 'emma@englishcenter.com',
       phone: '+84 905 678 901',
@@ -105,9 +107,8 @@ const seedDatabase = async () => {
     });
     
     // Create students
-    const student1 = await User.create({
+    const student1 = await createUser({
       username: 'student1',
-      password: hashedPassword,
       fullName: 'Emily Parker',
       email: 'emily@example.com',
       phone: '+84 906 789 012',
@@ -124,9 +125,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const student2 = await User.create({
+    const student2 = await createUser({
       username: 'student2',
-      password: hashedPassword,
       fullName: 'Michael Johnson',
       email: 'michael@example.com',
       phone: '+84 907 890 123',
@@ -143,9 +143,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const student3 = await User.create({
+    const student3 = await createUser({
       username: 'student3',
-      password: hashedPassword,
       fullName: 'Sarah Williams',
       email: 'sarahw@example.com',
       phone: '+84 908 901 234',
@@ -162,9 +161,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const student4 = await User.create({
+    const student4 = await createUser({
       username: 'student4',
-      password: hashedPassword,
       fullName: 'David Chen',
       email: 'david@example.com',
       phone: '+84 909 012 345',
@@ -181,9 +179,8 @@ const seedDatabase = async () => {
       }
     });
     
-    const student5 = await User.create({
+    const student5 = await createUser({
       username: 'student5',
-      password: hashedPassword,
       fullName: 'Jessica Lee',
       email: 'jessica@example.com',
       phone: '+84 910 123 456',
