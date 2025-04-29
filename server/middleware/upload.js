@@ -85,6 +85,8 @@ const fileFilter = (req, file, cb) => {
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'image/jpeg',
             'image/png',
+            'application/x-rar-compressed',
+            'application/x-7z-compressed',
             'text/plain'
         ];
     } else {
