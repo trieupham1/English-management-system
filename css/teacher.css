@@ -14,17 +14,6 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar Styles */
-.sidebar {
-    width: 250px;
-    background-color: #1e40af;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    height: 100vh;
-}
-
 .logo {
     padding: 20px;
     display: flex;
@@ -416,4 +405,147 @@ textarea.form-control {
 .tab.active {
     background-color: #1e40af;
     color: white;
+}
+
+/* Form Balance Adjustments */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+/* Consistent Card Styling */
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.card-header h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 15px;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.half-width {
+    flex: 1;
+}
+
+/* File Upload Area */
+.file-upload {
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    padding: 25px 20px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f9fafb;
+    margin-bottom: 0;
+}
+
+.file-upload i {
+    font-size: 32px;
+    color: #1e40af;
+    margin-bottom: 10px;
+}
+
+.file-upload p {
+    color: #666;
+    margin: 0;
+}
+
+.file-upload:hover {
+    border-color: #1e40af;
+    background-color: #f0f7ff;
+}
+
+/* Form Textareas */
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Submit Buttons */
+.btn {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #1e40af;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1c3879;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+    margin-top: 0;
+}
+
+/* Ensure the forms and buttons align perfectly */
+#uploadMaterialForm, #createAssignmentForm {
+    display: flex;
+    flex-direction: column;
+}
+
+#uploadMaterialForm .form-group:last-of-type,
+#createAssignmentForm .form-group:last-of-type {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
 }

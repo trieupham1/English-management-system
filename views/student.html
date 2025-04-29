@@ -15,53 +15,46 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <div class="logo-circle">E</div>
-                <h1>English Center</h1>
-            </div>
-            
-            <div class="menu">
-                <a href="#" class="menu-item active" data-section="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#" class="menu-item" data-section="schedule">
-                    <i class="fas fa-calendar"></i>
-                    <span>Schedule</span>
-                </a>
-                <a href="#" class="menu-item" data-section="courses">
-                    <i class="fas fa-book"></i>
-                    <span>Courses</span>
-                </a>
-                <a href="#" class="menu-item" data-section="materials">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Materials</span>
-                </a>
-                <a href="#" class="menu-item" data-section="assignments">
-                    <i class="fas fa-tasks"></i>
-                    <span>Assignments</span>
-                </a>
-            </div>
-            
-            <div class="menu" style="margin-top: auto;">
-                <a href="login.html" class="menu-item">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </div>
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-circle">E</div>
+        <h1>English Center</h1>
+    </div>
+    
+    <div class="main-menu">
+        <a href="#" class="menu-item active" data-section="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="menu-item" data-section="courses">
+            <i class="fas fa-book"></i>
+            <span>Courses</span>
+        </a>
+        <a href="#" class="menu-item" data-section="materials">
+            <i class="fas fa-file-alt"></i>
+            <span>Materials</span>
+        </a>
+        <a href="#" class="menu-item" data-section="assignments">
+            <i class="fas fa-tasks"></i>
+            <span>Assignments</span>
+        </a>
+    </div>
+    
+    <div class="bottom-menu">
+        <a href="login.html" class="menu-item">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</div>
         
         <!-- Main Content -->
         <div class="main-content">
             <div class="header">
                 <h1>Student Dashboard</h1>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </div>
+
                     <div class="user-avatar" id="user-avatar">S</div>
                     <div>
                         <div id="user-name">John Smith</div>
@@ -70,395 +63,259 @@
                 </div>
             </div>
             
-            <!-- Dashboard Section -->
-            <section id="dashboard-section" class="content-section">
-                <div class="welcome-card">
-                    <h2>Welcome back, <span id="welcome-name">John</span>!</h2>
-                    <p>Your next class "<span id="next-class">Conversational English</span>" starts in <span id="next-class-time">2 hours</span>. Don't forget to complete your pending assignments.</p>
+<!-- Dashboard Section -->
+<section id="dashboard-section" class="content-section">
+    <div class="welcome-card">
+        <h2>Welcome back, <span id="welcome-name">John</span>!</h2>
+        <p>Your next class "<span id="next-class">Conversational English</span>" starts in <span id="next-class-time">2 hours</span>. Don't forget to complete your pending assignments.</p>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3>Announcements</h3>
+        </div>
+        <div class="announcement-item">
+            <h4>Holiday Schedule</h4>
+            <div class="announcement-date">Apr 12, 2025</div>
+            <p>Center will be closed on April 30 for public holiday.</p>
+        </div>
+        <div class="announcement-item">
+            <h4>New Learning Resources</h4>
+            <div class="announcement-date">Apr 10, 2025</div>
+            <p>Additional practice materials have been uploaded for IELTS courses.</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3>My Assignments</h3>
+            <a href="#" class="view-all" id="assignments-view-all">View All</a>
+        </div>
+        <div class="dashboard-assignments">
+            <div class="dashboard-assignment-item">
+                <div class="assignment-content">
+                    <div class="assignment-title">Writing Essay</div>
+                    <div class="assignment-due">Due: Apr 18, 2025</div>
                 </div>
-                
-                <div class="grid">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Upcoming Classes</h3>
-                            <a href="#" class="view-all">View All</a>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">Conversational English</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
-                                </div>
-                            </div>
-                            <div class="class-status status-upcoming">Today</div>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">IELTS Preparation</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 103</div>
-                                </div>
-                            </div>
-                            <div class="class-status status-upcoming">Tomorrow</div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>My Assignments</h3>
-                            <a href="#" class="view-all">View All</a>
-                        </div>
-                        <div class="assignment-item assignment-pending">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Writing Essay</div>
-                                <div class="assignment-status status-pending">Pending</div>
-                            </div>
-                            <div class="assignment-due">Due: Apr 18, 2025</div>
-                        </div>
-                        <div class="assignment-item assignment-completed">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Grammar Quiz</div>
-                                <div class="assignment-status status-completed">Completed</div>
-                            </div>
-                            <div class="assignment-due">Due: Apr 20, 2025</div>
-                        </div>
-                        <div class="assignment-item assignment-overdue">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Vocabulary Test</div>
-                                <div class="assignment-status status-overdue">Overdue</div>
-                            </div>
-                            <div class="assignment-due">Due: Apr 10, 2025</div>
-                        </div>
-                    </div>
+                <div class="status-indicator pending-indicator"></div>
+            </div>
+            <div class="dashboard-assignment-item">
+                <div class="assignment-content">
+                    <div class="assignment-title">Grammar Quiz</div>
+                    <div class="assignment-due">Due: Apr 20, 2025</div>
                 </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Course Progress</h3>
-                    </div>
-                    <div class="progress-section">
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <div>Conversational English</div>
-                                <div>75%</div>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 75%;"></div>
-                            </div>
-                        </div>
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <div>IELTS Preparation</div>
-                                <div>40%</div>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar" style="width: 40%;"></div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="status-indicator completed-indicator"></div>
+            </div>
+            <div class="dashboard-assignment-item">
+                <div class="assignment-content">
+                    <div class="assignment-title">Vocabulary Test</div>
+                    <div class="assignment-due">Due: Apr 10, 2025</div>
                 </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Announcements</h3>
-                    </div>
-                    <div class="announcement-item">
-                        <h4>Holiday Schedule</h4>
-                        <div class="announcement-date">Apr 12, 2025</div>
-                        <p>Center will be closed on April 30 for public holiday.</p>
-                    </div>
-                    <div class="announcement-item">
-                        <h4>New Learning Resources</h4>
-                        <div class="announcement-date">Apr 10, 2025</div>
-                        <p>Additional practice materials have been uploaded for IELTS courses.</p>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Schedule Section -->
-            <section id="schedule-section" class="content-section" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Class Schedule</h3>
-                    </div>
-                    <div class="schedule-container">
-                        <div class="day-header">
-                            <h4>Monday</h4>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">Conversational English</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="day-header">
-                            <h4>Tuesday</h4>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">IELTS Preparation</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 103</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="day-header">
-                            <h4>Thursday</h4>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">Conversational English</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 14:00 - 15:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 204</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="day-header">
-                            <h4>Friday</h4>
-                        </div>
-                        <div class="class-item">
-                            <div class="class-info">
-                                <div class="class-name">IELTS Preparation</div>
-                                <div class="class-details">
-                                    <div class="class-time"><i class="fas fa-clock"></i> 16:00 - 17:30</div>
-                                    <div class="class-teacher"><i class="fas fa-user"></i> John Davis</div>
-                                    <div class="class-room"><i class="fas fa-door-open"></i> Room 103</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <div class="status-indicator overdue-indicator"></div>
+            </div>
+        </div>
+    </div>
+</section>
             
             <!-- Courses Section -->
-            <section id="courses-section" class="content-section" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>My Courses</h3>
-                    </div>
-                    <div class="courses-list">
-                        <div class="course-item">
-                            <div class="course-header">
-                                <h4>Conversational English</h4>
-                                <div class="course-level">Intermediate</div>
-                            </div>
-                            <div class="course-progress">
-                                <div class="progress-label">
-                                    <span>Progress: 75%</span>
-                                </div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 75%;"></div>
-                                </div>
-                            </div>
-                            <div class="course-details">
-                                <div><i class="fas fa-user"></i> Teacher: Sarah Williams</div>
-                                <div><i class="fas fa-calendar"></i> Schedule: Mon, Thu 14:00 - 15:30</div>
-                                <div><i class="fas fa-users"></i> 15 students enrolled</div>
-                            </div>
-                            <div class="course-description">
-                                <p>Improve your spoken English through conversations, role-plays, and discussions on various topics.</p>
-                            </div>
-                            <div class="course-actions">
-                                <button class="btn btn-primary">View Course Details</button>
-                            </div>
-                        </div>
-                        
-                        <div class="course-item">
-                            <div class="course-header">
-                                <h4>IELTS Preparation</h4>
-                                <div class="course-level">Advanced</div>
-                            </div>
-                            <div class="course-progress">
-                                <div class="progress-label">
-                                    <span>Progress: 40%</span>
-                                </div>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 40%;"></div>
-                                </div>
-                            </div>
-                            <div class="course-details">
-                                <div><i class="fas fa-user"></i> Teacher: John Davis</div>
-                                <div><i class="fas fa-calendar"></i> Schedule: Tue, Fri 16:00 - 17:30</div>
-                                <div><i class="fas fa-users"></i> 12 students enrolled</div>
-                            </div>
-                            <div class="course-description">
-                                <p>Comprehensive preparation for the IELTS exam, focusing on all four skills: reading, writing, listening, and speaking.</p>
-                            </div>
-                            <div class="course-actions">
-                                <button class="btn btn-primary">View Course Details</button>
-                            </div>
-                        </div>
-                    </div>
+<section id="courses-section" class="content-section" style="display: none;">
+    <h2 class="section-title">My Courses</h2>
+    
+    <div class="courses-grid">
+        <!-- Course Card 1 -->
+        <div class="course-card">
+            <div class="course-header" style="background-color: #e0f2fe;">
+                <h3>Conversational English</h3>
+                <span class="course-level">Intermediate</span>
+            </div>
+            <div class="course-content">
+                <div class="course-instructor">
+                    <i class="fas fa-user"></i> Teacher: Sarah Williams
                 </div>
-            </section>
+                <div class="course-duration">
+                    <i class="fas fa-calendar"></i> Duration: 3 months
+                </div>
+                <div class="course-description">
+                    <p>Improve your spoken English through conversations, role-plays, and discussions on various topics.</p>
+                </div>
+                <div class="course-actions">
+                    <button class="btn btn-primary view-course-materials" data-course="conversational">View Course Materials</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Course Card 2 -->
+        <div class="course-card">
+            <div class="course-header" style="background-color: #ede9fe;">
+                <h3>IELTS Preparation</h3>
+                <span class="course-level">Advanced</span>
+            </div>
+            <div class="course-content">
+                <div class="course-instructor">
+                    <i class="fas fa-user"></i> Teacher: John Davis
+                </div>
+                <div class="course-duration">
+                    <i class="fas fa-calendar"></i> Duration: 4 months
+                </div>
+                <div class="course-description">
+                    <p>Comprehensive preparation for the IELTS exam, focusing on all four skills: reading, writing, listening, and speaking.</p>
+                </div>
+                <div class="course-actions">
+                    <button class="btn btn-primary view-course-materials" data-course="ielts">View Course Materials</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
             
-            <!-- Materials Section -->
-            <section id="materials-section" class="content-section" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Course Materials</h3>
-                        <div class="filter-dropdown">
-                            <select id="material-filter">
-                                <option value="all">All Courses</option>
-                                <option value="conversational">Conversational English</option>
-                                <option value="ielts">IELTS Preparation</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="materials-list">
-                        <div class="material-item" data-course="conversational">
-                            <div class="material-icon">
-                                <i class="fas fa-file-powerpoint"></i>
-                            </div>
-                            <div class="material-info">
-                                <div class="material-name">Speaking Practice Slides</div>
-                                <div class="material-details">
-                                    <div class="material-course">Conversational English</div>
-                                    <div class="material-date">Apr 15, 2025</div>
-                                </div>
-                            </div>
-                            <div class="material-actions">
-                                <button class="btn btn-primary">Download</button>
-                            </div>
-                        </div>
-                        
-                        <div class="material-item" data-course="conversational">
-                            <div class="material-icon">
-                                <i class="fas fa-file-word"></i>
-                            </div>
-                            <div class="material-info">
-                                <div class="material-name">Idioms and Expressions Handout</div>
-                                <div class="material-details">
-                                    <div class="material-course">Conversational English</div>
-                                    <div class="material-date">Apr 10, 2025</div>
-                                </div>
-                            </div>
-                            <div class="material-actions">
-                                <button class="btn btn-primary">Download</button>
-                            </div>
-                        </div>
-                        
-                        <div class="material-item" data-course="ielts">
-                            <div class="material-icon">
-                                <i class="fas fa-file-pdf"></i>
-                            </div>
-                            <div class="material-info">
-                                <div class="material-name">IELTS Writing Practice Tests</div>
-                                <div class="material-details">
-                                    <div class="material-course">IELTS Preparation</div>
-                                    <div class="material-date">Apr 12, 2025</div>
-                                </div>
-                            </div>
-                            <div class="material-actions">
-                                <button class="btn btn-primary">Download</button>
-                            </div>
-                        </div>
-                        
-                        <div class="material-item" data-course="ielts">
-                            <div class="material-icon">
-                                <i class="fas fa-file-audio"></i>
-                            </div>
-                            <div class="material-info">
-                                <div class="material-name">Listening Practice - Academic</div>
-                                <div class="material-details">
-                                    <div class="material-course">IELTS Preparation</div>
-                                    <div class="material-date">Apr 8, 2025</div>
-                                </div>
-                            </div>
-                            <div class="material-actions">
-                                <button class="btn btn-primary">Download</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+<!-- Materials Section -->
+<section id="materials-section" class="content-section" style="display: none;">
+    <div class="materials-header">
+        <h2 class="section-title">Course Materials</h2>
+        <div class="filter-dropdown">
+            <select id="material-filter" class="form-control">
+                <option value="all">All Courses</option>
+                <option value="conversational">Conversational English</option>
+                <option value="ielts">IELTS Preparation</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="materials-container">
+        <!-- Material Item 1 -->
+        <div class="material-row" data-course="conversational">
+            <div class="material-icon">
+                <i class="fas fa-file-powerpoint"></i>
+            </div>
+            <div class="material-content">
+                <h3 class="material-title">Speaking Practice Slides</h3>
+                <div class="material-subtitle">Conversational English</div>
+                <div class="material-date">Apr 15, 2025</div>
+            </div>
+            <div class="material-action">
+                <button class="btn btn-primary">Download</button>
+            </div>
+        </div>
+        
+        <!-- Material Item 2 -->
+        <div class="material-row" data-course="conversational">
+            <div class="material-icon">
+                <i class="fas fa-file-word"></i>
+            </div>
+            <div class="material-content">
+                <h3 class="material-title">Idioms and Expressions Handout</h3>
+                <div class="material-subtitle">Conversational English</div>
+                <div class="material-date">Apr 10, 2025</div>
+            </div>
+            <div class="material-action">
+                <button class="btn btn-primary">Download</button>
+            </div>
+        </div>
+        
+        <!-- Material Item 3 -->
+        <div class="material-row" data-course="ielts">
+            <div class="material-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="material-content">
+                <h3 class="material-title">IELTS Writing Practice Tests</h3>
+                <div class="material-subtitle">IELTS Preparation</div>
+                <div class="material-date">Apr 12, 2025</div>
+            </div>
+            <div class="material-action">
+                <button class="btn btn-primary">Download</button>
+            </div>
+        </div>
+        
+        <!-- Material Item 4 -->
+        <div class="material-row" data-course="ielts">
+            <div class="material-icon">
+                <i class="fas fa-file-audio"></i>
+            </div>
+            <div class="material-content">
+                <h3 class="material-title">Listening Practice - Academic</h3>
+                <div class="material-subtitle">IELTS Preparation</div>
+                <div class="material-date">Apr 8, 2025</div>
+            </div>
+            <div class="material-action">
+                <button class="btn btn-primary">Download</button>
+            </div>
+        </div>
+    </div>
+</section>
             
-            <!-- Assignments Section -->
-            <section id="assignments-section" class="content-section" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>My Assignments</h3>
-                        <div class="filter-dropdown">
-                            <select id="assignment-filter">
-                                <option value="all">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
-                                <option value="overdue">Overdue</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="assignments-list">
-                        <div class="assignment-item assignment-pending" data-status="pending">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Writing Essay</div>
-                                <div class="assignment-status status-pending">Pending</div>
-                            </div>
-                            <div class="assignment-details">
-                                <div class="assignment-course"><i class="fas fa-book"></i> Conversational English</div>
-                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 18, 2025</div>
-                                <div class="assignment-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                            </div>
-                            <div class="assignment-description">
-                                <p>Write a 300-word essay on the topic "The Importance of Learning English in Today's World".</p>
-                            </div>
-                            <div class="assignment-actions">
-                                <button class="btn btn-primary">Start Assignment</button>
-                            </div>
-                        </div>
-                        
-                        <div class="assignment-item assignment-completed" data-status="completed">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Grammar Quiz</div>
-                                <div class="assignment-status status-completed">Completed</div>
-                            </div>
-                            <div class="assignment-details">
-                                <div class="assignment-course"><i class="fas fa-book"></i> Conversational English</div>
-                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 20, 2025</div>
-                                <div class="assignment-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
-                            </div>
-                            <div class="assignment-description">
-                                <p>Online quiz covering present perfect and present perfect continuous tenses.</p>
-                            </div>
-                            <div class="assignment-actions">
-                                <button class="btn btn-secondary">View Submission</button>
-                            </div>
-                        </div>
-                        
-                        <div class="assignment-item assignment-overdue" data-status="overdue">
-                            <div class="assignment-header">
-                                <div class="assignment-title">Vocabulary Test</div>
-                                <div class="assignment-status status-overdue">Overdue</div>
-                            </div>
-                            <div class="assignment-details">
-                                <div class="assignment-course"><i class="fas fa-book"></i> IELTS Preparation</div>
-                                <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 10, 2025</div>
-                                <div class="assignment-teacher"><i class="fas fa-user"></i> John Davis</div>
-                            </div>
-                            <div class="assignment-description">
-                                <p>Complete the vocabulary test on academic words for IELTS.</p>
-                            </div>
-                            <div class="assignment-actions">
-                                <button class="btn btn-primary">Complete Now</button>
-                            </div>
-                        </div>
-                    </div>
+<!-- Assignments Section -->
+<section id="assignments-section" class="content-section" style="display: none;">
+    <div class="assignments-header">
+        <h2 class="section-title">My Assignments</h2>
+        <div class="filter-dropdown">
+            <select id="assignment-filter" class="form-control">
+                <option value="all">All Courses</option>
+                <option value="conversational">Conversational English</option>
+                <option value="ielts">IELTS Preparation</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="assignments-container">
+        <!-- Assignment 1 (Pending) -->
+        <div class="assignment-row" data-course="conversational">
+            <div class="assignment-status-indicator status-pending"></div>
+            <div class="assignment-content">
+                <h3 class="assignment-title">Writing Essay</h3>
+                <div class="assignment-details">
+                    <div class="assignment-course"><i class="fas fa-book"></i> Conversational English</div>
+                    <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 18, 2025</div>
+                    <div class="assignment-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
                 </div>
-            </section>
+                <div class="assignment-description">
+                    <p>Write a 300-word essay on the topic "The Importance of Learning English in Today's World".</p>
+                </div>
+                <div class="assignment-actions">
+                    <button class="btn btn-primary">Start Assignment</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assignment 2 (Completed) -->
+        <div class="assignment-row" data-course="conversational">
+            <div class="assignment-status-indicator status-completed"></div>
+            <div class="assignment-content">
+                <h3 class="assignment-title">Grammar Quiz <span class="status-label completed">Completed</span></h3>
+                <div class="assignment-details">
+                    <div class="assignment-course"><i class="fas fa-book"></i> Conversational English</div>
+                    <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 20, 2025</div>
+                    <div class="assignment-teacher"><i class="fas fa-user"></i> Sarah Williams</div>
+                </div>
+                <div class="assignment-description">
+                    <p>Online quiz covering present perfect and present perfect continuous tenses.</p>
+                </div>
+                <div class="assignment-actions">
+                    <button class="btn btn-secondary">View Submission</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assignment 3 (Overdue) -->
+        <div class="assignment-row" data-course="ielts">
+            <div class="assignment-status-indicator status-overdue"></div>
+            <div class="assignment-content">
+                <h3 class="assignment-title">Vocabulary Test <span class="status-label overdue">Overdue</span></h3>
+                <div class="assignment-details">
+                    <div class="assignment-course"><i class="fas fa-book"></i> IELTS Preparation</div>
+                    <div class="assignment-due"><i class="fas fa-calendar"></i> Due: Apr 10, 2025</div>
+                    <div class="assignment-teacher"><i class="fas fa-user"></i> John Davis</div>
+                </div>
+                <div class="assignment-description">
+                    <p>Complete the vocabulary test on academic words for IELTS.</p>
+                </div>
+                <div class="assignment-actions">
+                    <button class="btn btn-primary">Complete Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
         </div>
     </div>
     
