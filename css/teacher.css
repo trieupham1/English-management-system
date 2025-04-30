@@ -243,8 +243,20 @@ body {
     color: #333;
 }
 
+.form-text {
+    height: 140px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background-color: #f9fafc;
+}
+
 .form-control {
     width: 100%;
+    height: 40px;
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -399,16 +411,77 @@ textarea.form-control {
     gap: 8px;
 }
 
-/* Filter Bar Styling */
+/* Add this CSS to your teacher.css file */
+
+/* Filter bar with better spacing */
 .filter-bar {
     display: flex;
+    flex-wrap: wrap;
     gap: 15px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 15px;
-    background-color: #f9fafc;
+    padding: 20px;
+    background-color: #f9fafb;
     border-radius: 8px;
+    align-items: center;
+}
+
+/* Dropdown selects */
+.filter-bar select,
+.filter-dropdown select {
+    min-width: 200px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-color: white;
+    cursor: pointer;
+}
+
+/* Search bar */
+.search-bar {
+    display: flex;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px 0 0 6px;
+    font-size: 14px;
+}
+
+.search-bar button {
+    padding: 0 15px;
+    background-color: #1e40af;
+    color: white;
+    border: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+}
+
+.search-bar button:hover {
+    background-color: #1c3879;
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-bar {
+        width: 100%;
+    }
+    
+    .filter-bar select {
+        width: 100%;
+    }
 }
 
 .search-bar {

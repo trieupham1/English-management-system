@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - English Learning Center</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/components/common.js"></script>
     <script src="js/pages/admin.js"></script>
@@ -33,15 +34,11 @@
                 </a>
                 <a href="#" class="menu-item" data-section="teachers">
                     <i class="fas fa-chalkboard-teacher"></i>
-                    <span>Teachers</span>
+                    <span>Teachers Placement</span>
                 </a>
                 <a href="#" class="menu-item" data-section="students">
                     <i class="fas fa-user-graduate"></i>
-                    <span>Students</span>
-                </a>
-                <a href="#" class="menu-item" data-section="payments">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Payments</span>
+                    <span>Students Placement</span>
                 </a>
                 <a href="#" class="menu-item" data-section="reports">
                     <i class="fas fa-chart-bar"></i>
@@ -66,10 +63,6 @@
             <div class="header">
                 <h1>Admin</h1>
                 <div class="user-info">
-                    <div class="notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">5</span>
-                    </div>
                     <div class="user-avatar">A</div>
                     <div>
                         <div id="user-name">Admin User</div>
@@ -112,114 +105,129 @@
                     
                     <div class="stat-card">
                         <div class="stat-icon stat-purple">
-                            <i class="fas fa-money-bill-wave"></i>
+                            <i class="fas fa-file-alt"></i>
                         </div>
-                        <div class="stat-value" id="stat-revenue">$45K</div>
-                        <div class="stat-label">Monthly Revenue</div>
+                        <div class="stat-value" id="stat-reports">15</div>
+                        <div class="stat-label">New Reports</div>
                     </div>
                 </div>
                 
-                <div class="grid">
-                    <!-- Quick Actions -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Quick Actions</h3>
-                        </div>
-                        <div class="quick-actions">
-                            <button class="btn btn-primary" id="btn-add-user"><i class="fas fa-user-plus"></i> Add User</button>
-                            <button class="btn btn-primary" id="btn-add-course"><i class="fas fa-book-medical"></i> Create Course</button>
-                            <button class="btn btn-primary" id="btn-pending-approvals"><i class="fas fa-tasks"></i> Pending Approvals</button>
-                            <button class="btn btn-primary" id="btn-system-backup"><i class="fas fa-cloud-download-alt"></i> Backup System</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Activity -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Recent Activity</h3>
-                            <a href="#" class="view-all">View All</a>
-                        </div>
-                        <div class="activity-list" id="recent-activities">
-                            <div class="activity-item">
-                                <div class="activity-icon"><i class="fas fa-user-plus"></i></div>
-                                <div class="activity-details">
-                                    <div class="activity-title">New student registered</div>
-                                    <div class="activity-time">10 minutes ago</div>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon"><i class="fas fa-money-bill"></i></div>
-                                <div class="activity-details">
-                                    <div class="activity-title">Payment received</div>
-                                    <div class="activity-time">45 minutes ago</div>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon"><i class="fas fa-book"></i></div>
-                                <div class="activity-details">
-                                    <div class="activity-title">New course created</div>
-                                    <div class="activity-time">2 hours ago</div>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon"><i class="fas fa-user-edit"></i></div>
-                                <div class="activity-details">
-                                    <div class="activity-title">User profile updated</div>
-                                    <div class="activity-time">4 hours ago</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+  <!-- Create Forms -->
+<div class="dashboard-forms">
+    <!-- Create User Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Create User</h3>
+        </div>
+        <form id="create-user-form">
+            <div class="form-fields">
+                <div class="form-group">
+                    <label for="user-name">Name</label>
+                    <input type="text" id="user-name" class="form-control" placeholder="Enter full name" required>
                 </div>
                 
-                <!-- System Health -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>System Health</h3>
-                    </div>
-                    <div class="system-health">
-                        <div class="health-item">
-                            <div class="health-label">Database Status</div>
-                            <div class="health-status">
-                                <span class="status-badge status-healthy"><i class="fas fa-check-circle"></i> Healthy</span>
-                            </div>
-                        </div>
-                        <div class="health-item">
-                            <div class="health-label">Server Load</div>
-                            <div class="health-status">
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 25%;"></div>
-                                </div>
-                                <span class="health-value">25%</span>
-                            </div>
-                        </div>
-                        <div class="health-item">
-                            <div class="health-label">Storage Used</div>
-                            <div class="health-status">
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar" style="width: 42%;"></div>
-                                </div>
-                                <span class="health-value">42%</span>
-                            </div>
-                        </div>
-                        <div class="health-item">
-                            <div class="health-label">Last Backup</div>
-                            <div class="health-status">
-                                <span class="status-badge status-warning"><i class="fas fa-exclamation-circle"></i> 5 days ago</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label for="user-role">Role</label>
+                    <select id="user-role" class="form-control" required>
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
                 </div>
+                
+                <div class="form-group">
+                    <label for="user-email">Email</label>
+                    <input type="email" id="user-email" class="form-control" placeholder="Enter email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-status">Status</label>
+                    <select id="user-status" class="form-control" required>
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-block">Create User</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Create Course Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Create Course</h3>
+        </div>
+        <form id="create-course-form">
+            <div class="form-fields">
+                <div class="form-group">
+                    <label for="course-name">Course Name</label>
+                    <input type="text" id="course-name" class="form-control" placeholder="Enter course name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="course-level">Level</label>
+                    <select id="course-level" class="form-control" required>
+                        <option value="">Select Level</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="upper-intermediate">Upper-intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="course-teacher">Teacher</label>
+                    <select id="course-teacher" class="form-control" required>
+                        <option value="">Select Teacher</option>
+                        <option value="1">Sarah Williams</option>
+                        <option value="2">John Davis</option>
+                        <option value="3">Emma Wilson</option>
+                        <option value="4">David Brown</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="course-category">Category</label>
+                    <select id="course-category" class="form-control" required>
+                        <option value="">Select Category</option>
+                        <option value="general">General English</option>
+                        <option value="business">Business English</option>
+                        <option value="ielts">IELTS Preparation</option>
+                        <option value="toefl">TOEFL Preparation</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="course-max-students">Max Students</label>
+                    <input type="number" id="course-max-students" class="form-control" min="1" max="30" value="20" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="course-status">Status</label>
+                    <select id="course-status" class="form-control" required>
+                        <option value="active">Active</option>
+                        <option value="upcoming">Upcoming</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-block">Create Course</button>
+            </div>
+        </form>
+    </div>
+</div>
             </section>
             
             <!-- User Management Section -->
-            <section id="users-section" class="content-section" style="display: none;">
+            <section id="users-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
                         <h3>User Management</h3>
-                        <button class="btn btn-primary" id="btn-create-user">
-                            <i class="fas fa-plus"></i> Create User
-                        </button>
                     </div>
                     <div class="user-filters">
                         <div class="search-bar">
@@ -229,8 +237,6 @@
                         <div class="filter-options">
                             <select id="filter-role">
                                 <option value="">All Roles</option>
-                                <option value="manager">Manager</option>
-                                <option value="receptionist">Receptionist</option>
                                 <option value="teacher">Teacher</option>
                                 <option value="student">Student</option>
                             </select>
@@ -283,19 +289,6 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>U12347</td>
-                                    <td>Lisa Chen</td>
-                                    <td>Receptionist</td>
-                                    <td>lisa@example.com</td>
-                                    <td><span class="badge badge-success">Active</span></td>
-                                    <td>Mar 10, 2023</td>
-                                    <td>
-                                        <button class="action-btn" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="action-btn" title="Disable"><i class="fas fa-ban"></i></button>
-                                        <button class="action-btn" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
                                     <td>U12348</td>
                                     <td>Michael Johnson</td>
                                     <td>Student</td>
@@ -320,13 +313,10 @@
             </section>
             
             <!-- Course Management Section -->
-            <section id="courses-section" class="content-section" style="display: none;">
+            <section id="courses-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
                         <h3>Course Management</h3>
-                        <button class="btn btn-primary" id="btn-create-course">
-                            <i class="fas fa-plus"></i> Create Course
-                        </button>
                     </div>
                     <div class="course-filters">
                         <div class="search-bar">
@@ -426,37 +416,28 @@
                 </div>
             </section>
             
-            <!-- Additional sections (teachers, students, payments, reports, settings) would be added here -->
-            
-            <!-- Placeholder for other sections -->
-            <section id="teachers-section" class="content-section" style="display: none;">
+            <!-- Teachers Placement Section -->
+            <section id="teachers-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Teacher Management</h3>
+                        <h3>Teachers Placement</h3>
                     </div>
-                    <p>Teacher management interface will be displayed here.</p>
+                    <p>Teacher placement interface will be displayed here.</p>
                 </div>
             </section>
             
-            <section id="students-section" class="content-section" style="display: none;">
+            <!-- Students Placement Section -->
+            <section id="students-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Student Management</h3>
+                        <h3>Students Placement</h3>
                     </div>
-                    <p>Student management interface will be displayed here.</p>
+                    <p>Student placement interface will be displayed here.</p>
                 </div>
             </section>
             
-            <section id="payments-section" class="content-section" style="display: none;">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Payment Management</h3>
-                    </div>
-                    <p>Payment management interface will be displayed here.</p>
-                </div>
-            </section>
-            
-            <section id="reports-section" class="content-section" style="display: none;">
+            <!-- Reports Section -->
+            <section id="reports-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
                         <h3>Reports</h3>
@@ -465,7 +446,8 @@
                 </div>
             </section>
             
-            <section id="settings-section" class="content-section" style="display: none;">
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section">
                 <div class="card">
                     <div class="card-header">
                         <h3>System Settings</h3>
@@ -494,80 +476,6 @@
                                 </div>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="center-hours">Working Hours</label>
-                                <input type="text" id="center-hours" class="form-control" value="Monday-Friday: 8:00 AM - 8:00 PM, Saturday: 9:00 AM - 5:00 PM">
-                            </div>
-                            
-                            <hr>
-                            
-                            <h4>System Configuration</h4>
-                            
-                            <div class="grid">
-                                <div class="form-group">
-                                    <label for="max-students">Max Students Per Class</label>
-                                    <input type="number" id="max-students" class="form-control" value="20">
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="currency">Currency Symbol</label>
-                                    <input type="text" id="currency" class="form-control" value="₫">
-                                </div>
-                            </div>
-                            
-                            <div class="grid">
-                                <div class="form-group">
-                                    <label for="system-language">Default Language</label>
-                                    <select id="system-language" class="form-control">
-                                        <option value="en" selected>English</option>
-                                        <option value="vi">Vietnamese</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="system-theme">System Theme</label>
-                                    <select id="system-theme" class="form-control">
-                                        <option value="light" selected>Light</option>
-                                        <option value="dark">Dark</option>
-                                        <option value="blue">Blue</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Features</label>
-                                <div class="checkbox-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="enable-chatbot" checked> Enable Chatbot
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="enable-online-learning" checked> Enable Online Learning
-                                    </label>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="enable-auto-backup" checked> Enable Automatic Backups
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            
-                            <h4>Notifications</h4>
-                            
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="email-notifications" checked> Email Notifications
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="sms-notifications"> SMS Notifications
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="registration-alerts" checked> New Registration Alerts
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="payment-alerts" checked> Payment Alerts
-                                </label>
-                            </div>
-                            
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary">Save Settings</button>
                                 <button type="button" class="btn btn-secondary">Reset</button>
@@ -578,29 +486,23 @@
             </section>
         </div>
     </div>
-
-    <!-- Modals would go here (for create user, edit user, etc.) -->
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Authentication check
-            if (!ELC || !ELC.isAuthenticated()) {
+            if (typeof ELC !== 'undefined' && (!ELC.isAuthenticated())) {
                 window.location.href = 'login.html';
                 return;
             }
             
-            // Role check
-            if (!ELC.hasRole('manager')) {
-                window.location.href = 'login.html?error=unauthorized';
-                return;
-            }
-            
             // Initialize user profile
-            const user = ELC.getCurrentUser();
-            if (user) {
-                document.getElementById('user-name').textContent = user.fullName;
-                document.getElementById('admin-name').textContent = user.fullName.split(' ')[0];
-                document.querySelector('.user-avatar').textContent = user.fullName.charAt(0);
+            if (typeof ELC !== 'undefined') {
+                const user = ELC.getCurrentUser();
+                if (user) {
+                    document.getElementById('user-name').textContent = user.fullName;
+                    document.getElementById('admin-name').textContent = user.fullName.split(' ')[0];
+                    document.querySelector('.user-avatar').textContent = user.fullName.charAt(0);
+                }
             }
             
             // Tab navigation
@@ -628,21 +530,34 @@
                 });
             });
             
+            // Form submission handlers
+            document.getElementById('create-user-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Add user creation logic here
+                alert('User created successfully!');
+            });
+            
+            document.getElementById('create-course-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Add course creation logic here
+                alert('Course created successfully!');
+            });
+            
+            // Settings form
+            document.getElementById('system-settings-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Save settings logic here
+                alert('Settings saved successfully!');
+            });
+            
             // Logout functionality
             document.getElementById('logout-btn').addEventListener('click', function(e) {
                 e.preventDefault();
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
+                if (typeof ELC !== 'undefined') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                }
                 window.location.href = 'login.html';
-            });
-            
-            // Add any other initialization code here
-            
-            // For the system settings form
-            document.getElementById('system-settings-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Here you would collect all form data and send to your API
-                alert('Settings saved successfully!');
             });
         });
     </script>

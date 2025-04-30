@@ -1,0 +1,121 @@
+.content-section {
+    display: none;
+}
+
+#dashboard-section {
+    display: block;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.dashboard-forms {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 25px;
+}
+
+@media (max-width: 992px) {
+    .dashboard-forms {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-actions {
+    margin-top: 20px;
+}
+
+.dashboard-forms .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-header {
+    flex-shrink: 0;
+}
+
+#create-user-form, #create-course-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.form-fields {
+    flex-grow: 1;
+}
+
+.form-actions {
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.btn-primary {
+    background-color: #1e40af;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #1c3879;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* Style for dropdown statuses */
+.user-status, .course-status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.status-active {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-inactive {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.status-upcoming {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
