@@ -4,40 +4,42 @@ const router = express.Router();
 const studentController = require('../controllers/studentController');
 const { protect, authorize } = require('../middleware/auth');
 
-// Get student dashboard data
+// Special routes (must come BEFORE parameter routes)
 router.get('/dashboard', protect, studentController.getStudentDashboard);
+router.get('/assignments', protect, studentController.getStudentAssignments);
+router.get('/materials', protect, studentController.getCourseMaterials);
+router.get('/registrations/pending', protect, authorize('receptionist', 'manager'), studentController.getPendingRegistrations);
+router.put('/registrations/:id/approve', protect, authorize('receptionist', 'manager'), studentController.approveRegistration);
+router.get('/courses', protect, studentController.getStudentCourses);
 
 // Get all students (receptionist, teacher, manager only)
 router.get('/', protect, authorize('receptionist', 'teacher', 'manager'), studentController.getAllStudents);
 
-// Get a single student
+// Parameter routes (must come AFTER special routes)
 router.get('/:id', protect, studentController.getStudent);
-
-// Create a new student (receptionist and manager only)
 router.post('/', protect, authorize('receptionist', 'manager'), studentController.createStudent);
-
-// Update a student
 router.put('/:id', protect, studentController.updateStudent);
-
-// Delete a student (manager only)
 router.delete('/:id', protect, authorize('manager'), studentController.deleteStudent);
-
-// Get student's courses
 router.get('/:id/courses', protect, studentController.getStudentCourses);
-
-// Get student's assignments
 router.get('/:id/assignments', protect, studentController.getStudentAssignments);
-
-// Get student's progress
 router.get('/:id/progress', protect, studentController.getStudentProgress);
-
-// Update student attendance
-router.put('/:studentId/attendance', protect, authorize('teacher', 'manager'), studentController.updateAttendance);
-
-// Get pending student registrations (receptionist and manager only)
-router.get('/registrations/pending', protect, authorize('receptionist', 'manager'), studentController.getPendingRegistrations);
-
-// Approve student registration (receptionist and manager only)
-router.put('/registrations/:id/approve', protect, authorize('receptionist', 'manager'), studentController.approveRegistration);
-
+router.put('/:studentId/attendance', protect, authorize('teacher', 'manager'), studentController.updateAttendance); 
+// Add this debug endpoint to your student routes
+router.get('/debug-courses', async (req, res) => {
+    try {
+        const courses = await Course.find().limit(5);
+        res.status(200).json({
+            success: true,
+            count: courses.length,
+            data: courses
+        });
+    } catch (error) {
+        console.error('Debug courses error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+});
 module.exports = router;

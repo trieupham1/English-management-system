@@ -1,0 +1,74 @@
+[
+  {
+    "_id": "681333f473460c095068d899",
+    "username": "student1",
+    "password": "$2b$10$wws/C/ekdUyHdbWAnppVD.iLU6jQY5n0HhZ0daP87U77GddYvQWMa",
+    "fullName": "John Smith",
+    "email": "john.smith@example.com",
+    "phone": "123-456-7890",
+    "avatar": "default-student-avatar.png",
+    "studentInfo": {
+      "studentId": "ST10001",
+      "dateOfBirth": "1998-05-15T00:00:00.000Z",
+      "currentLevel": "intermediate",
+      "status": "active",
+      "enrollmentDate": "2025-05-01T08:42:28.771Z",
+      "courses": [],
+      "attendance": 0,
+      "progress": 0
+    },
+    "lastLogin": "2025-05-01T18:48:16.772Z",
+    "isActive": true,
+    "createdAt": "2025-05-01T08:42:28.771Z",
+    "updatedAt": "2025-05-01T08:42:28.771Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f473460c095068d89b",
+    "username": "student3",
+    "password": "$2b$10$MA7lDPVFMfbloiiMQhnCPuAf0/Tq.RouxP0LbhFNeTVAcM8/lefOm",
+    "fullName": "Michael Chen",
+    "email": "michael.chen@example.com",
+    "phone": "345-678-9012",
+    "avatar": "default-student-avatar.png",
+    "studentInfo": {
+      "studentId": "ST10003",
+      "dateOfBirth": "1995-11-08T00:00:00.000Z",
+      "currentLevel": "advanced",
+      "status": "active",
+      "enrollmentDate": "2025-05-01T08:42:28.773Z",
+      "courses": [],
+      "attendance": 0,
+      "progress": 0
+    },
+    "lastLogin": null,
+    "isActive": true,
+    "createdAt": "2025-05-01T08:42:28.773Z",
+    "updatedAt": "2025-05-01T08:42:28.773Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f473460c095068d89a",
+    "username": "student2",
+    "password": "$2b$10$v.JnO.ji58X4OfzimBLzQOsCSBQvBnsBVS5ApmgosSCB6SsSlWYJO",
+    "fullName": "Emily Johnson",
+    "email": "emily.johnson@example.com",
+    "phone": "234-567-8901",
+    "avatar": "default-student-avatar.png",
+    "studentInfo": {
+      "studentId": "ST10002",
+      "dateOfBirth": "2000-03-22T00:00:00.000Z",
+      "currentLevel": "beginner",
+      "status": "active",
+      "enrollmentDate": "2025-05-01T08:42:28.772Z",
+      "courses": [],
+      "attendance": 0,
+      "progress": 0
+    },
+    "lastLogin": null,
+    "isActive": true,
+    "createdAt": "2025-05-01T08:42:28.772Z",
+    "updatedAt": "2025-05-01T08:42:28.772Z",
+    "__v": 0
+  }
+]

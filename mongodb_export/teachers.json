@@ -1,0 +1,83 @@
+[
+  {
+    "_id": "681333f573460c095068d8a8",
+    "username": "teacher3",
+    "password": "$2b$10$ax185NyCxUahxhXYrF9D/eAf06dEIRwdou/.dGEBfnmK7zF8gmSBS",
+    "fullName": "Laura Martinez",
+    "email": "laura.martinez@example.com",
+    "phone": "678-901-2345",
+    "avatar": "default-teacher-avatar.png",
+    "teacherInfo": {
+      "teacherId": "T20003",
+      "specialization": "children",
+      "qualifications": [
+        "Bachelor in Education",
+        "Specialized in Young Learners"
+      ],
+      "certifications": []
+    },
+    "classes": [],
+    "salary": 0,
+    "lastLogin": null,
+    "isActive": true,
+    "schedule": [],
+    "hireDate": "2025-05-01T08:42:29.343Z",
+    "createdAt": "2025-05-01T08:42:29.343Z",
+    "updatedAt": "2025-05-01T08:42:29.343Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f573460c095068d8a6",
+    "username": "teacher1",
+    "password": "$2b$10$AjMnRsCW.99joQCcY31l0ufthEjdcAOx30AtHG17glRN1jwWJ1FBa",
+    "fullName": "Sarah Wilson",
+    "email": "sarah.wilson@example.com",
+    "phone": "456-789-0123",
+    "avatar": "default-teacher-avatar.png",
+    "teacherInfo": {
+      "teacherId": "T20001",
+      "specialization": "ielts",
+      "qualifications": [
+        "Masters in TESOL",
+        "Cambridge CELTA"
+      ],
+      "certifications": []
+    },
+    "classes": [],
+    "salary": 0,
+    "lastLogin": "2025-05-01T18:39:20.553Z",
+    "isActive": true,
+    "schedule": [],
+    "hireDate": "2025-05-01T08:42:29.342Z",
+    "createdAt": "2025-05-01T08:42:29.342Z",
+    "updatedAt": "2025-05-01T08:42:29.342Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f573460c095068d8a7",
+    "username": "teacher2",
+    "password": "$2b$10$gw3QJLDhL54U5wbLC2fsVOpLLYVxdIxQsCAaG/jV7CZB6NTzZIZ8K",
+    "fullName": "David Brown",
+    "email": "david.brown@example.com",
+    "phone": "567-890-1234",
+    "avatar": "default-teacher-avatar.png",
+    "teacherInfo": {
+      "teacherId": "T20002",
+      "specialization": "business",
+      "qualifications": [
+        "Bachelor in English Literature",
+        "TEFL Certification"
+      ],
+      "certifications": []
+    },
+    "classes": [],
+    "salary": 0,
+    "lastLogin": null,
+    "isActive": true,
+    "schedule": [],
+    "hireDate": "2025-05-01T08:42:29.342Z",
+    "createdAt": "2025-05-01T08:42:29.342Z",
+    "updatedAt": "2025-05-01T08:42:29.342Z",
+    "__v": 0
+  }
+]

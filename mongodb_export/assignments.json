@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "681324ef882466c61f898605",
+    "title": "IELTS Writing Task 2 Practice",
+    "course": "681324ee882466c61f8985ee",
+    "instructions": "Write an essay responding to the following IELTS question...",
+    "attachments": [],
+    "createdBy": "681324ee882466c61f8985e9",
+    "createdAt": "2025-05-01T07:38:23.326Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ef882466c61f898603",
+    "title": "Introduction Essay",
+    "course": "681324ee882466c61f8985ec",
+    "instructions": "Write a 500-word essay introducing yourself and your English learning goals.",
+    "attachments": [],
+    "createdBy": "681324ee882466c61f8985e8",
+    "createdAt": "2025-05-01T07:38:23.326Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ef882466c61f898604",
+    "title": "Business Email Practice",
+    "course": "681324ee882466c61f8985ed",
+    "instructions": "Draft three professional emails for different business scenarios.",
+    "attachments": [],
+    "createdBy": "681324ee882466c61f8985e8",
+    "createdAt": "2025-05-01T07:38:23.326Z",
+    "__v": 0
+  }
+]

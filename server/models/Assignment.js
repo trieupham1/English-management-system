@@ -1,4 +1,5 @@
-// models/Assignment.js
+// Updated Assignment model to better match your JSON data
+
 const mongoose = require('mongoose');
 
 const SubmissionSchema = new mongoose.Schema({
@@ -42,33 +43,34 @@ const AssignmentSchema = new mongoose.Schema({
         required: [true, 'Please add a title'],
         trim: true
     },
-    description: {
-        type: String,
-        required: [true, 'Please add a description']
-    },
     course: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course',
         required: true
     },
+    instructions: {
+        type: String,
+        default: ''
+    },
     dueDate: {
-        type: Date,
-        required: true
+        type: Date
     },
     totalPoints: {
         type: Number,
-        required: true,
         default: 100
     },
     isActive: {
         type: Boolean,
         default: true
     },
-    attachments: [{
-        title: String,
-        file: String
-    }],
-    submissions: [SubmissionSchema],
+    attachments: {
+        type: Array,
+        default: []
+    },
+    submissions: {
+        type: [SubmissionSchema],
+        default: []
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -88,27 +90,6 @@ const AssignmentSchema = new mongoose.Schema({
 AssignmentSchema.pre('findOneAndUpdate', function(next) {
     this.set({ updatedAt: Date.now() });
     next();
-});
-
-// Virtual for submission count
-AssignmentSchema.virtual('submissionCount').get(function() {
-    return this.submissions.length;
-});
-
-// Virtual for average grade
-AssignmentSchema.virtual('averageGrade').get(function() {
-    if (this.submissions.length === 0) return 0;
-    
-    const validGrades = this.submissions.filter(sub => sub.grade !== undefined);
-    if (validGrades.length === 0) return 0;
-    
-    const totalGrade = validGrades.reduce((sum, sub) => sum + sub.grade, 0);
-    return totalGrade / validGrades.length;
-});
-
-// Virtual for graded count
-AssignmentSchema.virtual('gradedCount').get(function() {
-    return this.submissions.filter(sub => sub.grade !== undefined).length;
 });
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);

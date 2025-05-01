@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "6804a0abf64bd127fdce70db",
+    "centerName": "English Learning Center",
+    "address": "123 Education Street, City, Country",
+    "phone": "+84 123 456 789",
+    "email": "info@englishcenter.com",
+    "workingHours": "Monday-Friday: 8:00 AM - 8:00 PM, Saturday: 9:00 AM - 5:00 PM",
+    "logoUrl": "/images/logo.png",
+    "currencySymbol": "₫",
+    "language": "en",
+    "maxStudentsPerClass": 20,
+    "enableChatbot": true,
+    "enableOnlineLearning": true,
+    "theme": "light",
+    "notificationSettings": {
+      "emailNotifications": true,
+      "smsNotifications": false,
+      "newRegistrationAlert": true,
+      "newPaymentAlert": true,
+      "assignmentReminderAlert": true
+    },
+    "maintenanceMode": false,
+    "maintenanceMessage": "The system is currently under maintenance. Please check back later.",
+    "backupSettings": {
+      "enableAutoBackup": true,
+      "backupFrequency": "weekly",
+      "maxBackups": 5
+    },
+    "updatedBy": "6804a0a6f64bd127fdce709c",
+    "updatedAt": "2025-04-20T07:22:19.229Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "_id": "681333f573460c095068d8ad",
+    "username": "manager1",
+    "password": "$2b$10$4Ja/NGOcWldW5JV9wz.upOlyRcIhgT5hCV289PPUR0fs6mI.DMvze",
+    "fullName": "Robert Taylor",
+    "email": "robert.taylor@example.com",
+    "phone": "890-123-4567",
+    "avatar": "default-manager-avatar.png",
+    "department": "Academic Affairs",
+    "lastLogin": "2025-05-01T18:39:00.502Z",
+    "isActive": true,
+    "permissions": [
+      "view_students",
+      "manage_courses"
+    ],
+    "createdAt": "2025-05-01T08:42:29.613Z",
+    "updatedAt": "2025-05-01T08:42:29.613Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f573460c095068d8ac",
+    "username": "admin",
+    "password": "$2b$10$8Aqb04z4y..8.JhiPxmtjehxpyjOxLDpd89NsPdAU0Iz3Z62iBhsu",
+    "fullName": "Admin User",
+    "email": "admin@example.com",
+    "phone": "789-012-3456",
+    "avatar": "default-manager-avatar.png",
+    "department": "Administration",
+    "lastLogin": "2025-05-01T08:57:42.400Z",
+    "isActive": true,
+    "permissions": [
+      "all"
+    ],
+    "createdAt": "2025-05-01T08:42:29.612Z",
+    "updatedAt": "2025-05-01T08:42:29.612Z",
+    "__v": 0
+  },
+  {
+    "_id": "681333f573460c095068d8ae",
+    "username": "manager2",
+    "password": "$2b$10$jXwZ4XXzxXfrL3slhJc65Ok6yYD1HXHVdYX7p/N.p42zC4r5fZ9vK",
+    "fullName": "Jennifer Lee",
+    "email": "jennifer.lee@example.com",
+    "phone": "901-234-5678",
+    "avatar": "default-manager-avatar.png",
+    "department": "Student Services",
+    "lastLogin": null,
+    "isActive": true,
+    "permissions": [
+      "view_students",
+      "manage_enrollment"
+    ],
+    "createdAt": "2025-05-01T08:42:29.613Z",
+    "updatedAt": "2025-05-01T08:42:29.613Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "_id": "681324ee882466c61f8985ed",
+    "name": "Business Communication",
+    "level": "Intermediate",
+    "category": "Business English",
+    "teacher": "681324ee882466c61f8985e8",
+    "maxStudents": 12,
+    "status": "Active",
+    "students": [
+      "681324ee882466c61f8985f9"
+    ],
+    "createdAt": "2025-05-01T07:38:22.520Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ee882466c61f8985ef",
+    "name": "TOEFL Speaking and Writing",
+    "level": "Upper-intermediate",
+    "category": "TOEFL Preparation",
+    "teacher": "681324ee882466c61f8985e9",
+    "maxStudents": 8,
+    "status": "Active",
+    "students": [],
+    "createdAt": "2025-05-01T07:38:22.521Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ee882466c61f8985ec",
+    "name": "Conversational English 101",
+    "level": "Beginner",
+    "category": "General English",
+    "teacher": "681324ee882466c61f8985e8",
+    "maxStudents": 15,
+    "status": "Active",
+    "students": [
+      "681324ee882466c61f8985f7"
+    ],
+    "createdAt": "2025-05-01T07:38:22.520Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ee882466c61f8985ee",
+    "name": "IELTS Academic Preparation",
+    "level": "Advanced",
+    "category": "IELTS Preparation",
+    "teacher": "681324ee882466c61f8985e9",
+    "maxStudents": 10,
+    "status": "Active",
+    "students": [
+      "681324ee882466c61f8985fb"
+    ],
+    "createdAt": "2025-05-01T07:38:22.521Z",
+    "__v": 0
+  }
+]

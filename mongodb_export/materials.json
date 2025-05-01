@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "681324ef882466c61f89860b",
+    "title": "IELTS Speaking Practice",
+    "course": "681324ee882466c61f8985ee",
+    "type": "Audio",
+    "description": "Sample IELTS speaking test with examiner feedback",
+    "file": "ielts_speaking.mp3",
+    "createdBy": "681324ee882466c61f8985e9",
+    "createdAt": "2025-05-01T07:38:23.385Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ef882466c61f89860c",
+    "title": "TOEFL Structure Tutorial",
+    "course": "681324ee882466c61f8985ef",
+    "type": "Video Link",
+    "description": "A comprehensive overview of the TOEFL test structure",
+    "file": "https://example.com/toefl-tutorial",
+    "createdBy": "681324ee882466c61f8985e9",
+    "createdAt": "2025-05-01T07:38:23.385Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ef882466c61f898609",
+    "title": "Conversation Basics Slides",
+    "course": "681324ee882466c61f8985ec",
+    "type": "Slides",
+    "description": "Introduction to basic conversation structures and greetings",
+    "file": "conversation_basics.pdf",
+    "createdBy": "681324ee882466c61f8985e8",
+    "createdAt": "2025-05-01T07:38:23.385Z",
+    "__v": 0
+  },
+  {
+    "_id": "681324ef882466c61f89860a",
+    "title": "Business Vocabulary List",
+    "course": "681324ee882466c61f8985ed",
+    "type": "Document",
+    "description": "Essential vocabulary for business communications",
+    "file": "business_vocab.docx",
+    "createdBy": "681324ee882466c61f8985e8",
+    "createdAt": "2025-05-01T07:38:23.385Z",
+    "__v": 0
+  }
+]
