@@ -177,6 +177,103 @@
                         </form>
                     </div>
                 </div>
+
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Write New Progress Report</h3>
+                    </div>
+                    <form id="writeReportForm">
+                        <div class="form-group">
+                            <label for="reportType">Report Type</label>
+                            <select id="reportType" class="form-control" required>
+                                <option value="">Select Report Type</option>
+                                <option value="individual">Individual Report</option>
+                                <option value="class">Class Report</option>
+                            </select>
+                        </div>
+                
+                        <div class="form-group">
+                            <label for="selectedClass">Select Class</label>
+                            <select id="selectedClass" class="form-control" required>
+                                <option value="">Choose a class</option>
+                                <option value="conversational">Conversational English</option>
+                                <option value="business">Business English</option>
+                                <option value="beginner">Beginner English</option>
+                                <option value="ielts">IELTS Preparation</option>
+                            </select>
+                        </div>
+                
+                        <div class="form-group">
+                            <label for="reportTitle">Report Title</label>
+                            <input 
+                                type="text" 
+                                id="reportTitle" 
+                                class="form-control" 
+                                placeholder="Enter report title" 
+                                required
+                            >
+                        </div>
+                
+                        <div class="form-group">
+                            <label for="reportDescription">Report Description</label>
+                            <textarea 
+                                id="reportDescription" 
+                                class="form-text" 
+                                placeholder="Provide detailed report description"
+                                rows="4"
+                            ></textarea>
+                        </div>
+                
+                        <div class="form-group">
+                            <label for="reportFile">Attachment (Optional)</label>
+                            <div class="file-upload">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Drag & drop files here or click to browse</p>
+                                <input 
+                                    type="file" 
+                                    id="reportFile" 
+                                    style="display: none;"
+                                >
+                            </div>
+                        </div>
+                
+                        <div class="form-actions">
+                            <button 
+                                type="submit" 
+                                class="btn btn-primary btn-block"
+                            >
+                                Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <script>
+                document.getElementById('writeReportForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Collect form data
+                    const formData = {
+                        reportType: document.getElementById('reportType').value,
+                        selectedClass: document.getElementById('selectedClass').value,
+                        reportTitle: document.getElementById('reportTitle').value,
+                        reportDescription: document.getElementById('reportDescription').value,
+                        reportFile: document.getElementById('reportFile').files[0]
+                    };
+                
+                    // You would typically send this data to a server
+                    console.log('Report Data:', formData);
+                
+                    // Optional: Show a success toast or notification
+                    alert('Report generated successfully!');
+                });
+                
+                // File upload browse trigger
+                document.querySelector('.file-upload').addEventListener('click', function() {
+                    document.getElementById('reportFile').click();
+                });
+                </script>
             </section>
             
             <!-- Materials Section -->

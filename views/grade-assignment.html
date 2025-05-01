@@ -1,0 +1,64 @@
+<!-- grade-assignment.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Assignment</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="header">
+                <h1>Grade Submissions</h1>
+            </div>
+            <div class="card">
+                <div id="submissionList" class="list-container"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const assignmentId = new URLSearchParams(window.location.search).get('id');
+
+            ELC.apiRequest(`/api/assignments/${assignmentId}/submissions`, 'GET')
+                .then(response => {
+                    if (response.success) {
+                        const list = document.getElementById('submissionList');
+                        response.data.forEach(sub => {
+                            const div = document.createElement('div');
+                            div.className = 'list-item';
+                            div.innerHTML = `
+                                <div class="item-content">
+                                    <div class="item-title">${sub.studentName}</div>
+                                    <div class="item-details">
+                                        <a href="${sub.fileUrl}" download>Download File</a>
+                                        <input type="number" placeholder="Points" min="0" max="100" data-id="${sub.id}" />
+                                        <textarea placeholder="Feedback" data-id="${sub.id}"></textarea>
+                                        <button onclick="submitGrade('${sub.id}')" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+                            `;
+                            list.appendChild(div);
+                        });
+                    }
+                });
+        });
+
+        function submitGrade(submissionId) {
+            const points = document.querySelector(`input[data-id="${submissionId}"]`).value;
+            const feedback = document.querySelector(`textarea[data-id="${submissionId}"]`).value;
+
+            ELC.apiRequest(`/api/submissions/${submissionId}/grade`, 'POST', {
+                points, feedback
+            }).then(response => {
+                if (response.success) {
+                    alert('Grade submitted successfully.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
