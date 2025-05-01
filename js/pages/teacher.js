@@ -1,459 +1,566 @@
+// Add this code to your teacher.js file to implement the Grade and Edit buttons
+
+// When the page loads, attach our event handlers to the buttons
 document.addEventListener('DOMContentLoaded', function() {
-    if (!ELC.isAuthenticated()) {
-        window.location.href = 'login.html';
-        return;
-    }
-    
-    if (!ELC.hasRole('teacher')) {
-        window.location.href = 'login.html?error=unauthorized';
-        return;
-    }
-    
-    initTeacherDashboard();
+    // Set up event handlers for assignment actions
+    setupAssignmentButtons();
 });
 
-function initTeacherDashboard() {
-    ELC.initUserProfile();
-    ELC.initLogout();
-    initTabNavigation();
-    loadTeacherDashboard();
-    initUploadMaterialForm();
-    initCreateAssignmentForm();
-    enhanceFileUploads();
-    initStudentAttendance();
-}
-
-function initTabNavigation() {
-    const menuItems = document.querySelectorAll('.menu-item[data-section]');
-    const sections = document.querySelectorAll('.content-section');
-    
-    menuItems.forEach(item => {
-        item.addEventListener('click', function(e) {
+// Set up event handlers for assignment actions
+function setupAssignmentButtons() {
+    // Grade buttons
+    const gradeButtons = document.querySelectorAll('.grade-btn, button:contains("Grade")');
+    gradeButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            const targetSection = this.getAttribute('data-section');
-            
-            menuItems.forEach(mi => mi.classList.remove('active'));
-            this.classList.add('active');
-            
-            sections.forEach(section => {
-                if (section.id === `${targetSection}-section`) {
-                    section.style.display = 'block';
-                } else {
-                    section.style.display = 'none';
-                }
-            });
-            
-            if (targetSection === 'dashboard') {
-                loadTeacherDashboard();
-            } else if (targetSection === 'schedule') {
-                loadScheduleData();
-            } else if (targetSection === 'materials') {
-                loadMaterialsData();
-            } else if (targetSection === 'assignments') {
-                loadAssignmentsData();
-            } else if (targetSection === 'students') {
-                loadStudentsData();
-            } else if (targetSection === 'progress') {
-                loadProgressData();
+            const assignmentId = this.getAttribute('data-id');
+            if (assignmentId) {
+                gradeAssignment(assignmentId);
+            }
+        });
+    });
+
+    // Edit buttons
+    const editButtons = document.querySelectorAll('.edit-btn, button:contains("Edit")');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const assignmentId = this.getAttribute('data-id');
+            if (assignmentId) {
+                editAssignment(assignmentId);
+            }
+        });
+    });
+
+    // Delete buttons
+    const deleteButtons = document.querySelectorAll('.delete-btn, button:contains("Delete")');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const assignmentId = this.getAttribute('data-id');
+            if (assignmentId && confirm('Are you sure you want to delete this assignment?')) {
+                deleteAssignment(assignmentId);
             }
         });
     });
 }
 
-function loadTeacherDashboard() {
-    ELC.apiRequest('/api/teacher/dashboard', 'GET')
-        .then(response => {
-            if (response.success) {
-                updateDashboardData(response.data);
+// Function to handle grading an assignment
+function gradeAssignment(assignmentId) {
+    // Show loading notification
+    ELC.showNotification('Loading submissions...', 'info');
+    
+    // Fetch assignment submissions from API
+    fetch(`/api/assignments/${assignmentId}/submissions`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayGradingModal(data.data);
             } else {
-                console.error('Error loading dashboard data:', response.message);
+                ELC.showNotification('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
-            console.error('Error fetching dashboard data:', error);
+            console.error('Error fetching submissions:', error);
+            ELC.showNotification('Failed to load submissions. Please try again.', 'error');
         });
 }
 
-function updateDashboardData(data) {
-    if (!data) return;
+// Function to display grading modal
+function displayGradingModal(assignmentData) {
+    // Create modal HTML
+    let modalHTML = `
+        <div id="grading-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Grade: ${assignmentData.title}</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="assignment-info">
+                        <p><strong>Class:</strong> ${assignmentData.className}</p>
+                        <p><strong>Due Date:</strong> ${new Date(assignmentData.dueDate).toLocaleDateString()}</p>
+                        <p><strong>Total Points:</strong> ${assignmentData.totalPoints}</p>
+                        <p><strong>Submissions:</strong> ${assignmentData.submissions.length}/${assignmentData.totalStudents}</p>
+                    </div>
+                    <div class="submissions-list">
+    `;
     
-    const welcomeCard = document.querySelector('.welcome-card h2');
-    if (welcomeCard && data.firstName) {
-        welcomeCard.textContent = `Welcome back, ${data.firstName}!`;
-    }
-    
-    const welcomeMessage = document.querySelector('.welcome-card p');
-    if (welcomeMessage && data.stats) {
-        welcomeMessage.textContent = `You have ${data.stats.assignmentsToGrade || 0} assignments to grade and ${data.stats.classesToday || 0} classes today. `;
-        
-        if (data.nextClass) {
-            welcomeMessage.textContent += `Your next class "${data.nextClass.name}" starts in ${data.nextClass.startsIn}.`;
-        }
-    }
-    
-    if (data.todayClasses && data.todayClasses.length > 0) {
-        const classesContainer = document.querySelector('.card:first-of-type .class-item').parentNode;
-        if (classesContainer) {
-            classesContainer.innerHTML = '';
-            
-            data.todayClasses.forEach(cls => {
-                let statusClass = 'status-upcoming';
-                let statusText = 'Upcoming';
-                
-                if (cls.status === 'completed') {
-                    statusClass = 'status-completed';
-                    statusText = 'Completed';
-                }
-                
-                const classItem = document.createElement('div');
-                classItem.className = 'class-item';
-                classItem.innerHTML = `
-                    <div class="class-info">
-                        <div class="class-name">${cls.name}</div>
-                        <div class="class-details">
-                            <div class="class-time"><i class="fas fa-clock"></i> ${cls.startTime} - ${cls.endTime}</div>
-                            <div class="class-room"><i class="fas fa-door-open"></i> ${cls.room}</div>
-                            <div class="class-students"><i class="fas fa-users"></i> ${cls.studentCount} students</div>
+    // Add submissions to modal
+    if (assignmentData.submissions.length === 0) {
+        modalHTML += `<p class="empty-state">No submissions yet.</p>`;
+    } else {
+        assignmentData.submissions.forEach(submission => {
+            modalHTML += `
+                <div class="submission-card">
+                    <div class="submission-header">
+                        <h3>${submission.studentName}</h3>
+                        <p>Submitted: ${new Date(submission.submittedAt).toLocaleString()}</p>
+                    </div>
+                    <div class="submission-content">
+                        ${submission.fileUrl ? 
+                            `<p><a href="${submission.fileUrl}" target="_blank"><i class="fas fa-file"></i> ${submission.fileName}</a></p>` : ''}
+                        <div class="submission-text">
+                            ${submission.content || 'No text content submitted.'}
                         </div>
                     </div>
-                    <div class="class-status ${statusClass}">${statusText}</div>
-                `;
-                
-                classesContainer.appendChild(classItem);
-            });
-        }
+                    <div class="grading-form">
+                        <div class="form-group">
+                            <label for="grade-${submission.studentId}">Grade (out of ${assignmentData.totalPoints})</label>
+                            <input type="number" id="grade-${submission.studentId}" class="form-control" 
+                                min="0" max="${assignmentData.totalPoints}" value="${submission.grade || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="feedback-${submission.studentId}">Feedback</label>
+                            <textarea id="feedback-${submission.studentId}" class="form-control" rows="3">${submission.feedback || ''}</textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary save-grade-btn" 
+                                data-student-id="${submission.studentId}" 
+                                data-assignment-id="${assignmentData.id}">
+                            Save Grade
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
     }
     
-    if (data.students && data.students.length > 0) {
-        const studentList = document.querySelector('.student-list');
-        const classSelector = document.querySelector('.card-header select');
-        
-        if (studentList && classSelector) {
-            if (data.classes && data.classes.length > 0) {
-                classSelector.innerHTML = '';
-                data.classes.forEach(cls => {
-                    const option = document.createElement('option');
-                    option.value = cls.id;
-                    option.textContent = cls.name;
-                    classSelector.appendChild(option);
-                });
+    // Close modal HTML
+    modalHTML += `
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to the page
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer.firstChild);
+    
+    // Get modal element
+    const modal = document.getElementById('grading-modal');
+    
+    // Add modal styles if not already added
+    if (!document.getElementById('modal-styles')) {
+        const styleElement = document.createElement('style');
+        styleElement.id = 'modal-styles';
+        styleElement.textContent = `
+            .modal {
+                display: block;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto;
+                background-color: rgba(0, 0, 0, 0.5);
             }
             
-            studentList.innerHTML = '';
+            .modal-content {
+                background-color: white;
+                margin: 5% auto;
+                padding: 0;
+                width: 80%;
+                max-width: 800px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
             
-            data.students.forEach(student => {
-                const studentItem = document.createElement('div');
-                studentItem.className = 'student-item';
-                studentItem.dataset.id = student.id;
-                studentItem.innerHTML = `
-                    <div class="student-name">${student.name}</div>
-                    <div class="student-attendance">Attendance: ${student.attendanceRate}%</div>
-                    <div class="student-actions">
-                        <button title="Present" data-action="present"><i class="fas fa-check text-green-500"></i></button>
-                        <button title="Absent" data-action="absent"><i class="fas fa-times text-red-500"></i></button>
-                        <button title="Late" data-action="late"><i class="fas fa-clock text-yellow-500"></i></button>
-                    </div>
-                `;
-                
-                studentList.appendChild(studentItem);
-            });
-        }
-    }
-    
-    if (data.assignmentsToGrade && data.assignmentsToGrade.length > 0) {
-        const assignmentsContainer = document.querySelector('.assignment-item').parentNode;
-        if (assignmentsContainer) {
-            assignmentsContainer.innerHTML = '';
+            .modal-header {
+                padding: 15px 20px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
             
-            data.assignmentsToGrade.forEach(assignment => {
-                const assignmentItem = document.createElement('div');
-                assignmentItem.className = 'assignment-item';
-                assignmentItem.dataset.id = assignment.id;
-                assignmentItem.innerHTML = `
-                    <div class="assignment-info">
-                        <div class="assignment-title">${assignment.title}</div>
-                        <div class="assignment-details">
-                            <div class="assignment-due"><i class="fas fa-calendar"></i> Due: ${ELC.formatDate(assignment.dueDate)}</div>
-                            <div class="assignment-class"><i class="fas fa-book"></i> ${assignment.className}</div>
-                            <div class="assignment-submissions"><i class="fas fa-file-alt"></i> ${assignment.submissionCount}/${assignment.totalStudents} submitted</div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" onclick="gradeAssignment('${assignment.id}')">Grade</button>
-                `;
-                
-                assignmentsContainer.appendChild(assignmentItem);
-            });
-        }
+            .modal-header h2 {
+                margin: 0;
+                font-size: 20px;
+            }
+            
+            .close {
+                color: #aaa;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            
+            .close:hover {
+                color: #333;
+            }
+            
+            .modal-body {
+                padding: 20px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+            
+            .modal-footer {
+                padding: 15px 20px;
+                border-top: 1px solid #eee;
+                text-align: right;
+            }
+            
+            .assignment-info {
+                background-color: #f9fafc;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+            }
+            
+            .assignment-info p {
+                margin: 8px 0;
+            }
+            
+            .submissions-list {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .submission-card {
+                border: 1px solid #eee;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            
+            .submission-header {
+                background-color: #f9fafc;
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .submission-header h3 {
+                margin: 0 0 5px 0;
+                font-size: 16px;
+            }
+            
+            .submission-header p {
+                margin: 0;
+                font-size: 14px;
+                color: #666;
+            }
+            
+            .submission-content {
+                padding: 15px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .submission-text {
+                background-color: #f9fafc;
+                padding: 10px;
+                border-radius: 4px;
+                margin-top: 10px;
+                white-space: pre-wrap;
+            }
+            
+            .grading-form {
+                padding: 15px;
+            }
+            
+            .empty-state {
+                text-align: center;
+                padding: 30px;
+                background-color: #f9fafc;
+                border-radius: 8px;
+                color: #666;
+            }
+        `;
+        document.head.appendChild(styleElement);
     }
     
-    populateClassDropdowns(data.classes);
-}
-
-function populateClassDropdowns(classes) {
-    if (!classes || classes.length === 0) return;
-    
-    const materialClassSelect = document.getElementById('materialClass');
-    const assignmentClassSelect = document.getElementById('assignmentClass');
-    
-    if (materialClassSelect) {
-        const firstOption = materialClassSelect.options[0];
-        materialClassSelect.innerHTML = '';
-        materialClassSelect.appendChild(firstOption);
-        
-        classes.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.id;
-            option.textContent = cls.name;
-            materialClassSelect.appendChild(option);
+    // Set up close button event
+    const closeButtons = modal.querySelectorAll('.close, .close-modal-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            modal.remove();
         });
-    }
-    
-    if (assignmentClassSelect) {
-        const firstOption = assignmentClassSelect.options[0];
-        assignmentClassSelect.innerHTML = '';
-        assignmentClassSelect.appendChild(firstOption);
-        
-        classes.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.id;
-            option.textContent = cls.name;
-            assignmentClassSelect.appendChild(option);
-        });
-    }
-}
-
-function initStudentAttendance() {
-    document.addEventListener('click', function(e) {
-        const button = e.target.closest('button[data-action]');
-        if (!button) return;
-        
-        const studentItem = button.closest('.student-item');
-        if (!studentItem) return;
-        
-        const studentId = studentItem.dataset.id;
-        const action = button.dataset.action;
-        
-        if (studentId && action) {
-            markStudentAttendance(studentId, action);
-        }
     });
     
-    const classSelector = document.querySelector('.card-header select');
-    if (classSelector) {
-        classSelector.addEventListener('change', function() {
-            const classId = this.value;
-            if (classId) {
-                loadStudentsForClass(classId);
-            }
+    // Set up save grade button events
+    const saveButtons = modal.querySelectorAll('.save-grade-btn');
+    saveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const assignmentId = this.getAttribute('data-assignment-id');
+            const grade = document.getElementById(`grade-${studentId}`).value;
+            const feedback = document.getElementById(`feedback-${studentId}`).value;
+            
+            saveGrade(assignmentId, studentId, grade, feedback, this);
         });
-    }
+    });
     
-    const tabs = document.querySelectorAll('.tabs .tab');
-    if (tabs) {
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                tabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    }
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.remove();
+        }
+    });
 }
 
-function markStudentAttendance(studentId, attendanceStatus) {
-    const today = new Date().toISOString().split('T')[0];
+// Function to save grade
+function saveGrade(assignmentId, studentId, grade, feedback, button) {
+    // Show loading state
+    button.disabled = true;
+    button.innerHTML = 'Saving...';
     
+    // Prepare data
     const data = {
-        studentId,
-        status: attendanceStatus,
-        date: today
+        grade: grade,
+        feedback: feedback
     };
     
-    ELC.apiRequest('/api/attendance', 'POST', data)
-        .then(response => {
-            if (response.success) {
-                const studentItem = document.querySelector(`.student-item[data-id="${studentId}"]`);
-                if (studentItem) {
-                    const buttons = studentItem.querySelectorAll('.student-actions button');
-                    buttons.forEach(btn => btn.classList.remove('active'));
-                    
-                    const selectedButton = studentItem.querySelector(`button[data-action="${attendanceStatus}"]`);
-                    if (selectedButton) {
-                        selectedButton.classList.add('active');
-                    }
-                }
-                
-                ELC.showNotification(`Attendance marked as "${attendanceStatus}" for student`, 'success');
+    // Send to API
+    fetch(`/api/assignments/${assignmentId}/grade/${studentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Reset button
+        button.disabled = false;
+        button.innerHTML = 'Save Grade';
+        
+        if (data.success) {
+            // Show success notification
+            ELC.showNotification('Grade saved successfully!', 'success');
+        } else {
+            // Show error notification
+            ELC.showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        // Reset button
+        button.disabled = false;
+        button.innerHTML = 'Save Grade';
+        
+        console.error('Error saving grade:', error);
+        ELC.showNotification('Failed to save grade. Please try again.', 'error');
+    });
+}
+
+// Function to handle editing an assignment
+function editAssignment(assignmentId) {
+    // Show loading notification
+    ELC.showNotification('Loading assignment details...', 'info');
+    
+    // Fetch assignment details from API
+    fetch(`/api/assignments/${assignmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayEditModal(data.data);
             } else {
-                ELC.showNotification('Error recording attendance: ' + response.message, 'error');
+                ELC.showNotification('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
-            console.error('Error marking attendance:', error);
-            ELC.showNotification('Error recording attendance', 'error');
+            console.error('Error fetching assignment details:', error);
+            ELC.showNotification('Failed to load assignment details. Please try again.', 'error');
         });
 }
 
-function loadStudentsForClass(classId) {
-    ELC.apiRequest(`/api/classes/${classId}/students`, 'GET')
-        .then(response => {
-            if (response.success) {
-                updateStudentList(response.data);
-            } else {
-                ELC.showNotification('Error loading students: ' + response.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading students:', error);
-            ELC.showNotification('Error loading students for class', 'error');
-        });
-}
-
-function updateStudentList(students) {
-    if (!students || students.length === 0) return;
+// Function to display edit modal
+function displayEditModal(assignment) {
+    // Format date for input (YYYY-MM-DD)
+    const dueDate = new Date(assignment.dueDate);
+    const formattedDate = dueDate.toISOString().split('T')[0];
     
-    const studentList = document.querySelector('.student-list');
-    if (!studentList) return;
-    
-    studentList.innerHTML = '';
-    
-    students.forEach(student => {
-        const studentItem = document.createElement('div');
-        studentItem.className = 'student-item';
-        studentItem.dataset.id = student.id;
-        studentItem.innerHTML = `
-            <div class="student-name">${student.name}</div>
-            <div class="student-attendance">Attendance: ${student.attendanceRate}%</div>
-            <div class="student-actions">
-                <button title="Present" data-action="present"><i class="fas fa-check text-green-500"></i></button>
-                <button title="Absent" data-action="absent"><i class="fas fa-times text-red-500"></i></button>
-                <button title="Late" data-action="late"><i class="fas fa-clock text-yellow-500"></i></button>
+    // Create modal HTML
+    let modalHTML = `
+        <div id="edit-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Edit Assignment</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-assignment-form">
+                        <div class="form-group">
+                            <label for="edit-title">Title</label>
+                            <input type="text" id="edit-title" class="form-control" value="${assignment.title}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-description">Description</label>
+                            <textarea id="edit-description" class="form-control" rows="4" required>${assignment.description}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group half-width">
+                                <label for="edit-due-date">Due Date</label>
+                                <input type="date" id="edit-due-date" class="form-control" value="${formattedDate}" required>
+                            </div>
+                            
+                            <div class="form-group half-width">
+                                <label for="edit-points">Total Points</label>
+                                <input type="number" id="edit-points" class="form-control" min="1" max="100" value="${assignment.totalPoints || 100}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-course">Course</label>
+                            <select id="edit-course" class="form-control" required>
+                                <option value="">Select a course</option>
+                                <!-- Courses will be loaded dynamically -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-modal-btn">Cancel</button>
+                    <button class="btn btn-primary" id="save-edit-btn" data-id="${assignment._id}">Save Changes</button>
+                </div>
             </div>
-        `;
-        
-        studentList.appendChild(studentItem);
-    });
-}
-
-function initUploadMaterialForm() {
-    ELC.handleFormSubmit(
-        'uploadMaterialForm',
-        '/api/materials',
-        'POST',
-        (response) => {
-            ELC.showNotification('Course material uploaded successfully!', 'success');
-            document.getElementById('uploadMaterialForm').reset();
-            
-            const fileUpload = document.querySelector('#uploadMaterialForm .file-upload p');
-            if (fileUpload) {
-                fileUpload.textContent = 'Drag & drop files here or click to browse';
-            }
-        },
-        (error) => {
-            ELC.showNotification('Error uploading material: ' + error.message, 'error');
-        }
-    );
-}
-
-function initCreateAssignmentForm() {
-    ELC.handleFormSubmit(
-        'createAssignmentForm',
-        '/api/assignments',
-        'POST',
-        (response) => {
-            ELC.showNotification('Assignment created successfully!', 'success');
-            document.getElementById('createAssignmentForm').reset();
-            
-            const fileUpload = document.querySelector('#createAssignmentForm .file-upload p');
-            if (fileUpload) {
-                fileUpload.textContent = 'Drag & drop files here or click to browse';
-            }
-        },
-        (error) => {
-            ELC.showNotification('Error creating assignment: ' + error.message, 'error');
-        }
-    );
-}
-
-function enhanceFileUploads() {
-    document.querySelectorAll('.file-upload').forEach(upload => {
-        const fileInput = upload.querySelector('input[type="file"]');
-        
-        if (!fileInput) return;
-        
-        upload.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        upload.addEventListener('dragover', e => {
-            e.preventDefault();
-            upload.classList.add('dragover');
-        });
-        
-        upload.addEventListener('dragleave', () => {
-            upload.classList.remove('dragover');
-        });
-        
-        upload.addEventListener('drop', e => {
-            e.preventDefault();
-            upload.classList.remove('dragover');
-            
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                const fileName = e.dataTransfer.files[0].name;
-                upload.querySelector('p').textContent = fileName;
-            }
-        });
-        
-        fileInput.addEventListener('change', e => {
-            if (e.target.files.length > 0) {
-                const fileName = e.target.files[0].name;
-                upload.querySelector('p').textContent = fileName;
-            }
-        });
-    });
-}
-
-function loadScheduleData() {
-    console.log('Loading schedule data...');
-    ELC.showNotification('Loading class schedule...', 'info');
-}
-
-function loadMaterialsData() {
-    console.log('Loading materials data...');
-    ELC.showNotification('Loading course materials...', 'info');
-}
-
-function loadAssignmentsData() {
-    console.log('Loading assignments data...');
-    ELC.showNotification('Loading assignments...', 'info');
-}
-
-function loadStudentsData() {
-    console.log('Loading students data...');
-    ELC.showNotification('Loading student list...', 'info');
-}
-
-function loadProgressData() {
-    console.log('Loading progress reports...');
-    ELC.showNotification('Loading progress reports...', 'info');
-}
-
-function gradeAssignment(assignmentId) {
-    ELC.showNotification(`Loading grading interface for assignment ID: ${assignmentId}`, 'info');
+        </div>
+    `;
     
-    ELC.apiRequest(`/api/assignments/${assignmentId}/submissions`, 'GET')
-        .then(response => {
-            if (response.success) {
-                alert(`In a complete implementation, this would open the grading interface for ${response.data.title} with ${response.data.submissions.length} submissions.`);
+    // Add modal to the page
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHTML;
+    document.body.appendChild(modalContainer.firstChild);
+    
+    // Get modal element
+    const modal = document.getElementById('edit-modal');
+    
+    // Load courses into dropdown
+    loadCoursesForDropdown(assignment.course);
+    
+    // Set up close button event
+    const closeButtons = modal.querySelectorAll('.close, .close-modal-btn');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            modal.remove();
+        });
+    });
+    
+    // Set up save button event
+    const saveButton = document.getElementById('save-edit-btn');
+    saveButton.addEventListener('click', function() {
+        const assignmentId = this.getAttribute('data-id');
+        const title = document.getElementById('edit-title').value;
+        const description = document.getElementById('edit-description').value;
+        const dueDate = document.getElementById('edit-due-date').value;
+        const totalPoints = document.getElementById('edit-points').value;
+        const courseId = document.getElementById('edit-course').value;
+        
+        if (!title || !description || !dueDate || !totalPoints || !courseId) {
+            ELC.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        updateAssignment(assignmentId, {
+            title,
+            description,
+            dueDate,
+            totalPoints,
+            course: courseId
+        });
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Function to load courses for dropdown
+function loadCoursesForDropdown(selectedCourseId) {
+    // Fetch courses from API
+    fetch('/api/courses')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const dropdown = document.getElementById('edit-course');
+                
+                // Add each course to dropdown
+                data.data.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course._id;
+                    option.textContent = course.name;
+                    option.selected = course._id === selectedCourseId;
+                    dropdown.appendChild(option);
+                });
             } else {
-                ELC.showNotification('Error loading assignment submissions: ' + response.message, 'error');
+                console.error('Error loading courses:', data.message);
             }
         })
         .catch(error => {
-            console.error('Error loading assignment submissions:', error);
-            ELC.showNotification('Error loading assignment submissions', 'error');
+            console.error('Error fetching courses:', error);
         });
 }
 
-window.gradeAssignment = gradeAssignment;
+// Function to update assignment
+function updateAssignment(assignmentId, data) {
+    // Show loading notification
+    ELC.showNotification('Updating assignment...', 'info');
+    
+    // Send to API
+    fetch(`/api/assignments/${assignmentId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success notification
+            ELC.showNotification('Assignment updated successfully!', 'success');
+            
+            // Close modal
+            const modal = document.getElementById('edit-modal');
+            if (modal) modal.remove();
+            
+            // Reload assignments to show updated data
+            loadAssignmentsData();
+        } else {
+            // Show error notification
+            ELC.showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating assignment:', error);
+        ELC.showNotification('Failed to update assignment. Please try again.', 'error');
+    });
+}
+
+// Function to delete assignment
+function deleteAssignment(assignmentId) {
+    // Show loading notification
+    ELC.showNotification('Deleting assignment...', 'info');
+    
+    // Send to API
+    fetch(`/api/assignments/${assignmentId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success notification
+            ELC.showNotification('Assignment deleted successfully!', 'success');
+            
+            // Reload assignments to refresh the list
+            loadAssignmentsData();
+        } else {
+            // Show error notification
+            ELC.showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting assignment:', error);
+        ELC.showNotification('Failed to delete assignment. Please try again.', 'error');
+    });
+}

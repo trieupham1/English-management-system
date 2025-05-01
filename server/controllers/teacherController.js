@@ -1,7 +1,6 @@
 const Teacher = require('../models/Teacher');
 const Course = require('../models/Course');
-const Lesson = require('../models/Lesson');
-const LessonMaterial = require('../models/LessonMaterial');
+const LessonMaterial = require('../models/Material');
 const Assignment = require('../models/Assignment');
 const mongoose = require('mongoose');
 

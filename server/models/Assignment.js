@@ -1,3 +1,4 @@
+// models/Assignment.js
 const mongoose = require('mongoose');
 
 const SubmissionSchema = new mongoose.Schema({
@@ -10,7 +11,7 @@ const SubmissionSchema = new mongoose.Schema({
         type: String
     },
     file: {
-        type: String // Path to the submitted file
+        type: String
     },
     submittedAt: {
         type: Date,
@@ -50,33 +51,22 @@ const AssignmentSchema = new mongoose.Schema({
         ref: 'Course',
         required: true
     },
-    lesson: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Lesson'
-    },
     dueDate: {
         type: Date,
         required: true
     },
     totalPoints: {
         type: Number,
-        required: true
+        required: true,
+        default: 100
     },
     isActive: {
         type: Boolean,
         default: true
     },
-    allowLateSubmissions: {
-        type: Boolean,
-        default: false
-    },
-    latePenalty: {
-        type: Number, // Percentage penalty for late submissions
-        default: 0
-    },
     attachments: [{
         title: String,
-        file: String // Path to the file
+        file: String
     }],
     submissions: [SubmissionSchema],
     createdBy: {
@@ -116,7 +106,7 @@ AssignmentSchema.virtual('averageGrade').get(function() {
     return totalGrade / validGrades.length;
 });
 
-// Virtual for submissions graded
+// Virtual for graded count
 AssignmentSchema.virtual('gradedCount').get(function() {
     return this.submissions.filter(sub => sub.grade !== undefined).length;
 });

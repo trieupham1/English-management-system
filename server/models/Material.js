@@ -1,6 +1,7 @@
+// models/Material.js
 const mongoose = require('mongoose');
 
-const LessonMaterialSchema = new mongoose.Schema({
+const MaterialSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'Please add a title'],
@@ -11,7 +12,7 @@ const LessonMaterialSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['document', 'presentation', 'video', 'audio', 'image', 'link', 'other'],
+        enum: ['document', 'presentation', 'video', 'audio', 'image', 'link', 'exercise', 'other'],
         required: true
     },
     file: {
@@ -19,11 +20,6 @@ const LessonMaterialSchema = new mongoose.Schema({
     },
     url: {
         type: String, // External URL if applicable
-    },
-    lesson: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Lesson',
-        required: true
     },
     course: {
         type: mongoose.Schema.Types.ObjectId,
@@ -34,10 +30,6 @@ const LessonMaterialSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-    },
-    isPublic: {
-        type: Boolean,
-        default: false
     },
     tags: [{
         type: String
@@ -61,17 +53,17 @@ const LessonMaterialSchema = new mongoose.Schema({
 });
 
 // Middleware to update the timestamp on update
-LessonMaterialSchema.pre('findOneAndUpdate', function(next) {
+MaterialSchema.pre('findOneAndUpdate', function(next) {
     this.set({ updatedAt: Date.now() });
     next();
 });
 
 // Virtual for file URL
-LessonMaterialSchema.virtual('fileUrl').get(function() {
+MaterialSchema.virtual('fileUrl').get(function() {
     if (this.file) {
         return `/uploads/${this.file}`;
     }
     return null;
 });
 
-module.exports = mongoose.model('LessonMaterial', LessonMaterialSchema);
+module.exports = mongoose.model('Material', MaterialSchema);

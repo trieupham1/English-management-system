@@ -14,10 +14,11 @@ dotenv.config();
 // Import routes
 const authRoutes = require('./server/routes/auth');
 const courseRoutes = require('./server/routes/courses');
-const lessonRoutes = require('./server/routes/lessons');
 const settingsRoutes = require('./server/routes/settings');
 const studentRoutes = require('./server/routes/students');
 const teacherRoutes = require('./server/routes/teachers');
+const assignmentRoutes = require('./server/routes/assignments'); 
+const materialRoutes = require('./server/routes/materials');
 
 // Initialize Express app
 const app = express();
@@ -49,10 +50,20 @@ app.use(express.static(path.join(__dirname, '/')));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
-app.use('/api/lessons', lessonRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
+app.use('/api/assignments', assignmentRoutes); 
+app.use('/api/materials', materialRoutes); 
+
+// Create uploads directory for file uploads
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Route for the root path - redirect to login page
 app.get('/', (req, res) => {
@@ -80,6 +91,80 @@ app.get('/admin', (req, res) => {
 app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/index.html'));
 });
+
+// Mock API endpoints for development (can be removed in production)
+// These endpoints will help with testing the frontend before the real API is ready
+if (process.env.NODE_ENV === 'development') {
+    // Mock assignment endpoints for testing
+    app.get('/api/mock/assignments', (req, res) => {
+        res.json({
+            success: true,
+            data: [
+                {
+                    _id: 'assignment1',
+                    title: 'Writing Essay',
+                    description: 'Write a 500-word essay on a topic of your choice',
+                    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                    course: 'course1',
+                    className: 'Conversational English',
+                    totalPoints: 100,
+                    submissionCount: 12,
+                    totalStudents: 15,
+                    status: 'active'
+                },
+                {
+                    _id: 'assignment2',
+                    title: 'Grammar Quiz',
+                    description: 'Complete the grammar quiz',
+                    dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+                    course: 'course2',
+                    className: 'Beginner English',
+                    totalPoints: 50,
+                    submissionCount: 15,
+                    totalStudents: 18,
+                    status: 'active'
+                }
+            ]
+        });
+    });
+
+    // Mock assignment submission
+    app.get('/api/mock/assignments/:id/submissions', (req, res) => {
+        res.json({
+            success: true,
+            data: {
+                id: req.params.id,
+                title: req.params.id === 'assignment1' ? 'Writing Essay' : 'Grammar Quiz',
+                dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                totalPoints: 100,
+                className: req.params.id === 'assignment1' ? 'Conversational English' : 'Beginner English',
+                totalStudents: req.params.id === 'assignment1' ? 15 : 18,
+                submissions: [
+                    {
+                        studentId: 'student1',
+                        studentName: 'John Smith',
+                        submittedAt: new Date().toISOString(),
+                        content: 'This is my submission for the assignment.',
+                        fileName: 'assignment.pdf',
+                        fileUrl: '/uploads/assignment.pdf',
+                        grade: null,
+                        feedback: ''
+                    },
+                    {
+                        studentId: 'student2',
+                        studentName: 'Jane Doe',
+                        submittedAt: new Date(Date.now() - 86400000).toISOString(),
+                        content: 'Here is my completed work.',
+                        fileName: 'homework.docx',
+                        fileUrl: '/uploads/homework.docx',
+                        grade: 85,
+                        feedback: 'Good work, but could use more detail.'
+                    }
+                ]
+            }
+        });
+    });
+}
 
 // Catch all other routes and redirect to login
 app.get('*', (req, res) => {
