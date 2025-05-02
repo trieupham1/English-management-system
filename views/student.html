@@ -6,6 +6,7 @@
     <title>Student Dashboard - English Learning Center</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/student.css">
+    <link rel="stylesheet" href="css/assignment.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .content-section {
@@ -176,6 +177,8 @@
             <select id="material-filter" class="form-control">
                 <option value="all">All Courses</option>
                 <option value="conversational">Conversational English</option>
+                <option value="business">Business English</option>
+                <option value="beginner">Beginner English</option>
                 <option value="ielts">IELTS Preparation</option>
             </select>
         </div>
@@ -252,6 +255,8 @@
             <select id="assignment-filter" class="form-control">
                 <option value="all">All Courses</option>
                 <option value="conversational">Conversational English</option>
+                <option value="business">Business English</option>
+                <option value="beginner">Beginner English</option>
                 <option value="ielts">IELTS Preparation</option>
             </select>
         </div>
@@ -316,9 +321,101 @@
         </div>
     </div>
 </section>
+<!-- Assignment Submission Section -->
+<section id="assignment-submission-section" class="content-section" style="display: none;">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title" id="submission-assignment-title">Assignment Title</h2>
+            <div class="page-subtitle">Complete this assignment before the due date.</div>
         </div>
     </div>
     
+    <!-- Assignment Description -->
+    <div class="assignment-description" id="submission-description">
+        <!-- Assignment description will be loaded here -->
+    </div>
+
+    <!-- File Upload Section -->
+    <div id="file-upload-section" class="file-upload-section">
+        <div class="section-header">
+            <h3>File submissions</h3>
+            <span class="file-limits">Maximum file size: 100MB, maximum number of files: 20</span>
+        </div>
+        
+        <div class="dropzone" id="dropzone">
+            <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <div class="upload-message">You can drag and drop files here to add them.</div>
+            <input type="file" id="file-input" class="file-input" multiple>
+            <button class="select-files-btn" id="select-files-btn">
+                <i class="fas fa-file"></i> Select Files
+            </button>
+        </div>
+        
+        <div class="file-list" id="file-list">
+            <!-- Files will be added here dynamically -->
+        </div>
+        
+        <div class="form-actions">
+            <button class="btn btn-primary" id="save-changes-btn">
+                <i class="fas fa-save"></i> Save changes
+            </button>
+            <button class="btn btn-secondary" id="cancel-btn">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </div>
+    
+    <!-- Submission Status Section -->
+    <div class="submission-status-section" id="submission-status" style="display: none;">
+        <div class="section-header">
+            <h3>Submission status</h3>
+        </div>
+        
+        <table class="status-table">
+            <tr>
+                <th>Submission status</th>
+                <td><span class="status-badge badge-submitted">Submitted for grading</span></td>
+            </tr>
+            <tr>
+                <th>Grading status</th>
+                <td><span class="status-badge badge-not-graded">Not graded</span></td>
+            </tr>
+            <tr>
+                <th>Last modified</th>
+                <td id="submission-date">Friday, May 2, 2025 at 05:48 PM</td>
+            </tr>
+        </table>
+        
+        <h3 class="section-title">File submissions</h3>
+        <div class="submitted-files" id="submitted-files-list">
+            <!-- Submitted files will be shown here -->
+        </div>
+        
+        <h3 class="section-title">Teacher Feedback</h3>
+        <div class="feedback-section">
+            <div class="feedback-toggle" id="feedback-toggle">
+                <i class="fas fa-chevron-right feedback-toggle-icon"></i>
+                <span>Feedback (0)</span>
+            </div>
+            <div class="feedback-content" id="feedback-content" style="display: none;">
+                <p class="feedback-empty">No feedback has been provided yet.</p>
+            </div>
+        </div>
+        
+        <div class="actions-container">
+            <button class="btn btn-secondary" id="edit-submission-btn">
+                <i class="fas fa-edit"></i> Edit submission
+            </button>
+            <button class="btn btn-secondary" id="remove-submission-btn">
+                <i class="fas fa-trash"></i> Remove submission
+            </button>
+        </div>
+    </div>
+</section>
+        </div>
+    </div>
     <script src="js/components/common.js"></script>
     <script src="js/pages/student.js"></script>
 </body>

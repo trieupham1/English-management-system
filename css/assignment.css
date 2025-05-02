@@ -1,0 +1,365 @@
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.page-title {
+    font-size: 24px;
+    color: #1e40af;
+    margin-bottom: 5px;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+}
+
+/* Assignment Description */
+.assignment-description {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #1e40af;
+}
+
+/* File Upload Section */
+.file-upload-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    font-size: 18px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-limits {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.dropzone {
+    border: 2px dashed #cbd5e1;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.dropzone:hover, .dropzone.dragover {
+    background-color: #f0f7ff;
+    border-color: #2563eb;
+}
+
+.upload-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #2563eb;
+    color: white;
+    font-size: 28px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-message {
+    font-size: 16px;
+    color: #4b5563;
+    margin-bottom: 20px;
+}
+
+.select-files-btn {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.select-files-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.file-input {
+    display: none;
+}
+
+/* File List */
+.file-list {
+    margin-top: 30px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.file-icon {
+    width: 40px;
+    height: 40px;
+    background-color: #e0f2fe;
+    color: #2563eb;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name {
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.file-size {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.file-remove {
+    color: #ef4444;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.file-remove:hover {
+    background-color: #fee2e2;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* Submission Status Section */
+.submission-status-section {
+    margin-bottom: 40px;
+}
+
+.status-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.status-table th, .status-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.status-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    width: 200px;
+    color: #4b5563;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.badge-submitted {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-not-graded {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.section-title {
+    font-size: 18px;
+    color: #1f2937;
+    margin: 30px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Submitted Files */
+.submitted-files {
+    margin-bottom: 30px;
+}
+
+.file-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.file-link:hover {
+    background-color: #f0f7ff;
+}
+
+/* Feedback Section */
+.feedback-section {
+    margin-bottom: 30px;
+}
+
+.feedback-toggle {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.feedback-toggle:hover {
+    background-color: #f0f7ff;
+}
+
+.feedback-toggle-icon {
+    margin-right: 10px;
+    color: #2563eb;
+    transition: transform 0.2s;
+}
+
+.feedback-toggle.open .feedback-toggle-icon {
+    transform: rotate(90deg);
+}
+
+.feedback-content {
+    padding: 15px;
+    background-color: #f9fafb;
+    border-radius: 0 0 8px 8px;
+    margin-top: -8px;
+}
+
+.feedback-empty {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.actions-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* Button Styles */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .file-limits {
+        margin-top: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .actions-container {
+        flex-direction: column;
+    }
+    
+    .dropzone {
+        padding: 20px;
+    }
+    
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* Additional Utility Classes */
+.hidden {
+    display: none;
+}

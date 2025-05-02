@@ -22,6 +22,7 @@ function initStudentDashboard() {
     initTabNavigation();
     initCourseMaterialsNavigation();
     initAssignmentFiltering();
+    initAssignmentSubmission(); // Add this line to initialize assignment submission
     
     // Initialize assignments view all button
     const assignmentsViewAll = document.getElementById('assignments-view-all');
@@ -419,6 +420,29 @@ function navigateToSection(sectionName) {
     if (menuItem) {
         // Trigger click event on the menu item
         menuItem.click();
+    } else if (sectionName === 'assignment-submission') {
+        // Custom handling for assignment submission section
+        const menuItems = document.querySelectorAll('.menu-item[data-section]');
+        const sections = document.querySelectorAll('.content-section');
+        
+        // Remove active class from all menu items
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        // Add active class to assignments menu item
+        const assignmentsMenuItem = document.querySelector('.menu-item[data-section="assignments"]');
+        if (assignmentsMenuItem) {
+            assignmentsMenuItem.classList.add('active');
+        }
+        
+        // Hide all sections
+        sections.forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Show assignment submission section
+        const submissionSection = document.getElementById('assignment-submission-section');
+        if (submissionSection) {
+            submissionSection.style.display = 'block';
+        }
     }
 }
 
@@ -463,6 +487,7 @@ function initTabNavigation() {
         });
     }
 }
+
 function loadCoursesData() {
     console.log('Loading courses data...');
     ELC.showNotification('Loading your courses...', 'info');
@@ -603,7 +628,6 @@ function loadMaterialsData() {
         filterMaterials(materialFilter.value);
     }
 }
-// Add this to your student.js file
 
 function loadAssignmentsData() {
     console.log('Loading assignments data...');
@@ -690,6 +714,7 @@ function updateAssignmentsSection(assignments) {
         const assignmentRow = document.createElement('div');
         assignmentRow.className = 'assignment-row';
         assignmentRow.setAttribute('data-course', assignment.course ? assignment.course._id : 'all');
+        assignmentRow.setAttribute('data-id', assignment._id || '');
         
         // Create assignment content
         assignmentRow.innerHTML = `
@@ -705,8 +730,8 @@ function updateAssignmentsSection(assignments) {
                     <p>${assignment.description || 'Complete this assignment before the due date.'}</p>
                 </div>
                 <div class="assignment-actions">
-                    <button class="btn ${assignment.status === 'completed' ? 'btn-secondary' : 'btn-primary'}">
-                        ${assignment.status === 'completed' ? 'View Submission' : 'Start Assignment'}
+                    <button class="btn ${assignment.status === 'completed' ? 'btn-secondary start-view-submission' : 'btn-primary start-assignment'}" data-id="${assignment._id || ''}">
+                        ${assignment.status === 'completed' ? 'View Submission' : 'Add Submission'}
                     </button>
                 </div>
             </div>
@@ -716,5 +741,512 @@ function updateAssignmentsSection(assignments) {
         assignmentsContainer.appendChild(assignmentRow);
     });
     
+    // Add event listeners to the assignment buttons
+    initAssignmentActionButtons();
+    
     console.log('Assignments section updated successfully');
+}
+
+// Assignment Submission Functionality - New Code Below
+
+// Global variables for assignment submission
+let selectedAssignment = null;
+let submissionFiles = [];
+
+function initAssignmentSubmission() {
+    // Add event listeners for file upload functionality
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const selectFilesBtn = document.getElementById('select-files-btn');
+    const saveChangesBtn = document.getElementById('save-changes-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const editSubmissionBtn = document.getElementById('edit-submission-btn');
+    const removeSubmissionBtn = document.getElementById('remove-submission-btn');
+    
+    if (selectFilesBtn) {
+        selectFilesBtn.addEventListener('click', () => {
+            if (fileInput) fileInput.click();
+        });
+    }
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+    }
+    
+    if (dropzone) {
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+    }
+    
+    if (saveChangesBtn) {
+        saveChangesBtn.addEventListener('click', () => {
+            if (submissionFiles.length > 0) {
+                saveSubmission();
+            } else {
+                ELC.showNotification('Please add at least one file before submitting.', 'warning');
+            }
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+                navigateToSection('assignments');
+            }
+        });
+    }
+    
+    if (editSubmissionBtn) {
+        editSubmissionBtn.addEventListener('click', () => {
+            showFileUploadSection();
+        });
+    }
+    
+    if (removeSubmissionBtn) {
+        removeSubmissionBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to remove your submission?')) {
+                removeSubmission();
+            }
+        });
+    }
+}
+
+function initAssignmentActionButtons() {
+    // Add event listeners to the assignment action buttons
+    const startAssignmentButtons = document.querySelectorAll('.start-assignment');
+    const viewSubmissionButtons = document.querySelectorAll('.start-view-submission');
+    
+    startAssignmentButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const assignmentId = this.getAttribute('data-id');
+            const assignmentRow = this.closest('.assignment-row');
+            const assignmentTitle = assignmentRow.querySelector('.assignment-title').textContent.trim().replace(/completed|overdue/i, '').trim();
+            const assignmentDescription = assignmentRow.querySelector('.assignment-description p').textContent.trim();
+            
+            openAssignmentSubmission(assignmentId, assignmentTitle, assignmentDescription);
+        });
+    });
+    
+    viewSubmissionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const assignmentId = this.getAttribute('data-id');
+            const assignmentRow = this.closest('.assignment-row');
+            const assignmentTitle = assignmentRow.querySelector('.assignment-title').textContent.trim().replace(/completed|overdue/i, '').trim();
+            const assignmentDescription = assignmentRow.querySelector('.assignment-description p').textContent.trim();
+            
+            viewAssignmentSubmission(assignmentId, assignmentTitle, assignmentDescription);
+        });
+    });
+}
+
+function openAssignmentSubmission(assignmentId, title, description) {
+    // Set the selected assignment
+    selectedAssignment = assignmentId;
+    
+    // Update the assignment title and description in the submission section
+    const submissionTitle = document.getElementById('submission-assignment-title');
+    const submissionDescription = document.getElementById('submission-description');
+    
+    if (submissionTitle) submissionTitle.textContent = title;
+    if (submissionDescription) submissionDescription.innerHTML = `<p>${description}</p>`;
+    
+    // Reset files
+    submissionFiles = [];
+    const fileList = document.getElementById('file-list');
+    if (fileList) fileList.innerHTML = '';
+    
+    // Show file upload section, hide status section
+    showFileUploadSection();
+    
+    // Navigate to submission section
+    navigateToSection('assignment-submission');
+    
+    // Check if there's already a submission for this assignment
+    checkExistingSubmission(assignmentId);
+}
+
+function viewAssignmentSubmission(assignmentId, title, description) {
+    // Set the selected assignment
+    selectedAssignment = assignmentId;
+    
+    // Update the assignment title and description in the submission section
+    const submissionTitle = document.getElementById('submission-assignment-title');
+    const submissionDescription = document.getElementById('submission-description');
+    
+    if (submissionTitle) submissionTitle.textContent = title;
+    if (submissionDescription) submissionDescription.innerHTML = `<p>${description}</p>`;
+    
+    // Load submission data
+    loadSubmissionData(assignmentId);
+    
+    // Navigate to submission section
+    navigateToSection('assignment-submission');
+}
+
+function loadSubmissionData(assignmentId) {
+    // Show loading notification
+    ELC.showNotification('Loading submission...', 'info');
+    
+    // In a real application, you would fetch the submission data from the server
+    // For demonstration, we'll create mock data
+    
+    // Simulate API call delay
+    setTimeout(() => {
+        // Create mock submission data
+        const submissionData = {
+            files: [
+                { name: 'assignment.pdf', size: 1024 * 1024 * 2.5, date: new Date() }
+            ],
+            submittedAt: new Date(),
+            status: 'submitted',
+            gradingStatus: 'not_graded'
+        };
+        
+        // Update submission files array
+        submissionFiles = submissionData.files.map(file => ({
+            name: file.name,
+            size: file.size
+        }));
+        
+        // Show submission status
+        showSubmissionStatus(submissionData);
+        
+        // Show success notification
+        ELC.showNotification('Submission loaded successfully', 'success');
+    }, 1000);
+    
+    // Actual API call would look like this:
+    ELC.apiRequest(`/students/assignments/${assignmentId}/submission`, 'GET')
+        .then(response => {
+            if (response.success) {
+                submissionFiles = response.data.files.map(file => ({
+                    name: file.name,
+                    size: file.size
+                }));
+                showSubmissionStatus(response.data);
+                ELC.showNotification('Submission loaded successfully', 'success');
+            } else {
+                console.error('Error loading submission:', response.message);
+                ELC.showNotification('Failed to load submission', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching submission:', error);
+            ELC.showNotification('Failed to connect to server', 'error');
+        });
+}
+
+function handleFiles(filesList) {
+    for (const file of filesList) {
+        // Check if file is already in the list
+        if (!submissionFiles.some(f => f.name === file.name)) {
+            submissionFiles.push(file);
+            addFileToList(file);
+        }
+    }
+}
+
+function addFileToList(file) {
+    const fileList = document.getElementById('file-list');
+    if (!fileList) return;
+    
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    
+    // Format file size
+    const fileSize = formatFileSize(file.size);
+    
+    fileItem.innerHTML = `
+        <div class="file-info">
+            <span class="file-icon"><i class="fas fa-file"></i></span>
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">${fileSize}</span>
+        </div>
+        <button class="file-remove" data-filename="${file.name}"><i class="fas fa-times"></i></button>
+    `;
+    
+    fileList.appendChild(fileItem);
+    
+    // Add event listener to remove button
+    const removeBtn = fileItem.querySelector('.file-remove');
+    removeBtn.addEventListener('click', () => {
+        removeFile(file.name);
+    });
+}
+
+function removeFile(filename) {
+    submissionFiles = submissionFiles.filter(file => file.name !== filename);
+    
+    // Remove from UI
+    const fileList = document.getElementById('file-list');
+    if (!fileList) return;
+    
+    const fileItems = fileList.querySelectorAll('.file-item');
+    for (const item of fileItems) {
+        const removeBtn = item.querySelector('.file-remove');
+        if (removeBtn.getAttribute('data-filename') === filename) {
+            fileList.removeChild(item);
+            break;
+        }
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) {
+        return bytes + ' bytes';
+    } else if (bytes < 1024 * 1024) {
+        return (bytes / 1024).toFixed(2) + ' KB';
+    } else {
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+}
+
+function saveSubmission() {
+    // Show loading notification
+    ELC.showNotification('Uploading files...', 'info');
+    
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('assignmentId', selectedAssignment);
+    
+    // Add files to FormData
+    submissionFiles.forEach(file => {
+        if (file instanceof File) {
+            formData.append('files', file);
+        }
+    });
+    
+    // In a real app, you would send the files to the server with an API call
+    // For demonstration, we'll simulate a successful submission
+    setTimeout(() => {
+        // Update submission status
+        showSubmissionStatus({
+            submittedAt: new Date(),
+            status: 'submitted',
+            gradingStatus: 'not_graded'
+        });
+        
+        // Show success notification
+        ELC.showNotification('Submission saved successfully', 'success');
+    }, 1500);
+    
+    // Actual API call would look like this:
+    ELC.apiRequest('/students/assignments/submit', 'POST', formData, true)
+        .then(response => {
+            if (response.success) {
+                showSubmissionStatus(response.data);
+                ELC.showNotification('Submission saved successfully', 'success');
+            } else {
+                ELC.showNotification('Failed to save submission: ' + response.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving submission:', error);
+            ELC.showNotification('Error uploading files', 'error');
+        });
+}
+
+function showSubmissionStatus(data) {
+    // Get the file upload and status sections
+    const fileUploadSection = document.getElementById('file-upload-section');
+    const submissionStatus = document.getElementById('submission-status');
+    
+    // Get date elements
+    const submissionDate = document.getElementById('submission-date');
+    const submittedFilesList = document.getElementById('submitted-files-list');
+    
+    // Format current date for display
+    const date = data.submittedAt || new Date();
+    const options = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const formattedDate = date.toLocaleDateString('en-US', options);
+    
+    // Update the submission date
+    if (submissionDate) submissionDate.textContent = formattedDate;
+    
+    // Update the submitted files list
+    if (submittedFilesList) {
+        submittedFilesList.innerHTML = '';
+        
+        submissionFiles.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-link';
+            fileItem.innerHTML = `
+                <i class="fas fa-file"></i>
+                <span style="margin-left: 10px;">${file.name}</span>
+                <span style="margin-left: 10px; color: #666;">${formattedDate}</span>
+            `;
+            submittedFilesList.appendChild(fileItem);
+        });
+    }
+    
+    // Hide upload section, show status section
+    if (fileUploadSection) fileUploadSection.style.display = 'none';
+    if (submissionStatus) submissionStatus.style.display = 'block';
+}
+
+function showFileUploadSection() {
+    // Get the file upload and status sections
+    const fileUploadSection = document.getElementById('file-upload-section');
+    const submissionStatus = document.getElementById('submission-status');
+    
+    // Show upload section, hide status section
+    if (fileUploadSection) fileUploadSection.style.display = 'block';
+    if (submissionStatus) submissionStatus.style.display = 'none';
+}
+
+function checkExistingSubmission(assignmentId) {
+    // In a real app, you would check if there's an existing submission for this assignment
+    // For demonstration, we'll simulate no existing submission
+    
+    // Actual API call would look like this:
+    ELC.apiRequest(`/students/assignments/${assignmentId}/submission`, 'GET')
+        .then(response => {
+            if (response.success && response.data.submission) {
+                // If there's an existing submission, show the status page
+                submissionFiles = response.data.submission.files.map(file => ({
+                    name: file.name,
+                    size: file.size
+                }));
+                showSubmissionStatus(response.data.submission);
+            } else {
+                // If no submission exists, show the upload page
+                showFileUploadSection();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking submission:', error);
+            // Default to showing the upload page
+            showFileUploadSection();
+        });
+
+    
+    // For demo, just show the upload page
+    showFileUploadSection();
+}
+
+function removeSubmission() {
+    // In a real app, you would send an API request to remove the submission
+    // For demonstration, we'll simulate successful removal
+    
+    // Show loading notification
+    ELC.showNotification('Removing submission...', 'info');
+    
+    // Simulate API call delay
+    setTimeout(() => {
+        // Navigate back to assignments
+        navigateToSection('assignments');
+        
+        // Show success notification
+        ELC.showNotification('Submission removed successfully', 'success');
+    }, 1000);
+    
+    // Actual API call would look like this:
+    ELC.apiRequest(`/students/assignments/${selectedAssignment}/submission`, 'DELETE')
+        .then(response => {
+            if (response.success) {
+                navigateToSection('assignments');
+                ELC.showNotification('Submission removed successfully', 'success');
+            } else {
+                ELC.showNotification('Failed to remove submission: ' + response.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error removing submission:', error);
+            ELC.showNotification('Error removing submission', 'error');
+        });
+    
+        // Add feedback toggle functionality
+const feedbackToggle = document.getElementById('feedback-toggle');
+const feedbackContent = document.getElementById('feedback-content');
+
+if (feedbackToggle) {
+    feedbackToggle.addEventListener('click', () => {
+        feedbackToggle.classList.toggle('open');
+        if (feedbackContent.style.display === 'block') {
+            feedbackContent.style.display = 'none';
+        } else {
+            feedbackContent.style.display = 'block';
+        }
+    });
+}
+
+// Update the showSubmissionStatus function to format the file list better
+function showSubmissionStatus(data) {
+    // Get the file upload and status sections
+    const fileUploadSection = document.getElementById('file-upload-section');
+    const submissionStatus = document.getElementById('submission-status');
+    
+    // Get date elements
+    const submissionDate = document.getElementById('submission-date');
+    const submittedFilesList = document.getElementById('submitted-files-list');
+    
+    // Format current date for display
+    const date = data.submittedAt || new Date();
+    const options = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const formattedDate = date.toLocaleDateString('en-US', options) + ' at ' + 
+                          date.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+    
+    // Update the submission date
+    if (submissionDate) submissionDate.textContent = formattedDate;
+    
+    // Update the submitted files list
+    if (submittedFilesList) {
+        submittedFilesList.innerHTML = '';
+        
+        submissionFiles.forEach(file => {
+            // Determine file icon based on file type
+            let fileIconClass = 'fas fa-file';
+            if (file.name.endsWith('.pdf')) {
+                fileIconClass = 'fas fa-file-pdf';
+            } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+                fileIconClass = 'fas fa-file-word';
+            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png') || file.name.endsWith('.gif')) {
+                fileIconClass = 'fas fa-file-image';
+            }
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-link';
+            fileItem.innerHTML = `
+                <div class="file-icon">
+                    <i class="${fileIconClass}"></i>
+                </div>
+                <div class="file-name">${file.name}</div>
+                <div class="file-date">${formattedDate}</div>
+            `;
+            submittedFilesList.appendChild(fileItem);
+        });
+    }
+    
+    // Hide upload section, show status section
+    if (fileUploadSection) fileUploadSection.style.display = 'none';
+    if (submissionStatus) submissionStatus.style.display = 'block';
+}
 }
