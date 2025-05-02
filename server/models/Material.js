@@ -16,10 +16,10 @@ const MaterialSchema = new mongoose.Schema({
         required: true
     },
     file: {
-        type: String, // Path to the file
+        type: String,
     },
     url: {
-        type: String, // External URL if applicable
+        type: String,
     },
     course: {
         type: mongoose.Schema.Types.ObjectId,

@@ -16,20 +16,22 @@ const API_BASE_URL = '/api';
  * @param {boolean} includeAuth - Whether to include the authentication token
  * @returns {Promise} - Promise resolving to the response data
  */
-async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = true) {
+async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = true, isFormData = false) {
     try {
         const url = `${API_BASE_URL}${endpoint}`;
-        const headers = {
-            'Content-Type': 'application/json'
-        };
+        const headers = {};
 
-        // Include authentication token if required
+        // Only set Content-Type if not FormData
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
+
+        // Include auth token
         if (includeAuth) {
             const token = getAuthToken();
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             } else {
-                // Redirect to login if no token is available
                 window.location.href = '/login.html';
                 return;
             }
@@ -40,8 +42,13 @@ async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = t
             headers
         };
 
-        if (body && (method === 'POST' || method === 'PUT')) {
-            options.body = JSON.stringify(body);
+        if (body) {
+            if (isFormData) {
+                // Don't stringify FormData
+                options.body = body;
+            } else if (method === 'POST' || method === 'PUT') {
+                options.body = JSON.stringify(body);
+            }
         }
 
         const response = await fetch(url, options);

@@ -68,4 +68,13 @@ router.get(
     assignmentController.getSubmissions
 );
 
+// Remove a submission
+// POST /api/assignments/:id/remove-submission
+router.post(
+    '/:id/remove-submission', 
+    protect, 
+    authorize('student'), 
+    assignmentController.removeSubmission
+);
+
 module.exports = router;

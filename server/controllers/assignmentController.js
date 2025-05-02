@@ -155,6 +155,7 @@ exports.deleteAssignment = async (req, res) => {
 // Submit assignment (for students)
 exports.submitAssignment = async (req, res) => {
     try {
+        
         const assignment = await Assignment.findById(req.params.id);
 
         if (!assignment) {
@@ -164,12 +165,24 @@ exports.submitAssignment = async (req, res) => {
             });
         }
 
+        // Look for studentId in query parameters first, then body, then user object
+        const studentId = req.query.studentId || req.body.student || (req.user ? req.user.id : null);
+
+        console.log("Final student ID being used:", studentId);
+        
+        if (!studentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student ID is required'
+            });
+        }
+
         // Check if assignment is past due date
         const isPastDue = new Date(assignment.dueDate) < new Date();
-        
-        // Check if student has already submitted
-        const existingSubmission = assignment.submissions.find(
-            sub => sub.student.toString() === req.user.id
+
+         // Check if student has already submitted
+         const existingSubmission = assignment.submissions.find(
+            sub => sub.student && sub.student.toString() === studentId
         );
 
         if (existingSubmission) {
@@ -181,16 +194,15 @@ exports.submitAssignment = async (req, res) => {
             if (req.file) {
                 existingSubmission.file = req.file.path;
             }
-        } else {
-            // Add new submission
-            assignment.submissions.push({
-                student: req.user.id,
-                content: req.body.content,
-                file: req.file ? req.file.path : null,
-                submittedAt: Date.now(),
-                isLate: isPastDue
-            });
-        }
+        } else 
+        // Add submission
+        assignment.submissions.push({
+            student: studentId,  // This is the important part - using the found studentId
+            content: req.body.content || '',
+            file: req.file ? req.file.path : null,
+            submittedAt: Date.now(),
+            isLate: new Date(assignment.dueDate) < new Date()
+        });
 
         await assignment.save();
 
@@ -198,8 +210,52 @@ exports.submitAssignment = async (req, res) => {
             success: true,
             message: 'Assignment submitted successfully'
         });
+    
     } catch (error) {
         console.error('Error submitting assignment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Remove a submission
+exports.removeSubmission = async (req, res) => {
+    try {
+        const assignment = await Assignment.findById(req.params.id);
+
+        if (!assignment) {
+            return res.status(404).json({
+                success: false,
+                message: 'Assignment not found'
+            });
+        }
+
+        // Find the student's submission index
+        const submissionIndex = assignment.submissions.findIndex(
+            sub => sub.student.toString() === req.user.id
+        );
+
+        if (submissionIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: 'No submission found for this user'
+            });
+        }
+
+        // Remove the submission from the array
+        assignment.submissions.splice(submissionIndex, 1);
+
+        await assignment.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Submission removed successfully'
+        });
+    } catch (error) {
+        console.error('Error removing submission:', error);
         res.status(500).json({
             success: false,
             message: 'Server Error',

@@ -633,12 +633,23 @@ function loadAssignmentsData() {
     console.log('Loading assignments data...');
     ELC.showNotification('Loading your assignments...', 'info');
     
-    // Make the API request to get assignments
-    ELC.apiRequest('/students/assignments', 'GET')
+    // Updated API endpoint to match your routes
+    ELC.apiRequest('/assignments', 'GET')
         .then(response => {
             if (response.success) {
                 console.log('Assignments data loaded:', response.data);
                 
+                 // Check if we just submitted an assignment and update its status
+                 if (window.lastSubmittedAssignment) {
+                    response.data.forEach(assignment => {
+                        if (assignment._id === window.lastSubmittedAssignment) {
+                            assignment.status = 'completed';
+                        }
+                    });
+                    // Clear the flag after use
+                    window.lastSubmittedAssignment = null;
+                }
+
                 // Update the assignments section
                 updateAssignmentsSection(response.data);
                 
@@ -901,52 +912,59 @@ function loadSubmissionData(assignmentId) {
     // Show loading notification
     ELC.showNotification('Loading submission...', 'info');
     
-    // In a real application, you would fetch the submission data from the server
-    // For demonstration, we'll create mock data
-    
-    // Simulate API call delay
-    setTimeout(() => {
-        // Create mock submission data
-        const submissionData = {
-            files: [
-                { name: 'assignment.pdf', size: 1024 * 1024 * 2.5, date: new Date() }
-            ],
-            submittedAt: new Date(),
-            status: 'submitted',
-            gradingStatus: 'not_graded'
-        };
-        
-        // Update submission files array
-        submissionFiles = submissionData.files.map(file => ({
-            name: file.name,
-            size: file.size
-        }));
-        
-        // Show submission status
-        showSubmissionStatus(submissionData);
-        
-        // Show success notification
-        ELC.showNotification('Submission loaded successfully', 'success');
-    }, 1000);
-    
-    // Actual API call would look like this:
-    ELC.apiRequest(`/students/assignments/${assignmentId}/submission`, 'GET')
+    // Make API request to get assignment details with submission
+    ELC.apiRequest(`/assignments/${assignmentId}`, 'GET')
         .then(response => {
             if (response.success) {
-                submissionFiles = response.data.files.map(file => ({
-                    name: file.name,
-                    size: file.size
-                }));
-                showSubmissionStatus(response.data);
-                ELC.showNotification('Submission loaded successfully', 'success');
+                const assignment = response.data;
+                
+                // Find current user's submission
+                const currentUserId = ELC.getCurrentUser().id;
+                const userSubmission = assignment.submissions.find(sub => 
+                    sub.student._id === currentUserId || sub.student === currentUserId
+                );
+                
+                if (userSubmission) {
+                    // Extract file details if available
+                    submissionFiles = [];
+                    if (userSubmission.file) {
+                        const fileName = userSubmission.file.split('/').pop();
+                        submissionFiles.push({
+                            name: fileName,
+                            // For size, we don't have it, so use placeholder
+                            size: 0
+                        });
+                    }
+                    
+                    // Create submission data object
+                    const submissionData = {
+                        submittedAt: new Date(userSubmission.submittedAt),
+                        status: 'submitted',
+                        gradingStatus: userSubmission.grade ? 'graded' : 'not_graded',
+                        grade: userSubmission.grade,
+                        feedback: userSubmission.feedback
+                    };
+                    
+                    // Update the UI with submission data
+                    showSubmissionStatus(submissionData);
+                    
+                    // Show success notification
+                    ELC.showNotification('Submission loaded successfully', 'success');
+                } else {
+                    // No submission found
+                    showFileUploadSection();
+                    ELC.showNotification('No submission found', 'info');
+                }
             } else {
                 console.error('Error loading submission:', response.message);
                 ELC.showNotification('Failed to load submission', 'error');
+                showFileUploadSection();
             }
         })
         .catch(error => {
             console.error('Error fetching submission:', error);
             ELC.showNotification('Failed to connect to server', 'error');
+            showFileUploadSection();
         });
 }
 
@@ -1019,37 +1037,64 @@ function saveSubmission() {
     // Show loading notification
     ELC.showNotification('Uploading files...', 'info');
     
-    // Create FormData for file upload
-    const formData = new FormData();
-    formData.append('assignmentId', selectedAssignment);
+    // Get current user information
+    const currentUser = ELC.getCurrentUser();
+    console.log("Current user:", currentUser);
+
+    if (!currentUser || !currentUser._id) {
+        ELC.showNotification('Error: User information not available', 'error');
+        return;
+    }
+
+    // Use MongoDB ID
+    const mongoId = currentUser._id || currentUser.id;
+    console.log("Using MongoDB ID:", mongoId);
     
-    // Add files to FormData
-    submissionFiles.forEach(file => {
-        if (file instanceof File) {
-            formData.append('files', file);
-        }
-    });
+    // Build the URL with ID as query parameter
+    const url = `/assignments/${selectedAssignment}/submit?studentId=${encodeURIComponent(mongoId)}`;
+
+     // Create FormData for file
+     const formData = new FormData();
+     if (submissionFiles.length > 0) {
+         formData.append('file', submissionFiles[0]);
+         console.log("file:", submissionFiles[0]);
+     }
     
-    // In a real app, you would send the files to the server with an API call
-    // For demonstration, we'll simulate a successful submission
-    setTimeout(() => {
-        // Update submission status
-        showSubmissionStatus({
-            submittedAt: new Date(),
-            status: 'submitted',
-            gradingStatus: 'not_graded'
-        });
-        
-        // Show success notification
-        ELC.showNotification('Submission saved successfully', 'success');
-    }, 1500);
-    
-    // Actual API call would look like this:
-    ELC.apiRequest('/students/assignments/submit', 'POST', formData, true)
-        .then(response => {
-            if (response.success) {
-                showSubmissionStatus(response.data);
+    console.log("Submitting with MongoDB ID:", mongoId);
+
+    // Use a log to verify what's in the FormData
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
+
+    // Debug log
+    console.log("Submitting with MongoDB ID:", mongoId);
+
+    // Make API request
+    ELC.apiRequest(url, 'POST', formData, true, true)
+    .then(response => {
+       if (response.success) {
+           // Show success notification
+           ELC.showNotification('Submission saved successfully', 'success');
+           // Update the assignment status in the UI
+           updateAssignmentStatus(selectedAssignment, 'completed');
+           
+           navigateToSection('assignments');
+
+           // Show submission status
+           showSubmissionStatus({
+               submittedAt: new Date(),
+               status: 'submitted',
+               gradingStatus: 'not_graded'
+           });
+                
+                // Show success notification
                 ELC.showNotification('Submission saved successfully', 'success');
+                
+                // Navigate back to assignment list after a delay
+                setTimeout(() => {
+                    loadAssignmentsData();
+                }, 500);
             } else {
                 ELC.showNotification('Failed to save submission: ' + response.message, 'error');
             }
@@ -1058,6 +1103,48 @@ function saveSubmission() {
             console.error('Error saving submission:', error);
             ELC.showNotification('Error uploading files', 'error');
         });
+}
+
+function updateAssignmentStatus(assignmentId, newStatus) {
+    // Find the assignment in the UI
+    const assignmentRow = document.querySelector(`.assignment-row[data-id="${assignmentId}"]`);
+    if (!assignmentRow) return;
+    
+    // Update status indicator
+    const statusIndicator = assignmentRow.querySelector('.assignment-status-indicator');
+    if (statusIndicator) {
+        const oldClass = statusIndicator.className;
+        statusIndicator.className = oldClass.replace(/status-\w+/, `status-${newStatus}`);
+    }
+    
+    // Update title label
+    const assignmentTitle = assignmentRow.querySelector('.assignment-title');
+    if (assignmentTitle) {
+        // Remove any existing status labels
+        assignmentTitle.innerHTML = assignmentTitle.innerHTML.replace(/<span class="status-label.*?<\/span>/, '');
+        
+        // Add the new status label if it's completed or overdue
+        if (newStatus === 'completed') {
+            assignmentTitle.innerHTML += ' <span class="status-label completed">Completed</span>';
+        } else if (newStatus === 'overdue') {
+            assignmentTitle.innerHTML += ' <span class="status-label overdue">Overdue</span>';
+        }
+    }
+    
+    // Update action button
+    const actionButton = assignmentRow.querySelector('.assignment-actions button');
+    if (actionButton) {
+        if (newStatus === 'completed') {
+            actionButton.className = 'btn btn-secondary start-view-submission';
+            actionButton.textContent = 'View Submission';
+        } else if (newStatus === 'overdue') {
+            actionButton.className = 'btn btn-primary start-assignment';
+            actionButton.textContent = 'Complete Now';
+        } else {
+            actionButton.className = 'btn btn-primary start-assignment';
+            actionButton.textContent = 'Add Submission';
+        }
+    }
 }
 
 function showSubmissionStatus(data) {
@@ -1116,56 +1203,74 @@ function showFileUploadSection() {
 }
 
 function checkExistingSubmission(assignmentId) {
-    // In a real app, you would check if there's an existing submission for this assignment
-    // For demonstration, we'll simulate no existing submission
-    
-    // Actual API call would look like this:
-    ELC.apiRequest(`/students/assignments/${assignmentId}/submission`, 'GET')
+    // Make API request to get assignment details
+    ELC.apiRequest(`/assignments/${assignmentId}`, 'GET')
         .then(response => {
-            if (response.success && response.data.submission) {
-                // If there's an existing submission, show the status page
-                submissionFiles = response.data.submission.files.map(file => ({
-                    name: file.name,
-                    size: file.size
-                }));
-                showSubmissionStatus(response.data.submission);
+            if (response.success) {
+                const assignment = response.data;
+                
+                // Find current user's submission
+                const currentUserId = ELC.getCurrentUser().id;
+                const userSubmission = assignment.submissions.find(sub => 
+                    sub.student._id === currentUserId || sub.student === currentUserId
+                );
+                
+                if (userSubmission) {
+                    // Extract file details if available
+                    submissionFiles = [];
+                    if (userSubmission.file) {
+                        const fileName = userSubmission.file.split('/').pop();
+                        submissionFiles.push({
+                            name: fileName,
+                            // For size, we don't have it, so use placeholder
+                            size: 0
+                        });
+                    }
+                    
+                    // Create submission data object
+                    const submissionData = {
+                        submittedAt: new Date(userSubmission.submittedAt),
+                        status: 'submitted',
+                        gradingStatus: userSubmission.grade ? 'graded' : 'not_graded',
+                        grade: userSubmission.grade,
+                        feedback: userSubmission.feedback
+                    };
+                    
+                    // Show submission status
+                    showSubmissionStatus(submissionData);
+                } else {
+                    // No submission found
+                    showFileUploadSection();
+                }
             } else {
-                // If no submission exists, show the upload page
+                console.error('Error checking submission:', response.message);
                 showFileUploadSection();
             }
         })
         .catch(error => {
-            console.error('Error checking submission:', error);
-            // Default to showing the upload page
+            console.error('Error fetching submission:', error);
             showFileUploadSection();
         });
-
-    
-    // For demo, just show the upload page
-    showFileUploadSection();
 }
 
 function removeSubmission() {
-    // In a real app, you would send an API request to remove the submission
-    // For demonstration, we'll simulate successful removal
-    
     // Show loading notification
     ELC.showNotification('Removing submission...', 'info');
     
-    // Simulate API call delay
-    setTimeout(() => {
-        // Navigate back to assignments
-        navigateToSection('assignments');
-        
-        // Show success notification
-        ELC.showNotification('Submission removed successfully', 'success');
-    }, 1000);
+    // Define a custom API endpoint for removing a submission
+    // Your controller doesn't have a direct endpoint for this, so you may need to add one
+    // This is a workaround using the update assignment endpoint
     
-    // Actual API call would look like this:
-    ELC.apiRequest(`/students/assignments/${selectedAssignment}/submission`, 'DELETE')
+    ELC.apiRequest(`/assignments/${selectedAssignment}/remove-submission`, 'POST')
         .then(response => {
             if (response.success) {
+                // Update UI to show submission is removed
+                updateAssignmentStatus(selectedAssignment, 'pending');
+                
+                // Navigate back to assignments
                 navigateToSection('assignments');
+                
+                // Show success notification
                 ELC.showNotification('Submission removed successfully', 'success');
             } else {
                 ELC.showNotification('Failed to remove submission: ' + response.message, 'error');
@@ -1177,20 +1282,18 @@ function removeSubmission() {
         });
     
         // Add feedback toggle functionality
-const feedbackToggle = document.getElementById('feedback-toggle');
-const feedbackContent = document.getElementById('feedback-content');
+        const feedbackToggle = document.getElementById('feedback-toggle');
+        const feedbackContent = document.getElementById('feedback-content');
 
-if (feedbackToggle) {
-    feedbackToggle.addEventListener('click', () => {
-        feedbackToggle.classList.toggle('open');
-        if (feedbackContent.style.display === 'block') {
-            feedbackContent.style.display = 'none';
-        } else {
-            feedbackContent.style.display = 'block';
+        if (feedbackToggle && feedbackContent && data.feedback) {
+            feedbackToggle.querySelector('span').textContent = 'Feedback (1)';
+            feedbackContent.innerHTML = `<p>${data.feedback}</p>`;
+        } else if (feedbackToggle && feedbackContent) {
+            feedbackToggle.querySelector('span').textContent = 'Feedback (0)';
+            feedbackContent.innerHTML = '<p class="feedback-empty">No feedback has been provided yet.</p>';
         }
-    });
-}
-
+        if (fileUploadSection) fileUploadSection.style.display = 'none';
+        if (submissionStatus) submissionStatus.style.display = 'block';
 // Update the showSubmissionStatus function to format the file list better
 function showSubmissionStatus(data) {
     // Get the file upload and status sections

@@ -13,7 +13,7 @@ const AnnouncementSchema = new mongoose.Schema({
     },
     author: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Manager',
         required: true
     },
     targetAudience: {
@@ -48,7 +48,7 @@ const AnnouncementSchema = new mongoose.Schema({
     views: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
+            ref: 'Student',
         },
         viewedAt: {
             type: Date,

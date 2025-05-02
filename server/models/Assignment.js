@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const SubmissionSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Student',
         required: true
     },
     content: {
@@ -33,7 +33,7 @@ const SubmissionSchema = new mongoose.Schema({
     },
     gradedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Teacher'
     }
 });
 
@@ -73,7 +73,7 @@ const AssignmentSchema = new mongoose.Schema({
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Teacher',
         required: true
     },
     createdAt: {

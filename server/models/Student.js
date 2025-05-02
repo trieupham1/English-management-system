@@ -45,7 +45,7 @@ const StudentSchema = new mongoose.Schema({
         },
         currentLevel: {
             type: String,
-            enum: ['beginner', 'elementary', 'intermediate', 'upper-intermediate', 'advanced', 'proficient'],
+            enum: ['beginner','intermediate', 'upper-intermediate', 'advanced'],
             required: true
         },
         courses: [{
