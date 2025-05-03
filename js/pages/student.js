@@ -59,8 +59,7 @@ function loadStudentDashboard() {
             ELC.showNotification('Failed to connect to server', 'error');
         });
 }
-// Improved updateDashboardData function in student.js to better handle assignments
-// Update the assignment handling in the updateDashboardData function in student.js
+
 
 function updateDashboardData(data) {
     if (!data) {

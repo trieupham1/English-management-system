@@ -1,11 +1,18 @@
-// At the top of your materialController.js file
+// server/controllers/materialController.js
+
 const Material = require('../models/Material');
 const Course = require('../models/Course'); 
 const mongoose = require('mongoose');
 const Teacher = require('../models/Teacher');
-
 const path = require('path');
 const fs = require('fs');
+
+// Helper function to extract user ID from request
+const extractUserId = (user) => {
+    if (!user) return null;
+    return user._id || user.id || user.userId || (user.toObject && user.toObject()._id);
+};
+
 // Get all materials
 exports.getAllMaterials = async (req, res) => {
     try {
@@ -61,13 +68,15 @@ exports.getAllMaterials = async (req, res) => {
                     };
                 }
                 
-                // Get teacher name
-                const teacher = await Teacher.findById(material.uploadedBy).select('fullName').lean();
-                if (teacher) {
-                    materialObj.uploadedBy = {
-                        _id: teacher._id,
-                        name: teacher.fullName
-                    };
+                // Get teacher name - handle case where uploadedBy might be undefined
+                if (material.uploadedBy) {
+                    const teacher = await Teacher.findById(material.uploadedBy).select('fullName').lean();
+                    if (teacher) {
+                        materialObj.uploadedBy = {
+                            _id: teacher._id,
+                            name: teacher.fullName
+                        };
+                    }
                 }
             } catch (error) {
                 console.error('Error populating material data:', error);
@@ -114,8 +123,11 @@ exports.getMaterial = async (req, res) => {
             // Get course data
             const course = await Course.findById(material.course).select('name').lean();
             
-            // Get teacher data
-            const teacher = await Teacher.findById(material.uploadedBy).select('fullName').lean();
+            // Get teacher data - handle case where uploadedBy might be undefined
+            let teacher = null;
+            if (material.uploadedBy) {
+                teacher = await Teacher.findById(material.uploadedBy).select('fullName').lean();
+            }
             
             // Create response object
             const response = material.toObject();
@@ -157,6 +169,8 @@ exports.getMaterial = async (req, res) => {
         });
     }
 };
+
+// Create material
 exports.createMaterial = async (req, res) => {
     try {
         console.log('Request body:', req.body);
@@ -170,6 +184,18 @@ exports.createMaterial = async (req, res) => {
                 message: 'Please upload a file or provide a URL'
             });
         }
+        
+        // Extract user ID
+        const userId = extractUserId(req.user);
+        
+        if (!userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'User ID not found in request'
+            });
+        }
+        
+        console.log('Extracted user ID for create:', userId);
         
         // Process tags if they were sent
         let tags = [];
@@ -185,6 +211,15 @@ exports.createMaterial = async (req, res) => {
         const course = await Course.findById(req.body.course);
         
         if (!course) {
+            // Clean up uploaded file if course not found
+            if (req.file) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (unlinkError) {
+                    console.error('Error deleting file after course not found:', unlinkError);
+                }
+            }
+            
             return res.status(404).json({
                 success: false,
                 message: 'Course not found'
@@ -196,8 +231,8 @@ exports.createMaterial = async (req, res) => {
             title: req.body.title,
             description: req.body.description || '',
             type: req.body.type,
-            course: course._id, // Use the actual course ObjectId
-            uploadedBy: req.user._id,
+            course: course._id,
+            uploadedBy: userId, // Ensure this is set properly
             tags: tags,
             createdAt: Date.now(),
             updatedAt: Date.now()
@@ -213,16 +248,19 @@ exports.createMaterial = async (req, res) => {
             materialData.url = req.body.url;
         }
         
+        console.log('Material data to create:', materialData);
+        
         // Create material
         const material = await Material.create(materialData);
         
-        // Populate course name
+        // Populate course name for response
         await material.populate('course', 'name');
         
         res.status(201).json({
             success: true,
             data: material
         });
+        
     } catch (error) {
         console.error('Error creating material:', error);
         
@@ -231,7 +269,7 @@ exports.createMaterial = async (req, res) => {
             try {
                 fs.unlinkSync(req.file.path);
             } catch (unlinkError) {
-                console.error('Error deleting file:', unlinkError);
+                console.error('Error deleting file after create error:', unlinkError);
             }
         }
         
@@ -242,6 +280,7 @@ exports.createMaterial = async (req, res) => {
         });
     }
 };
+
 // Update material
 exports.updateMaterial = async (req, res) => {
     try {
@@ -254,8 +293,14 @@ exports.updateMaterial = async (req, res) => {
             });
         }
         
-        // Check if user is authorized (owner or admin)
-        if (material.uploadedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+        // Extract user ID
+        const userId = extractUserId(req.user);
+        
+        // Check if user is authorized (owner or admin) - handle case where uploadedBy might be undefined
+        const isOwner = material.uploadedBy && material.uploadedBy.toString() === userId.toString();
+        const isAuthorized = isOwner || req.user.role === 'admin' || req.user.role === 'manager';
+        
+        if (!isAuthorized) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to update this material'
@@ -277,7 +322,9 @@ exports.updateMaterial = async (req, res) => {
             if (material.file) {
                 try {
                     const filePath = path.join(__dirname, '../../uploads/materials', material.file);
-                    fs.unlinkSync(filePath);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
                 } catch (unlinkError) {
                     console.error('Error deleting old file:', unlinkError);
                 }
@@ -296,9 +343,11 @@ exports.updateMaterial = async (req, res) => {
             { new: true, runValidators: true }
         );
         
-        // Populate course and user
+        // Populate course and user (if uploadedBy exists)
         await material.populate('course', 'name');
-        await material.populate('uploadedBy', 'name');
+        if (material.uploadedBy) {
+            await material.populate('uploadedBy', 'name');
+        }
         
         res.status(200).json({
             success: true,
@@ -327,17 +376,63 @@ exports.updateMaterial = async (req, res) => {
 // Delete material
 exports.deleteMaterial = async (req, res) => {
     try {
-        const material = await Material.findById(req.params.id);
+        const materialId = req.params.id;
+        console.log('Delete request for material ID:', materialId);
         
-        if (!material) {
-            return res.status(404).json({
+        // Validate material ID
+        if (!mongoose.isValidObjectId(materialId)) {
+            return res.status(400).json({
                 success: false,
-                message: 'Material not found'
+                message: 'Invalid material ID format'
             });
         }
         
-        // Check if user is authorized (owner or admin)
-        if (material.uploadedBy.toString() !== req.user.id && req.user.role !== 'admin') {
+        // Find the material
+        const material = await Material.findById(materialId);
+        
+        if (!material) {
+            console.log('Material not found with ID:', materialId);
+            // Return success since the goal is to delete the material
+            return res.status(200).json({
+                success: true,
+                message: 'Material not found or already deleted',
+                data: {}
+            });
+        }
+        
+        console.log('Material found:', material._id);
+        console.log('Request user:', req.user);
+        console.log('Material uploadedBy:', material.uploadedBy);
+        console.log('User role:', req.user.role);
+        
+        // Extract user ID
+        const userId = extractUserId(req.user);
+        
+        if (!userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'User ID not found in request'
+            });
+        }
+        
+        console.log('Extracted user ID:', userId);
+        
+        // Check authorization
+        let isAuthorized = false;
+        
+        // Check if user is admin or manager
+        if (req.user.role === 'admin' || req.user.role === 'manager') {
+            isAuthorized = true;
+        }
+        // Check if user is the owner (if uploadedBy exists)
+        else if (material.uploadedBy) {
+            const uploadedById = material.uploadedBy.toString();
+            const userIdString = userId.toString();
+            isAuthorized = uploadedById === userIdString;
+            console.log('Owner check:', uploadedById, '===', userIdString, ':', isAuthorized);
+        }
+        
+        if (!isAuthorized) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to delete this material'
@@ -348,24 +443,66 @@ exports.deleteMaterial = async (req, res) => {
         if (material.file) {
             try {
                 const filePath = path.join(__dirname, '../../uploads/materials', material.file);
-                fs.unlinkSync(filePath);
+                console.log('Attempting to delete file at path:', filePath);
+                
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    console.log('File deleted successfully');
+                } else {
+                    console.log('File not found at path:', filePath);
+                }
             } catch (unlinkError) {
                 console.error('Error deleting file:', unlinkError);
+                // Continue with deletion even if file deletion fails
             }
         }
         
         // Remove from database
-        await Material.findByIdAndDelete(req.params.id);
+        try {
+            const result = await Material.deleteOne({ _id: materialId });
+            
+            if (result.deletedCount === 0) {
+                console.log('No document was deleted');
+                // Still return success since the material doesn't exist
+                return res.status(200).json({
+                    success: true,
+                    message: 'Material already deleted',
+                    data: {}
+                });
+            }
+            
+            console.log('Material deleted successfully from database');
+            
+            // Send success response
+            res.status(200).json({
+                success: true,
+                message: 'Material deleted successfully',
+                data: {}
+            });
+            
+        } catch (dbError) {
+            console.error('Database deletion error:', dbError);
+            
+            // Check if the material still exists
+            const stillExists = await Material.findById(materialId);
+            if (!stillExists) {
+                // Material was deleted despite the error
+                return res.status(200).json({
+                    success: true,
+                    message: 'Material deleted successfully',
+                    data: {}
+                });
+            }
+            
+            // If we get here, there was a genuine error
+            throw dbError;
+        }
         
-        res.status(200).json({
-            success: true,
-            data: {}
-        });
     } catch (error) {
-        console.error('Error deleting material:', error);
+        console.error('Error in deleteMaterial:', error);
         res.status(500).json({
             success: false,
-            message: 'Server Error',
+            message: 'Server Error: ' + error.message,
             error: error.message
         });
     }
@@ -398,6 +535,14 @@ exports.downloadMaterial = async (req, res) => {
         // Get file path
         const filePath = path.join(__dirname, '../../uploads/materials', material.file);
         
+        // Check if file exists on disk
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({
+                success: false,
+                message: 'File not found on server'
+            });
+        }
+        
         // Send file
         res.download(filePath);
     } catch (error) {
@@ -415,14 +560,42 @@ exports.getMaterialsByCourse = async (req, res) => {
     try {
         const courseId = req.params.courseId;
         
+        // Validate course ID
+        if (!mongoose.isValidObjectId(courseId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid course ID format'
+            });
+        }
+        
         const materials = await Material.find({ course: courseId })
-            .populate('uploadedBy', 'name')
             .sort({ createdAt: -1 });
+        
+        // Manually populate uploadedBy to handle cases where it might be undefined
+        const populatedMaterials = await Promise.all(materials.map(async (material) => {
+            const materialObj = material.toObject();
+            
+            if (material.uploadedBy) {
+                try {
+                    const teacher = await Teacher.findById(material.uploadedBy).select('fullName').lean();
+                    if (teacher) {
+                        materialObj.uploadedBy = {
+                            _id: teacher._id,
+                            name: teacher.fullName
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error populating teacher:', error);
+                }
+            }
+            
+            return materialObj;
+        }));
         
         res.status(200).json({
             success: true,
-            count: materials.length,
-            data: materials
+            count: populatedMaterials.length,
+            data: populatedMaterials
         });
     } catch (error) {
         console.error('Error fetching course materials:', error);

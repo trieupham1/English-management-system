@@ -596,7 +596,6 @@ function addButtonListeners() {
     // Setup material preview and delete buttons
     setupMaterialButtons();
 }
-
 // Setup material preview and delete buttons
 function setupMaterialButtons() {
     document.querySelectorAll('.material-actions button').forEach(button => {
@@ -1511,19 +1510,49 @@ function getVideoEmbedUrl(url) {
     return null;
 }
 
-// Function to delete material
+// Updated deleteMaterial function for teacher.js
+
 function deleteMaterial(materialId, materialElement) {
     // Show loading notification
     ELC.showNotification('Deleting material...', 'info');
-
+    
+    // Get authentication token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    if (!token) {
+        ELC.showNotification('No authentication token found. Please log in again.', 'error');
+        return;
+    }
+    
+    // Send delete request
     fetch(`/api/materials/${materialId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(async response => {
+        console.log('Delete response status:', response.status);
+        
+        // Try to parse the JSON response
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            // If parsing fails, create a default response
+            data = { 
+                success: response.ok, 
+                message: response.ok ? 'Material deleted' : 'Failed to delete material' 
+            };
+        }
+        
+        // If the response is OK or if we get a 404 (material already deleted)
+        if (response.ok || response.status === 404) {
             // Remove material from UI
-            materialElement.remove();
+            if (materialElement && materialElement.parentNode) {
+                materialElement.remove();
+            }
             
             // Show success message
             ELC.showNotification('Material deleted successfully', 'success');
@@ -1532,18 +1561,27 @@ function deleteMaterial(materialId, materialElement) {
             const materialsList = document.querySelector('.materials-list');
             if (materialsList && materialsList.children.length === 0) {
                 // Show empty state
-                const emptyState = document.querySelector('#materials-section .empty-state');
-                if (emptyState) {
-                    emptyState.style.display = 'block';
-                }
+                showMaterialsEmptyState(true);
             }
         } else {
-            ELC.showNotification('Error: ' + data.message, 'error');
+            // Handle other error responses
+            if (response.status === 403) {
+                ELC.showNotification('You are not authorized to delete this material', 'error');
+            } else {
+                ELC.showNotification('Error: ' + (data.message || 'Failed to delete material'), 'error');
+            }
         }
     })
     .catch(error => {
         console.error('Delete error:', error);
-        ELC.showNotification('Failed to delete material. Please try again.', 'error');
+        
+        // Check if the material element has already been removed from the DOM
+        if (!document.body.contains(materialElement)) {
+            // Material was removed, likely deleted successfully
+            ELC.showNotification('Material deleted successfully', 'success');
+        } else {
+            ELC.showNotification('Failed to delete material: ' + error.message, 'error');
+        }
     });
 }
 

@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const materialController = require('../controllers/materialController');
-const { protect, authorize } = require('../middleware/auth');
+const authMiddleware = require('../middleware/auth'); // Import the whole object
 const upload = require('../middleware/upload');
 const { handleMulterError } = require('../middleware/upload');
 
@@ -21,7 +21,7 @@ router.get('/:id/download', materialController.downloadMaterial);
 // Create new material - protected route
 router.post(
     '/',
-    protect,
+    authMiddleware.protect, // Changed this line
     upload.single('file'),
     handleMulterError,
     materialController.createMaterial
@@ -30,7 +30,7 @@ router.post(
 // Update material - protected route
 router.put(
     '/:id',
-    protect,
+    authMiddleware.protect, // Changed this line
     upload.single('file'),
     handleMulterError,
     materialController.updateMaterial
@@ -39,7 +39,7 @@ router.put(
 // Delete material - protected route
 router.delete(
     '/:id',
-    protect,
+    authMiddleware.protect, // Changed this line
     materialController.deleteMaterial
 );
 
