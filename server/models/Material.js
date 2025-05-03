@@ -12,7 +12,12 @@ const MaterialSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['document', 'presentation', 'video', 'audio', 'image', 'link', 'exercise', 'other'],
+        enum: ['document', 'presentation', 'slides', 'video', 'audio', 'image', 'link', 'exercise', 'other'],
+        required: true
+    },
+    course: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course',
         required: true
     },
     file: {
@@ -21,14 +26,9 @@ const MaterialSchema = new mongoose.Schema({
     url: {
         type: String,
     },
-    course: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course',
-        required: true
-    },
     uploadedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Teacher', // Changed from 'User' to 'Teacher'
         required: true
     },
     tags: [{
@@ -61,9 +61,13 @@ MaterialSchema.pre('findOneAndUpdate', function(next) {
 // Virtual for file URL
 MaterialSchema.virtual('fileUrl').get(function() {
     if (this.file) {
-        return `/uploads/${this.file}`;
+        return `/uploads/materials/${this.file}`;
     }
     return null;
 });
+
+// Configure toJSON and toObject to include virtuals
+MaterialSchema.set('toJSON', { virtuals: true });
+MaterialSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('Material', MaterialSchema);

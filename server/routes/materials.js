@@ -1,53 +1,46 @@
-// routes/materials.js
+// server/routes/materials.js
 const express = require('express');
 const router = express.Router();
 const materialController = require('../controllers/materialController');
 const { protect, authorize } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { handleMulterError } = require('../middleware/upload');
 
 // Get all materials
-// GET /api/materials
-router.get('/', protect, materialController.getMaterials);
+router.get('/', materialController.getAllMaterials);
 
-// Get a single material
-// GET /api/materials/:id
-router.get('/:id', protect, materialController.getMaterial);
+// Get materials by course - put this BEFORE the :id route to avoid conflicts
+router.get('/course/:courseId', materialController.getMaterialsByCourse);
 
-// Upload a new material
-// POST /api/materials
+// Get single material
+router.get('/:id', materialController.getMaterial);
+
+// Download material
+router.get('/:id/download', materialController.downloadMaterial);
+
+// Create new material - protected route
 router.post(
-    '/', 
-    protect, 
-    authorize('teacher', 'admin'), 
-    upload.single('file'), 
-    materialController.uploadMaterial
+    '/',
+    protect,
+    upload.single('file'),
+    handleMulterError,
+    materialController.createMaterial
 );
 
-// Update a material
-// PUT /api/materials/:id
+// Update material - protected route
 router.put(
-    '/:id', 
-    protect, 
-    authorize('teacher', 'admin'), 
-    upload.single('file'), 
+    '/:id',
+    protect,
+    upload.single('file'),
+    handleMulterError,
     materialController.updateMaterial
 );
 
-// Delete a material
-// DELETE /api/materials/:id
+// Delete material - protected route
 router.delete(
-    '/:id', 
-    protect, 
-    authorize('teacher', 'admin'), 
+    '/:id',
+    protect,
     materialController.deleteMaterial
-);
-
-// Download material
-// GET /api/materials/:id/download
-router.get(
-    '/:id/download', 
-    protect, 
-    materialController.downloadMaterial
 );
 
 module.exports = router;

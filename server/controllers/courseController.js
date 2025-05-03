@@ -6,9 +6,59 @@ const mongoose = require('mongoose');
 // Get all courses
 exports.getAllCourses = async (req, res) => {
     try {
-        const courses = await Course.find()
-            .populate('teacher', 'fullName email')
-            .select('-students');
+        // Get courses without using populate
+        const courses = await Course.find().select('-students');
+        
+        // Manually get teacher data if needed
+        const coursesWithTeachers = await Promise.all(courses.map(async (course) => {
+            const courseObj = course.toObject();
+            
+            try {
+                // Get teacher data if teacher ID exists
+                if (course.teacher) {
+                    const Teacher = require('../models/Teacher');
+                    const teacher = await Teacher.findById(course.teacher)
+                        .select('fullName email')
+                        .lean();
+                    
+                    if (teacher) {
+                        courseObj.teacher = {
+                            _id: teacher._id,
+                            fullName: teacher.fullName,
+                            email: teacher.email
+                        };
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching teacher for course:', err);
+                // Continue even if teacher data can't be fetched
+            }
+            
+            return courseObj;
+        }));
+        
+        res.status(200).json({
+            success: true,
+            count: coursesWithTeachers.length,
+            data: coursesWithTeachers
+        });
+    } catch (error) {
+        console.error('Error fetching courses:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Get courses available for materials
+exports.getTeacherAvailableCourses = async (req, res) => {
+    try {
+        // Find active courses
+        const courses = await Course.find({
+            status: 'Active'
+        }).select('_id name category level');
         
         res.status(200).json({
             success: true,
@@ -16,7 +66,7 @@ exports.getAllCourses = async (req, res) => {
             data: courses
         });
     } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error('Error fetching available courses:', error);
         res.status(500).json({
             success: false,
             message: 'Server Error',
@@ -144,6 +194,29 @@ exports.updateCourse = async (req, res) => {
         });
     }
 };
+// In courseController.js, add this new method
+exports.getCoursesForDropdown = async (req, res) => {
+    try {
+        // Simple query that doesn't use populate
+        const courses = await Course.find({ status: 'Active' })
+            .select('_id name level category')
+            .lean();
+        
+        res.status(200).json({
+            success: true,
+            count: courses.length,
+            data: courses
+        });
+    } catch (error) {
+        console.error('Error fetching courses for dropdown:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
 
 // Delete a course
 exports.deleteCourse = async (req, res) => {

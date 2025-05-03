@@ -42,5 +42,22 @@
     "createdBy": "681324ee882466c61f8985e8",
     "createdAt": "2025-05-01T07:38:23.385Z",
     "__v": 0
+  },
+  {
+    "_id": "6814cc6368c296a482b2ee82",
+    "title": "VÃI c",
+    "description": "ewewewe",
+    "type": "slides",
+    "course": "6814cc6368c296a482b2ee81",
+    "file": "file-1746193506727-113454250.mp4",
+    "uploadedBy": "681333f573460c095068d8a6",
+    "tags": [
+      "presentation"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
+    "createdAt": "2025-05-02T13:45:06.735Z",
+    "updatedAt": "2025-05-02T13:45:06.735Z",
+    "__v": 0
   }
 ]

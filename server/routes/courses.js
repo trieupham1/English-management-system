@@ -3,6 +3,18 @@ const router = express.Router();
 const courseController = require('../controllers/courseController');
 const { protect, authorize } = require('../middleware/auth');
 
+// Define specific routes FIRST
+router.get('/available', protect, courseController.getTeacherAvailableCourses);
+// In your courseRoutes.js, add this route BEFORE any :id routes
+router.get('/dropdown', courseController.getCoursesForDropdown);
+
+// Then define parameterized routes
+router.get('/:id', courseController.getCourse);
+router.put('/:id', protect, courseController.updateCourse);
+router.delete('/:id', protect, authorize('admin', 'manager'), courseController.deleteCourse);
+// Other routes
+router.get('/', courseController.getAllCourses);
+router.post('/', protect, authorize('admin', 'manager'), courseController.createCourse);
 // Get all courses
 router.get('/', protect, courseController.getAllCourses);
 
@@ -32,5 +44,7 @@ router.get('/teacher/:teacherId', protect, courseController.getTeacherCourses);
 
 // Get all students enrolled in a specific course
 router.get('/:id/students', protect, courseController.getCourseStudents);
+
+
 
 module.exports = router;

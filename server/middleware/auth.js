@@ -143,6 +143,56 @@ const authMiddleware = {
         next();
     }
 };
+// This should be in your middleware/auth.js file
+const protect = async (req, res, next) => {
+    let token;
+    
+    console.log('Headers:', req.headers);
+    
+    // Check for token in Authorization header
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        // Set token from Bearer token in header
+        token = req.headers.authorization.split(' ')[1];
+        console.log('Token from auth header:', token ? 'present' : 'missing');
+    } 
+    // Also check for token in cookie
+    else if (req.cookies.token) {
+        token = req.cookies.token;
+        console.log('Token from cookie:', token ? 'present' : 'missing');
+    }
+    
+    // Make sure token exists
+    if (!token) {
+        console.log('No token found in request');
+        return res.status(401).json({
+            success: false,
+            message: 'Not authorized to access this route'
+        });
+    }
+    
+    try {
+       // Important: Make sure to set req.user properly
+       req.user = await User.findById(decoded.id);
+        
+       if (!req.user) {
+           return res.status(401).json({
+               success: false,
+               message: 'User not found'
+           });
+       }
+       
+       // Log the authentication information for debugging
+       console.log('Authentication successful for user:', req.user._id);
+       
+       next();
+   } catch (error) {
+       console.error('Authentication error:', error);
+       res.status(401).json({
+           success: false,
+           message: 'Authentication required'
+       });
+   }
+};
 
 // Export the entire middleware object
 module.exports = authMiddleware;
