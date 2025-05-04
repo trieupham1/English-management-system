@@ -103,42 +103,65 @@ exports.getStudentDashboard = async (req, res) => {
         });
     }
 };
-// Helper functions - Make sure these are defined
-function formatTime(date) {
-    if (!date) return '';
-    return new Date(date).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true
-    });
-}
-
-function getDayName(date) {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function getTimeUntil(futureDate) {
-    if (!futureDate) return '';
-    
-    const now = new Date();
-    const future = new Date(futureDate);
-    const diffMs = future - now;
-    
-    if (diffMs < 0) return 'Past';
-    
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHrs < 1) {
-        const diffMins = Math.floor(diffMs / (1000 * 60));
-        return `${diffMins} minutes`;
-    } else if (diffHrs < 24) {
-        return `${diffHrs} hours`;
-    } else {
-        const diffDays = Math.floor(diffHrs / 24);
-        return `${diffDays} days`;
+// In studentController.js
+exports.getCoursesForDropdown = async (req, res) => {
+    try {
+        const Course = require('../models/Course');
+        
+        // Get active courses for dropdown
+        const courses = await Course.find({ status: 'Active' })
+            .select('_id name level category')
+            .lean();
+        
+        res.status(200).json({
+            success: true,
+            count: courses.length,
+            data: courses
+        });
+    } catch (error) {
+        console.error('Error fetching courses for dropdown:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
     }
-}
+};
+// In studentController.js
+exports.getMaterialsByCourse = async (req, res) => {
+    try {
+        const Material = require('../models/Material');
+        const courseId = req.params.courseId;
+        
+        // Fetch materials for the specific course
+        let materials;
+        if (courseId === 'all') {
+            // If 'all' is selected, get all materials
+            materials = await Material.find()
+                .sort({ createdAt: -1 })
+                .lean();
+        } else {
+            // Get materials for specific course
+            materials = await Material.find({ course: courseId })
+                .sort({ createdAt: -1 })
+                .lean();
+        }
+        
+        res.status(200).json({
+            success: true,
+            count: materials.length,
+            data: materials
+        });
+    } catch (error) {
+        console.error('Error fetching materials by course:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
 exports.getAllStudents = async (req, res) => {
     try {
         const students = await Student.find()
@@ -302,15 +325,14 @@ exports.deleteStudent = async (req, res) => {
         });
     }
 };
-// Get student's courses
+// In studentController.js, update the getStudentCourses function
 exports.getStudentCourses = async (req, res) => {
     try {
-        // Get all courses directly from the database
-        const courses = await Course.find();
-        console.log('All courses found:', courses.length);
+        const userId = req.user._id;
+        const student = await Student.findOne({ _id: userId })
+            .populate('studentInfo.course');  // Changed from courses to course
         
-        if (courses.length === 0) {
-            // No courses in database, return empty array
+        if (!student || !student.studentInfo.course) {
             return res.status(200).json({
                 success: true,
                 count: 0,
@@ -318,31 +340,117 @@ exports.getStudentCourses = async (req, res) => {
             });
         }
         
-        // Format the courses data for the frontend
-        const formattedCourses = courses.map(course => ({
-            _id: course._id,
-            name: course.name,
-            level: course.level,
-            category: course.category,
-            teacher: "Unknown Teacher", // You can enhance this later if needed
-            duration: {
-                value: 3,
-                unit: "months"
-            }
-        }));
+        // Return single course as an array for compatibility with frontend
+        const courses = [student.studentInfo.course];
         
-        return res.status(200).json({
+        res.status(200).json({
             success: true,
-            count: formattedCourses.length,
-            data: formattedCourses
+            count: courses.length,
+            data: courses
         });
-        
     } catch (error) {
-        console.error('Error in getStudentCourses:', error);
-        return res.status(500).json({
+        console.error('Error fetching student courses:', error);
+        res.status(500).json({
             success: false,
-            message: 'Server Error - ' + error.message,
-            error: error.stack
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+// Update course enrollment function
+exports.enrollInCourse = async (req, res) => {
+    try {
+        const studentId = req.params.studentId;
+        const courseId = req.body.courseId;
+        
+        const student = await Student.findById(studentId);
+        
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        // Check if student already has a course
+        if (student.studentInfo.course) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student is already enrolled in a course. Please unenroll first.'
+            });
+        }
+        
+        // Update student with new course
+        student.studentInfo.course = courseId;
+        await student.save();
+        
+        // Also update course with student
+        const course = await Course.findById(courseId);
+        if (course) {
+            course.students.push(studentId);
+            await course.save();
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Student enrolled successfully',
+            data: student
+        });
+    } catch (error) {
+        console.error('Error enrolling student:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
+
+// Add function to unenroll from course
+exports.unenrollFromCourse = async (req, res) => {
+    try {
+        const studentId = req.params.studentId;
+        
+        const student = await Student.findById(studentId);
+        
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student not found'
+            });
+        }
+        
+        if (!student.studentInfo.course) {
+            return res.status(400).json({
+                success: false,
+                message: 'Student is not enrolled in any course'
+            });
+        }
+        
+        // Remove student from course
+        const courseId = student.studentInfo.course;
+        const course = await Course.findById(courseId);
+        
+        if (course) {
+            course.students = course.students.filter(id => id.toString() !== studentId);
+            await course.save();
+        }
+        
+        // Remove course from student
+        student.studentInfo.course = null;
+        await student.save();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Student unenrolled successfully',
+            data: student
+        });
+    } catch (error) {
+        console.error('Error unenrolling student:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
         });
     }
 };

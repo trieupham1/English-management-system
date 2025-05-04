@@ -326,7 +326,7 @@ function updateAssignments(assignments) {
     
     console.log('Assignments updated successfully');
 }
-
+// Update the initCourseMaterialsNavigation function
 function initCourseMaterialsNavigation() {
     // Add event listeners to the "View Course Materials" buttons
     const viewMaterialsButtons = document.querySelectorAll('.view-course-materials');
@@ -345,7 +345,7 @@ function initCourseMaterialsNavigation() {
                 if (materialFilter) {
                     materialFilter.value = courseId;
                     
-                    // Trigger the filter change
+                    // Trigger the filter change to load materials
                     filterMaterials(courseId);
                 }
             }, 100); // Small timeout to ensure the materials section is loaded
@@ -360,26 +360,141 @@ function initCourseMaterialsNavigation() {
         });
     }
 }
-
+// Update the filterMaterials function to work with the above
 function filterMaterials(courseId) {
-    // Get all material rows
-    const materialRows = document.querySelectorAll('.material-row');
+    console.log('Filtering materials for course:', courseId);
     
-    if (courseId === 'all') {
-        // Show all materials
-        materialRows.forEach(row => {
-            row.style.display = 'flex';
-        });
-    } else {
-        // Show only selected course materials
-        materialRows.forEach(row => {
-            if (row.getAttribute('data-course') === courseId) {
-                row.style.display = 'flex';
+    // Show loading state
+    const materialsContainer = document.querySelector('.materials-container');
+    if (materialsContainer) {
+        materialsContainer.innerHTML = '<div class="loading-message">Loading materials...</div>';
+    }
+    
+    // Fetch materials for the selected course
+    ELC.apiRequest(`/students/materials/course/${courseId}`, 'GET')
+        .then(response => {
+            if (response.success) {
+                updateMaterialsUI(response.data);
             } else {
-                row.style.display = 'none';
+                console.error('Error loading materials:', response.message);
+                if (materialsContainer) {
+                    materialsContainer.innerHTML = '<div class="error-message">Failed to load materials</div>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching materials:', error);
+            if (materialsContainer) {
+                materialsContainer.innerHTML = '<div class="error-message">Failed to connect to server</div>';
             }
         });
+}
+// Keep the updateMaterialsUI function as it is
+function updateMaterialsUI(materials) {
+    const materialsContainer = document.querySelector('.materials-container');
+    if (!materialsContainer) return;
+    
+    // Clear existing content
+    materialsContainer.innerHTML = '';
+    
+    if (materials.length === 0) {
+        materialsContainer.innerHTML = '<div class="no-materials">No materials available for this course</div>';
+        return;
     }
+    
+    // Add each material
+    materials.forEach(material => {
+        // Get icon based on material type
+        let iconClass = 'fas fa-file';
+        switch (material.type) {
+            case 'document':
+                iconClass = 'fas fa-file-word';
+                break;
+            case 'presentation':
+            case 'slides':
+                iconClass = 'fas fa-file-powerpoint';
+                break;
+            case 'video':
+                iconClass = 'fas fa-file-video';
+                break;
+            case 'audio':
+                iconClass = 'fas fa-file-audio';
+                break;
+            case 'image':
+                iconClass = 'fas fa-file-image';
+                break;
+            case 'link':
+                iconClass = 'fas fa-link';
+                break;
+            case 'exercise':
+                iconClass = 'fas fa-pen';
+                break;
+            default:
+                iconClass = 'fas fa-file';
+        }
+        
+        // Format date
+        const date = new Date(material.createdAt);
+        const formattedDate = date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        
+        // Create material row
+        const materialRow = document.createElement('div');
+        materialRow.className = 'material-row';
+        materialRow.setAttribute('data-course', material.course);
+        
+        materialRow.innerHTML = `
+            <div class="material-icon">
+                <i class="${iconClass}"></i>
+            </div>
+            <div class="material-content">
+                <h3 class="material-title">${material.title}</h3>
+                <div class="material-subtitle">${material.description || ''}</div>
+                <div class="material-date">${formattedDate}</div>
+            </div>
+            <div class="material-action">
+                ${material.file ? 
+                    `<button class="btn btn-primary download-material" data-id="${material._id}">Download</button>` :
+                    material.url ? 
+                    `<a href="${material.url}" target="_blank" class="btn btn-primary">View</a>` :
+                    `<button class="btn btn-secondary" disabled>Not Available</button>`
+                }
+            </div>
+        `;
+        
+        materialsContainer.appendChild(materialRow);
+    });
+    
+    // Add download event listeners
+    initMaterialDownloads();
+}
+// Add function to handle material downloads
+function initMaterialDownloads() {
+    const downloadButtons = document.querySelectorAll('.download-material');
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const materialId = this.getAttribute('data-id');
+            downloadMaterial(materialId);
+        });
+    });
+}
+// Add function to download material
+function downloadMaterial(materialId) {
+    ELC.showNotification('Starting download...', 'info');
+    
+    // Create a link element and trigger download
+    const downloadUrl = `${ELC.getApiUrl()}/materials/${materialId}/download`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', '');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    ELC.showNotification('Download started', 'success');
 }
 
 function initAssignmentFiltering() {
@@ -444,7 +559,7 @@ function navigateToSection(sectionName) {
         }
     }
 }
-
+// Update tab navigation to use the new automatic loading
 function initTabNavigation() {
     const menuItems = document.querySelectorAll('.menu-item[data-section]');
     const sections = document.querySelectorAll('.content-section');
@@ -471,22 +586,14 @@ function initTabNavigation() {
             } else if (targetSection === 'courses') {
                 loadCoursesData();
             } else if (targetSection === 'materials') {
-                loadMaterialsData();
+                loadMaterialsData(); // This now automatically loads materials for the enrolled course
             } else if (targetSection === 'assignments') {
                 loadAssignmentsData();
             }
         });
     });
-    
-    const chatbotToggle = document.getElementById('chatbot-toggle');
-    if (chatbotToggle) {
-        chatbotToggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            toggleChatbot();
-        });
-    }
 }
-
+// In student.js, update the loadCoursesData function
 function loadCoursesData() {
     console.log('Loading courses data...');
     ELC.showNotification('Loading your courses...', 'info');
@@ -496,13 +603,22 @@ function loadCoursesData() {
             if (response.success) {
                 console.log('Courses data loaded:', response.data);
                 
-                // Check if we have actual data
+                // Check if student has a course
                 if (response.data && response.data.length > 0) {
                     updateCoursesUI(response.data);
-                    ELC.showNotification('Courses loaded successfully', 'success');
+                    ELC.showNotification('Course loaded successfully', 'success');
                 } else {
-                    console.error('No course data received from API');
-                    ELC.showNotification('No courses found', 'warning');
+                    // Show message for no course enrolled
+                    const coursesGrid = document.querySelector('.courses-grid');
+                    if (coursesGrid) {
+                        coursesGrid.innerHTML = `
+                            <div class="no-course-message">
+                                <h3>You are not enrolled in any course</h3>
+                                <p>Please contact the administration to enroll in a course.</p>
+                            </div>
+                        `;
+                    }
+                    ELC.showNotification('You are not enrolled in any course', 'info');
                 }
             } else {
                 console.error('Error loading courses data:', response.message);
@@ -515,6 +631,7 @@ function loadCoursesData() {
         });
 }
 
+// Update the updateCoursesUI function to use the correct course IDs
 function updateCoursesUI(courses) {
     console.log('Updating courses UI with data:', courses);
     
@@ -571,7 +688,7 @@ function updateCoursesUI(courses) {
             durationText = `${course.duration.value || 3} ${course.duration.unit || 'months'}`;
         }
         
-        // Create course card
+        // Create course card with correct course._id
         const courseCard = document.createElement('div');
         courseCard.className = 'course-card';
         courseCard.innerHTML = `
@@ -603,76 +720,149 @@ function updateCoursesUI(courses) {
     console.log('Courses UI updated successfully');
 }
 
+// In student.js, add this function to fetch courses for dropdown
+function loadCoursesForDropdown() {
+    return ELC.apiRequest('/students/courses/dropdown', 'GET')
+        .then(response => {
+            if (response.success) {
+                return response.data;
+            }
+            throw new Error('Failed to load courses');
+        })
+        .catch(error => {
+            console.error('Error fetching courses for dropdown:', error);
+            return [];
+        });
+}
+// In student.js, update the loadMaterialsData function
 function loadMaterialsData() {
     console.log('Loading materials data...');
     ELC.showNotification('Loading your course materials...', 'info');
     
-    // Add API call to get materials data
-    ELC.apiRequest('/students/materials', 'GET')
-        .then(response => {
-            if (response.success) {
-                console.log('Materials data loaded:', response.data);
-                // You can add code here to update the materials section with dynamic data
+    // First, get the student's enrolled course
+    ELC.apiRequest('/students/courses', 'GET')
+        .then(coursesResponse => {
+            if (coursesResponse.success && coursesResponse.data.length > 0) {
+                const enrolledCourse = coursesResponse.data[0]; // Since student has only one course
+                
+                // Hide the filter dropdown since student has only one course
+                const filterDropdown = document.querySelector('.filter-dropdown');
+                if (filterDropdown) {
+                    filterDropdown.style.display = 'none';
+                }
+                
+                // Update header to show the course name
+                const materialsHeader = document.querySelector('.materials-header');
+                if (materialsHeader) {
+                    const sectionTitle = materialsHeader.querySelector('.section-title');
+                    if (sectionTitle) {
+                        sectionTitle.textContent = `Course Materials - ${enrolledCourse.name}`;
+                    }
+                }
+                
+                // Now fetch materials for this specific course
+                filterMaterials(enrolledCourse._id);
+                
             } else {
-                console.error('Error loading materials data:', response.message);
+                // No course enrolled
+                const materialsContainer = document.querySelector('.materials-container');
+                if (materialsContainer) {
+                    materialsContainer.innerHTML = `
+                        <div class="no-course-message">
+                            <h3>No Course Enrolled</h3>
+                            <p>You need to be enrolled in a course to see materials.</p>
+                        </div>
+                    `;
+                }
+                ELC.showNotification('You are not enrolled in any course', 'info');
             }
         })
         .catch(error => {
-            console.error('Error fetching materials data:', error);
+            console.error('Error fetching courses:', error);
+            ELC.showNotification('Failed to connect to server', 'error');
         });
-    
-    // Apply initial filtering based on current dropdown value
-    const materialFilter = document.getElementById('material-filter');
-    if (materialFilter) {
-        filterMaterials(materialFilter.value);
-    }
 }
-
+// In student.js, update the loadAssignmentsData function
 function loadAssignmentsData() {
     console.log('Loading assignments data...');
     ELC.showNotification('Loading your assignments...', 'info');
     
-    // Updated API endpoint to match your routes
-    ELC.apiRequest('/assignments', 'GET')
-        .then(response => {
-            if (response.success) {
-                console.log('Assignments data loaded:', response.data);
+    // First, get the student's enrolled course
+    ELC.apiRequest('/students/courses', 'GET')
+        .then(coursesResponse => {
+            if (coursesResponse.success && coursesResponse.data.length > 0) {
+                const enrolledCourse = coursesResponse.data[0]; // Since student has only one course
                 
-                 // Check if we just submitted an assignment and update its status
-                 if (window.lastSubmittedAssignment) {
-                    response.data.forEach(assignment => {
-                        if (assignment._id === window.lastSubmittedAssignment) {
-                            assignment.status = 'completed';
+                // Now fetch assignments
+                return ELC.apiRequest('/assignments', 'GET')
+                    .then(assignmentsResponse => {
+                        if (assignmentsResponse.success) {
+                            console.log('Assignments data loaded:', assignmentsResponse.data);
+                            
+                            // Filter assignments to show only those for the enrolled course
+                            const filteredAssignments = assignmentsResponse.data.filter(assignment => {
+                                if (!assignment.course) return false;
+                                const courseId = typeof assignment.course === 'object' ? assignment.course._id : assignment.course;
+                                return courseId === enrolledCourse._id;
+                            });
+                            
+                            // Update the assignments section with filtered assignments
+                            updateAssignmentsSection(filteredAssignments, enrolledCourse);
+                            
+                            ELC.showNotification('Assignments loaded successfully', 'success');
+                        } else {
+                            console.error('Error loading assignments data:', assignmentsResponse.message);
+                            ELC.showNotification('Failed to load assignments data', 'error');
                         }
                     });
-                    // Clear the flag after use
-                    window.lastSubmittedAssignment = null;
-                }
-
-                // Update the assignments section
-                updateAssignmentsSection(response.data);
-                
-                ELC.showNotification('Assignments loaded successfully', 'success');
             } else {
-                console.error('Error loading assignments data:', response.message);
-                ELC.showNotification('Failed to load assignments data', 'error');
+                // No course enrolled
+                const assignmentsContainer = document.querySelector('.assignments-container');
+                if (assignmentsContainer) {
+                    assignmentsContainer.innerHTML = `
+                        <div class="no-course-message">
+                            <h3>No Course Enrolled</h3>
+                            <p>You need to be enrolled in a course to see assignments.</p>
+                        </div>
+                    `;
+                }
+                ELC.showNotification('You are not enrolled in any course', 'info');
             }
         })
         .catch(error => {
-            console.error('Error fetching assignments data:', error);
+            console.error('Error fetching data:', error);
             ELC.showNotification('Failed to connect to server', 'error');
         });
-    
-    // Apply initial filtering based on current dropdown value
-    const assignmentFilter = document.getElementById('assignment-filter');
-    if (assignmentFilter) {
-        filterAssignments(assignmentFilter.value);
-    }
 }
 
-function updateAssignmentsSection(assignments) {
+// Update the updateAssignmentsSection function to hide dropdown and show course name
+function updateAssignmentsSection(assignments, enrolledCourse) {
+    // Hide the filter dropdown
+    const filterDropdown = document.querySelector('.filter-dropdown');
+    if (filterDropdown) {
+        filterDropdown.style.display = 'none';
+    }
+    
+    // Update header to show the course name
+    const assignmentsHeader = document.querySelector('.assignments-header');
+    if (assignmentsHeader) {
+        const sectionTitle = assignmentsHeader.querySelector('.section-title');
+        if (sectionTitle && enrolledCourse) {
+            sectionTitle.textContent = `My Assignments - ${enrolledCourse.name}`;
+        }
+    }
+    
     if (!assignments || assignments.length === 0) {
-        console.log('No assignments to display in assignments section');
+        console.log('No assignments to display');
+        const assignmentsContainer = document.querySelector('.assignments-container');
+        if (assignmentsContainer) {
+            assignmentsContainer.innerHTML = `
+                <div class="no-assignments-message">
+                    <h3>No Assignments</h3>
+                    <p>There are no assignments for your course yet.</p>
+                </div>
+            `;
+        }
         return;
     }
     
@@ -688,15 +878,31 @@ function updateAssignmentsSection(assignments) {
     // Clear existing content
     assignmentsContainer.innerHTML = '';
     
+    // Get current user ID
+    const currentUser = ELC.getCurrentUser();
+    const currentUserId = currentUser._id || currentUser.id;
+    
     // Add each assignment
     assignments.forEach(assignment => {
+        // Check if current user has submitted
+        let hasSubmitted = false;
+        let userSubmission = null;
+        
+        if (assignment.submissions && assignment.submissions.length > 0) {
+            userSubmission = assignment.submissions.find(sub => {
+                const studentId = typeof sub.student === 'object' ? sub.student._id : sub.student;
+                return studentId === currentUserId;
+            });
+            hasSubmitted = !!userSubmission;
+        }
+        
         let statusClass = 'status-pending';
         let statusLabel = '';
         
-        if (assignment.status === 'completed') {
+        if (hasSubmitted) {
             statusClass = 'status-completed';
             statusLabel = '<span class="status-label completed">Completed</span>';
-        } else if (assignment.status === 'overdue') {
+        } else if (assignment.dueDate && new Date(assignment.dueDate) < new Date()) {
             statusClass = 'status-overdue';
             statusLabel = '<span class="status-label overdue">Overdue</span>';
         }
@@ -715,15 +921,9 @@ function updateAssignmentsSection(assignments) {
             formattedDate = 'Unknown date';
         }
         
-        // Get course name if available
-        const courseName = assignment.course && assignment.course.name ? 
-                           assignment.course.name : 
-                           'General Course';
-        
         // Create the assignment row
         const assignmentRow = document.createElement('div');
         assignmentRow.className = 'assignment-row';
-        assignmentRow.setAttribute('data-course', assignment.course ? assignment.course._id : 'all');
         assignmentRow.setAttribute('data-id', assignment._id || '');
         
         // Create assignment content
@@ -732,16 +932,15 @@ function updateAssignmentsSection(assignments) {
             <div class="assignment-content">
                 <h3 class="assignment-title">${assignment.title} ${statusLabel}</h3>
                 <div class="assignment-details">
-                    <div class="assignment-course"><i class="fas fa-book"></i> ${courseName}</div>
                     <div class="assignment-due"><i class="fas fa-calendar"></i> Due: ${formattedDate}</div>
                     <div class="assignment-teacher"><i class="fas fa-user"></i> Teacher: Unknown</div>
                 </div>
                 <div class="assignment-description">
-                    <p>${assignment.description || 'Complete this assignment before the due date.'}</p>
+                    <p>${assignment.instructions || 'Complete this assignment before the due date.'}</p>
                 </div>
                 <div class="assignment-actions">
-                    <button class="btn ${assignment.status === 'completed' ? 'btn-secondary start-view-submission' : 'btn-primary start-assignment'}" data-id="${assignment._id || ''}">
-                        ${assignment.status === 'completed' ? 'View Submission' : 'Add Submission'}
+                    <button class="btn ${hasSubmitted ? 'btn-secondary start-view-submission' : 'btn-primary start-assignment'}" data-id="${assignment._id || ''}">
+                        ${hasSubmitted ? 'View Submission' : 'Add Submission'}
                     </button>
                 </div>
             </div>
@@ -757,9 +956,6 @@ function updateAssignmentsSection(assignments) {
     console.log('Assignments section updated successfully');
 }
 
-// Assignment Submission Functionality - New Code Below
-
-// Global variables for assignment submission
 let selectedAssignment = null;
 let submissionFiles = [];
 
@@ -834,7 +1030,6 @@ function initAssignmentSubmission() {
         });
     }
 }
-
 function initAssignmentActionButtons() {
     // Add event listeners to the assignment action buttons
     const startAssignmentButtons = document.querySelectorAll('.start-assignment');
@@ -888,8 +1083,9 @@ function openAssignmentSubmission(assignmentId, title, description) {
     // Check if there's already a submission for this assignment
     checkExistingSubmission(assignmentId);
 }
-
 function viewAssignmentSubmission(assignmentId, title, description) {
+    console.log('Viewing submission for assignment:', assignmentId);
+    
     // Set the selected assignment
     selectedAssignment = assignmentId;
     
@@ -900,13 +1096,12 @@ function viewAssignmentSubmission(assignmentId, title, description) {
     if (submissionTitle) submissionTitle.textContent = title;
     if (submissionDescription) submissionDescription.innerHTML = `<p>${description}</p>`;
     
-    // Load submission data
-    loadSubmissionData(assignmentId);
-    
     // Navigate to submission section
     navigateToSection('assignment-submission');
+    
+    // Load submission data
+    loadSubmissionData(assignmentId);
 }
-
 function loadSubmissionData(assignmentId) {
     // Show loading notification
     ELC.showNotification('Loading submission...', 'info');
@@ -918,10 +1113,19 @@ function loadSubmissionData(assignmentId) {
                 const assignment = response.data;
                 
                 // Find current user's submission
-                const currentUserId = ELC.getCurrentUser().id;
-                const userSubmission = assignment.submissions.find(sub => 
-                    sub.student._id === currentUserId || sub.student === currentUserId
-                );
+                const currentUser = ELC.getCurrentUser();
+                const currentUserId = currentUser._id || currentUser.id;
+                
+                // Find the submission from the assignment data
+                let userSubmission = null;
+                
+                if (assignment.submissions && assignment.submissions.length > 0) {
+                    userSubmission = assignment.submissions.find(sub => {
+                        // Handle both string and object student references
+                        const studentId = typeof sub.student === 'object' ? (sub.student._id || sub.student.id) : sub.student;
+                        return studentId === currentUserId;
+                    });
+                }
                 
                 if (userSubmission) {
                     // Extract file details if available
@@ -930,8 +1134,8 @@ function loadSubmissionData(assignmentId) {
                         const fileName = userSubmission.file.split('/').pop();
                         submissionFiles.push({
                             name: fileName,
-                            // For size, we don't have it, so use placeholder
-                            size: 0
+                            size: 0, // We don't have size info from the API
+                            type: getFileTypeFromName(fileName)
                         });
                     }
                     
@@ -950,7 +1154,7 @@ function loadSubmissionData(assignmentId) {
                     // Show success notification
                     ELC.showNotification('Submission loaded successfully', 'success');
                 } else {
-                    // No submission found
+                    // No submission found - show file upload section
                     showFileUploadSection();
                     ELC.showNotification('No submission found', 'info');
                 }
@@ -967,6 +1171,20 @@ function loadSubmissionData(assignmentId) {
         });
 }
 
+// Helper function to determine file type from filename
+function getFileTypeFromName(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const typeMap = {
+        'pdf': 'application/pdf',
+        'doc': 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif'
+    };
+    return typeMap[ext] || 'application/octet-stream';
+}
 function handleFiles(filesList) {
     for (const file of filesList) {
         // Check if file is already in the list
@@ -1031,7 +1249,6 @@ function formatFileSize(bytes) {
         return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
 }
-
 function saveSubmission() {
     // Show loading notification
     ELC.showNotification('Uploading files...', 'info');
@@ -1052,48 +1269,37 @@ function saveSubmission() {
     // Build the URL with ID as query parameter
     const url = `/assignments/${selectedAssignment}/submit?studentId=${encodeURIComponent(mongoId)}`;
 
-     // Create FormData for file
-     const formData = new FormData();
-     if (submissionFiles.length > 0) {
-         formData.append('file', submissionFiles[0]);
-         console.log("file:", submissionFiles[0]);
-     }
-    
-    console.log("Submitting with MongoDB ID:", mongoId);
-
-    // Use a log to verify what's in the FormData
-    for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + pair[1]);
+    // Create FormData for file
+    const formData = new FormData();
+    if (submissionFiles.length > 0) {
+        formData.append('file', submissionFiles[0]);
+        console.log("file:", submissionFiles[0]);
     }
-
-    // Debug log
-    console.log("Submitting with MongoDB ID:", mongoId);
-
+    
     // Make API request
     ELC.apiRequest(url, 'POST', formData, true, true)
-    .then(response => {
-       if (response.success) {
-           // Show success notification
-           ELC.showNotification('Submission saved successfully', 'success');
-           // Update the assignment status in the UI
-           updateAssignmentStatus(selectedAssignment, 'completed');
-           
-           navigateToSection('assignments');
-
-           // Show submission status
-           showSubmissionStatus({
-               submittedAt: new Date(),
-               status: 'submitted',
-               gradingStatus: 'not_graded'
-           });
-                
+        .then(response => {
+            if (response.success) {
                 // Show success notification
                 ELC.showNotification('Submission saved successfully', 'success');
                 
-                // Navigate back to assignment list after a delay
+                // Create submission data object
+                const submissionData = {
+                    submittedAt: new Date(),
+                    status: 'submitted',
+                    gradingStatus: 'not_graded',
+                    grade: null,
+                    feedback: null
+                };
+                
+                // Show submission status
+                showSubmissionStatus(submissionData);
+                
+                // Reload assignments to update the button status
                 setTimeout(() => {
                     loadAssignmentsData();
-                }, 500);
+                }, 1000);
+                
             } else {
                 ELC.showNotification('Failed to save submission: ' + response.message, 'error');
             }
@@ -1145,7 +1351,6 @@ function updateAssignmentStatus(assignmentId, newStatus) {
         }
     }
 }
-
 function showSubmissionStatus(data) {
     // Get the file upload and status sections
     const fileUploadSection = document.getElementById('file-upload-section');
@@ -1165,7 +1370,8 @@ function showSubmissionStatus(data) {
         hour: '2-digit',
         minute: '2-digit'
     };
-    const formattedDate = date.toLocaleDateString('en-US', options);
+    const formattedDate = date.toLocaleDateString('en-US', options) + ' at ' + 
+                          date.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
     
     // Update the submission date
     if (submissionDate) submissionDate.textContent = formattedDate;
@@ -1175,18 +1381,36 @@ function showSubmissionStatus(data) {
         submittedFilesList.innerHTML = '';
         
         submissionFiles.forEach(file => {
+            // Determine file icon based on file type
+            let fileIconClass = 'fas fa-file';
+            if (file.name.endsWith('.pdf')) {
+                fileIconClass = 'fas fa-file-pdf';
+            } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+                fileIconClass = 'fas fa-file-word';
+            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png') || file.name.endsWith('.gif')) {
+                fileIconClass = 'fas fa-file-image';
+            }
+            
             const fileItem = document.createElement('div');
             fileItem.className = 'file-link';
             fileItem.innerHTML = `
-                <i class="fas fa-file"></i>
-                <span style="margin-left: 10px;">${file.name}</span>
-                <span style="margin-left: 10px; color: #666;">${formattedDate}</span>
+                <div class="file-icon">
+                    <i class="${fileIconClass}"></i>
+                </div>
+                <div class="file-name">${file.name}</div>
+                <div class="file-date">${formattedDate}</div>
             `;
             submittedFilesList.appendChild(fileItem);
         });
     }
     
-    // Hide upload section, show status section
+    // Update status badges
+    const statusBadge = submissionStatus.querySelector('.status-badge.badge-submitted');
+    if (statusBadge) {
+        statusBadge.textContent = 'Submitted for grading';
+    }
+    
+    // IMPORTANT: Hide upload section and show status section
     if (fileUploadSection) fileUploadSection.style.display = 'none';
     if (submissionStatus) submissionStatus.style.display = 'block';
 }
@@ -1200,7 +1424,6 @@ function showFileUploadSection() {
     if (fileUploadSection) fileUploadSection.style.display = 'block';
     if (submissionStatus) submissionStatus.style.display = 'none';
 }
-
 function checkExistingSubmission(assignmentId) {
     // Make API request to get assignment details
     ELC.apiRequest(`/assignments/${assignmentId}`, 'GET')
@@ -1209,10 +1432,17 @@ function checkExistingSubmission(assignmentId) {
                 const assignment = response.data;
                 
                 // Find current user's submission
-                const currentUserId = ELC.getCurrentUser().id;
-                const userSubmission = assignment.submissions.find(sub => 
-                    sub.student._id === currentUserId || sub.student === currentUserId
-                );
+                const currentUser = ELC.getCurrentUser();
+                const currentUserId = currentUser._id || currentUser.id;
+                
+                let userSubmission = null;
+                
+                if (assignment.submissions && assignment.submissions.length > 0) {
+                    userSubmission = assignment.submissions.find(sub => {
+                        const studentId = sub.student?._id || sub.student?.id || sub.student;
+                        return studentId === currentUserId;
+                    });
+                }
                 
                 if (userSubmission) {
                     // Extract file details if available
@@ -1221,7 +1451,6 @@ function checkExistingSubmission(assignmentId) {
                         const fileName = userSubmission.file.split('/').pop();
                         submissionFiles.push({
                             name: fileName,
-                            // For size, we don't have it, so use placeholder
                             size: 0
                         });
                     }

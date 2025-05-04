@@ -48,10 +48,11 @@ const StudentSchema = new mongoose.Schema({
             enum: ['beginner','intermediate', 'upper-intermediate', 'advanced'],
             required: true
         },
-        courses: [{
+        course: {  // Changed from courses array to single course
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Course'
-        }],
+            ref: 'Course',
+            default: null  // Student may not have a course initially
+        },
         attendance: {
             type: Number,
             default: 0
