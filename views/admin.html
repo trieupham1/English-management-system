@@ -405,35 +405,368 @@
                 </div>
             </section>
             
-            <!-- Teachers Placement Section -->
-            <section id="teachers-section" class="content-section">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Teachers Placement</h3>
-                    </div>
-                    <p>Teacher placement interface will be displayed here.</p>
-                </div>
-            </section>
+       <!-- Teachers Placement Section -->
+       <section id="teachers-section" class="content-section">
+        <div class="card">
+            <div class="card-header">
+                <h3>Teachers Placement</h3>
+            </div>
             
-            <!-- Students Placement Section -->
-            <section id="students-section" class="content-section">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Students Placement</h3>
-                    </div>
-                    <p>Student placement interface will be displayed here.</p>
+            <div class="filters-container mb-4">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search teachers..." id="search-teachers">
+                    <button><i class="fas fa-search"></i></button>
                 </div>
-            </section>
+                <div class="filter-options">
+                    <select id="filter-teacher-status">
+                        <option value="">All Teachers</option>
+                        <option value="active">Active</option>
+                        <option value="on-leave">On Leave</option>
+                    </select>
+                </div>
+            </div>
             
-            <!-- Reports Section -->
-            <section id="reports-section" class="content-section">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Reports</h3>
-                    </div>
-                    <p>Reports and analytics will be displayed here.</p>
+            <div class="table-responsive">
+                <table class="table" id="teacher-placements-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher ID</th>
+                            <th>Teacher Name</th>
+                            <th>Email</th>
+                            <th>Assigned Courses</th>
+                            <th>Total Hours</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>T001</td>
+                            <td>Sarah Williams</td>
+                            <td>sarah@example.com</td>
+                            <td>
+                                <div class="course-tags">
+                                    <span class="course-tag">Conversational English</span>
+                                    <span class="course-tag">Business English</span>
+                                </div>
+                            </td>
+                            <td>24</td>
+                            <td><span class="badge badge-success">Active</span></td>
+                            <td>
+                                <button class="action-btn" title="Edit Assignments" onclick="openTeacherAssignmentModal('T001', 'Sarah Williams')"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn" title="Remove" onclick="removeTeacher('T001')"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>T002</td>
+                            <td>John Davis</td>
+                            <td>john@example.com</td>
+                            <td>
+                                <div class="course-tags">
+                                    <span class="course-tag">IELTS Preparation</span>
+                                </div>
+                            </td>
+                            <td>16</td>
+                            <td><span class="badge badge-success">Active</span></td>
+                            <td>
+                                <button class="action-btn" title="Edit Assignments" onclick="openTeacherAssignmentModal('T002', 'John Davis')"><i class="fas fa-edit"></i></button>
+                                <button class="action-btn" title="Remove" onclick="removeTeacher('T002')"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Teacher Assignment Modal -->
+        <div id="teacher-assignment-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Assign Courses to <span id="teacher-name-modal"></span></h3>
+                    <button class="close-modal">&times;</button>
                 </div>
-            </section>
+                <div class="modal-body">
+                    <form id="teacher-assignment-form">
+                        <input type="hidden" id="teacher-id-modal">
+                        
+                        <div class="form-group">
+                            <label>Available Courses</label>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="courses" value="C1001"> Conversational English
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="courses" value="C1002"> Business English
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="courses" value="C1003"> IELTS Preparation
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" name="courses" value="C1004"> Grammar Foundations
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Update Assignments</button>
+                            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+            
+           <!-- Students Placement Section -->
+<section id="students-section" class="content-section">
+    <div class="card">
+        <div class="card-header">
+            <h3>Students Placement</h3>
+        </div>
+        
+        <div class="filters-container mb-4">
+            <div class="search-bar">
+                <input type="text" placeholder="Search students..." id="search-students-placement">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+            <div class="filter-options">
+                <select id="filter-placement-status">
+                    <option value="">All Students</option>
+                    <option value="placed">Placed</option>
+                    <option value="unplaced">Unplaced</option>
+                </select>
+                <select id="filter-student-level">
+                    <option value="">All Levels</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="upper-intermediate">Upper-intermediate</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table" id="student-placements-table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Email</th>
+                        <th>Level</th>
+                        <th>Current Course</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>S001</td>
+                        <td>John Smith</td>
+                        <td>john.smith@example.com</td>
+                        <td><span class="badge badge-info">Intermediate</span></td>
+                        <td>Conversational English</td>
+                        <td><span class="badge badge-success">Placed</span></td>
+                        <td>
+                            <button class="action-btn" title="Change Course"><i class="fas fa-exchange-alt"></i></button>
+                            <button class="action-btn" title="Remove from Course"><i class="fas fa-times"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>S002</td>
+                        <td>Emily Johnson</td>
+                        <td>emily.j@example.com</td>
+                        <td><span class="badge badge-info">Beginner</span></td>
+                        <td>-</td>
+                        <td><span class="badge badge-warning">Unplaced</span></td>
+                        <td>
+                            <button class="action-btn" title="Place in Course"><i class="fas fa-plus"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>S003</td>
+                        <td>Michael Brown</td>
+                        <td>m.brown@example.com</td>
+                        <td><span class="badge badge-info">Advanced</span></td>
+                        <td>IELTS Preparation</td>
+                        <td><span class="badge badge-success">Placed</span></td>
+                        <td>
+                            <button class="action-btn" title="Change Course"><i class="fas fa-exchange-alt"></i></button>
+                            <button class="action-btn" title="Remove from Course"><i class="fas fa-times"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Student Placement Modal -->
+    <div id="student-placement-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Student Course Placement</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="student-placement-form">
+                    <div class="student-info-card">
+                        <h4>Student Information</h4>
+                        <div class="student-details">
+                            <p><strong>Name:</strong> <span id="student-name-display"></span></p>
+                            <p><strong>Level:</strong> <span id="student-level-display"></span></p>
+                            <p><strong>Current Course:</strong> <span id="student-current-course"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="select-course">Select Course</label>
+                        <select id="select-course" class="form-control" required>
+                            <option value="">Choose a course</option>
+                            <optgroup label="Beginner">
+                                <option value="C1004">Grammar Foundations</option>
+                            </optgroup>
+                            <optgroup label="Intermediate">
+                                <option value="C1001">Conversational English</option>
+                            </optgroup>
+                            <optgroup label="Upper-intermediate">
+                                <option value="C1002">Business English</option>
+                            </optgroup>
+                            <optgroup label="Advanced">
+                                <option value="C1003">IELTS Preparation</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Place Student</button>
+                        <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+            
+          <!-- Reports Section -->
+<section id="reports-section" class="content-section">
+    <div class="reports-tabs">
+        <button class="tab-btn active" data-tab="individual-reports">Individual Reports</button>
+        <button class="tab-btn" data-tab="class-reports">Class Reports</button>
+    </div>
+    
+    <!-- Individual Reports Tab -->
+    <div id="individual-reports" class="tab-content active">
+        <div class="card">
+            <div class="card-header">
+                <h3>Individual Student Reports</h3>
+                <div class="filter-options">
+                    <select id="filter-individual-class">
+                        <option value="">All Classes</option>
+                        <option value="conv-english">Conversational English</option>
+                        <option value="bus-english">Business English</option>
+                        <option value="ielts">IELTS Preparation</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="reports-list">
+                <div class="report-item">
+                    <div class="report-header" onclick="toggleReport(this)">
+                        <div class="report-info">
+                            <h4>Conversational English - Mid-term Progress</h4>
+                            <div class="report-meta">
+                                <span><i class="fas fa-calendar"></i> Generated: Apr 15, 2025</span>
+                                <span><i class="fas fa-user-graduate"></i> 15 students</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="report-content">
+                        <div class="report-actions">
+                            <button class="btn btn-primary btn-sm">View Report</button>
+                            <button class="btn btn-secondary btn-sm">Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-item">
+                    <div class="report-header" onclick="toggleReport(this)">
+                        <div class="report-info">
+                            <h4>Business English - Weekly Assessment</h4>
+                            <div class="report-meta">
+                                <span><i class="fas fa-calendar"></i> Generated: Apr 12, 2025</span>
+                                <span><i class="fas fa-user-graduate"></i> 12 students</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="report-content">
+                        <div class="report-actions">
+                            <button class="btn btn-primary btn-sm">View Report</button>
+                            <button class="btn btn-secondary btn-sm">Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Class Reports Tab -->
+    <div id="class-reports" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h3>Class Performance Reports</h3>
+                <div class="filter-options">
+                    <select id="filter-class-period">
+                        <option value="">All Periods</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="reports-list">
+                <div class="report-item">
+                    <div class="report-header" onclick="toggleReport(this)">
+                        <div class="report-info">
+                            <h4>Conversational English - Class Performance</h4>
+                            <div class="report-meta">
+                                <span><i class="fas fa-calendar"></i> Generated: Apr 10, 2025</span>
+                                <span><i class="fas fa-chalkboard-teacher"></i> Teacher: Sarah Williams</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="report-content">
+                        <div class="report-actions">
+                            <button class="btn btn-primary btn-sm">View Report</button>
+                            <button class="btn btn-secondary btn-sm">Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="report-item">
+                    <div class="report-header" onclick="toggleReport(this)">
+                        <div class="report-info">
+                            <h4>IELTS Preparation - Monthly Progress</h4>
+                            <div class="report-meta">
+                                <span><i class="fas fa-calendar"></i> Generated: Apr 5, 2025</span>
+                                <span><i class="fas fa-chalkboard-teacher"></i> Teacher: Emma Wilson</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="report-content">
+                        <div class="report-actions">
+                            <button class="btn btn-primary btn-sm">View Report</button>
+                            <button class="btn btn-secondary btn-sm">Download PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
             
             <!-- Settings Section -->
             <section id="settings-section" class="content-section">
