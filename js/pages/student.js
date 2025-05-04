@@ -37,7 +37,7 @@ function initStudentDashboard() {
         initStudentChatbot();
     }
 }
-
+// In student.js, update the loadStudentDashboard function
 function loadStudentDashboard() {
     console.log('Loading dashboard data...');
     ELC.showNotification('Loading dashboard...', 'info');
@@ -48,6 +48,10 @@ function loadStudentDashboard() {
             console.log('Dashboard API response:', response);
             if (response.success) {
                 updateDashboardData(response.data);
+                
+                // Now also load assignments for the dashboard
+                loadDashboardAssignments();
+                
                 ELC.showNotification('Dashboard loaded successfully', 'success');
             } else {
                 console.error('Error loading dashboard data:', response.message);
@@ -59,8 +63,108 @@ function loadStudentDashboard() {
             ELC.showNotification('Failed to connect to server', 'error');
         });
 }
-
-
+// Add a new function to load assignments for the dashboard
+function loadDashboardAssignments() {
+    // First, get the student's enrolled course
+    ELC.apiRequest('/students/courses', 'GET')
+        .then(coursesResponse => {
+            if (coursesResponse.success && coursesResponse.data.length > 0) {
+                const enrolledCourse = coursesResponse.data[0];
+                
+                // Now fetch assignments
+                return ELC.apiRequest('/assignments', 'GET')
+                    .then(assignmentsResponse => {
+                        if (assignmentsResponse.success) {
+                            // Filter assignments for the enrolled course
+                            const filteredAssignments = assignmentsResponse.data.filter(assignment => {
+                                if (!assignment.course) return false;
+                                const courseId = typeof assignment.course === 'object' ? assignment.course._id : assignment.course;
+                                return courseId === enrolledCourse._id;
+                            });
+                            
+                            // Update the dashboard assignments section
+                            updateDashboardAssignments(filteredAssignments);
+                        }
+                    });
+            } else {
+                // No course enrolled
+                updateDashboardAssignments([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching dashboard assignments:', error);
+        });
+}
+// Add function to update dashboard assignments
+function updateDashboardAssignments(assignments) {
+    const dashboardAssignments = document.querySelector('.dashboard-assignments');
+    if (!dashboardAssignments) return;
+    
+    // Clear existing content
+    dashboardAssignments.innerHTML = '';
+    
+    if (assignments.length === 0) {
+        dashboardAssignments.innerHTML = '<p style="text-align: center; color: #666;">No assignments found</p>';
+        return;
+    }
+    
+    // Get current user ID
+    const currentUser = ELC.getCurrentUser();
+    const currentUserId = currentUser._id || currentUser.id;
+    
+    // Show only the first 3 assignments
+    const displayAssignments = assignments.slice(0, 3);
+    
+    displayAssignments.forEach(assignment => {
+        // Check if current user has submitted
+        let hasSubmitted = false;
+        
+        if (assignment.submissions && assignment.submissions.length > 0) {
+            const userSubmission = assignment.submissions.find(sub => {
+                const studentId = typeof sub.student === 'object' ? sub.student._id : sub.student;
+                return studentId === currentUserId;
+            });
+            hasSubmitted = !!userSubmission;
+        }
+        
+        let statusClass = 'pending-indicator';
+        let statusText = 'Pending';
+        
+        if (hasSubmitted) {
+            statusClass = 'completed-indicator';
+            statusText = 'Completed';
+        } else if (assignment.dueDate && new Date(assignment.dueDate) < new Date()) {
+            statusClass = 'overdue-indicator';
+            statusText = 'Overdue';
+        }
+        
+        // Format the date
+        let formattedDate = '';
+        try {
+            const date = new Date(assignment.dueDate);
+            formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch (error) {
+            formattedDate = 'No due date';
+        }
+        
+        const assignmentItem = document.createElement('div');
+        assignmentItem.className = 'dashboard-assignment-item';
+        assignmentItem.innerHTML = `
+            <div class="assignment-content">
+                <div class="assignment-title">${assignment.title}</div>
+                <div class="assignment-due">Due: ${formattedDate}</div>
+            </div>
+            <div class="status-indicator ${statusClass}"></div>
+        `;
+        
+        dashboardAssignments.appendChild(assignmentItem);
+    });
+}
+// Update the updateDashboardData function
 function updateDashboardData(data) {
     if (!data) {
         console.error('No data provided to update dashboard');
@@ -80,178 +184,32 @@ function updateDashboardData(data) {
     const nextClassTime = document.getElementById('next-class-time');
     
     if (data.nextClass) {
-        if (nextClass) nextClass.textContent = data.nextClass.name;
-        if (nextClassTime) nextClassTime.textContent = data.nextClass.startsIn;
+        if (nextClass) nextClass.textContent = data.nextClass.name || 'No upcoming class';
+        if (nextClassTime) nextClassTime.textContent = data.nextClass.startsIn || 'N/A';
+    } else {
+        if (nextClass) nextClass.textContent = 'No upcoming class';
+        if (nextClassTime) nextClassTime.textContent = 'N/A';
     }
     
     // Update announcements
-    if (data.announcements && data.announcements.length > 0) {
-        console.log('Found announcements to display:', data.announcements);
-        
-        // Find the card that contains announcements
-        const cards = document.querySelectorAll('.card');
-        let announcementCard;
-        
-        // Look for the card with an h3 containing "Announcements"
-        for (const card of cards) {
-            const header = card.querySelector('.card-header h3');
-            if (header && header.textContent.includes('Announcements')) {
-                announcementCard = card;
-                break;
-            }
-        }
-        
-        if (!announcementCard) {
-            console.error('Could not find announcements card');
-            return;
-        }
-        
-        // Save the header
-        const cardHeader = announcementCard.querySelector('.card-header');
-        
-        // Clear existing content
-        announcementCard.innerHTML = '';
-        
-        // Add back the header
-        announcementCard.appendChild(cardHeader);
-        
-        // Add each announcement
-        data.announcements.forEach(announcement => {
-            const announcementItem = document.createElement('div');
-            announcementItem.className = 'announcement-item';
-            
-            // Format date
-            const date = new Date(announcement.date);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-            
-            announcementItem.innerHTML = `
-                <h4>${announcement.title}</h4>
-                <div class="announcement-date">${formattedDate}</div>
-                <p>${announcement.content}</p>
-            `;
-            
-            announcementCard.appendChild(announcementItem);
-        });
-        
-        console.log('Announcements updated successfully');
-    } else {
-        console.log('No announcements to display');
-    }
-    
-    // Update assignments
-    if (data.assignments && data.assignments.length > 0) {
-        console.log('Found assignments to display:', data.assignments);
-        
-        // Find the assignments card - specifically the third card which contains assignments
-        const assignmentsCard = document.querySelector('.card:nth-child(3)');
-        
-        if (!assignmentsCard) {
-            console.error('Could not find assignments card');
-            return;
-        }
-        
-        // Get the dashboard-assignments container
-        const assignmentsContainer = assignmentsCard.querySelector('.dashboard-assignments');
-        
-        if (!assignmentsContainer) {
-            console.error('Could not find assignments container');
-            return;
-        }
-        
-        // Clear existing content
-        assignmentsContainer.innerHTML = '';
-        
-        // Add each assignment
-        data.assignments.forEach(assignment => {
-            let statusClass = 'pending-indicator';
-            
-            if (assignment.status === 'completed') {
-                statusClass = 'completed-indicator';
-            } else if (assignment.status === 'overdue') {
-                statusClass = 'overdue-indicator';
-            }
-            
-            // Format date safely
-            let formattedDate = '';
-            try {
-                const date = new Date(assignment.dueDate);
-                formattedDate = date.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            } catch (error) {
-                console.error('Error formatting date:', error);
-                formattedDate = 'Unknown date';
-            }
-            
-            const assignmentItem = document.createElement('div');
-            assignmentItem.className = 'dashboard-assignment-item';
-            assignmentItem.innerHTML = `
-                <div class="assignment-content">
-                    <div class="assignment-title">${assignment.title}</div>
-                    <div class="assignment-due">Due: ${formattedDate}</div>
-                </div>
-                <div class="status-indicator ${statusClass}"></div>
-            `;
-            
-            assignmentsContainer.appendChild(assignmentItem);
-        });
-        
-        console.log('Assignments updated successfully');
-    } else {
-        console.log('No assignments to display');
-    }
+    updateDashboardAnnouncements(data.announcements);
 }
-function updateAnnouncements(announcements) {
+
+// Add function to update announcements
+function updateDashboardAnnouncements(announcements) {
+    const announcementsContainer = document.getElementById('announcements-container');
+    if (!announcementsContainer) return;
+    
+    // Clear loading message
+    announcementsContainer.innerHTML = '';
+    
     if (!announcements || announcements.length === 0) {
-        console.log('No announcements to display');
+        announcementsContainer.innerHTML = '<p style="text-align: center; color: #666;">No announcements at this time</p>';
         return;
     }
     
-    console.log('Updating announcements:', announcements);
-    
-    // Find the announcements section - try different selectors
-    let announcementContainer = document.querySelector('.card:nth-of-type(1)');
-    
-    // If not found by the first selector, try a different approach
-    if (!announcementContainer || !announcementContainer.querySelector('.announcement-item')) {
-        announcementContainer = document.querySelector('.card:has(.announcement-item)');
-    }
-    
-    // Final fallback
-    if (!announcementContainer) {
-        announcementContainer = document.querySelector('.card:has(.card-header h3:contains("Announcements"))');
-    }
-    
-    if (!announcementContainer) {
-        console.error('Could not find announcements container');
-        return;
-    }
-    
-    // Save the card header
-    const cardHeader = announcementContainer.querySelector('.card-header');
-    if (!cardHeader) {
-        console.error('Could not find card header');
-        return;
-    }
-    
-    // Clear existing content
-    announcementContainer.innerHTML = '';
-    
-    // Add back the header
-    announcementContainer.appendChild(cardHeader);
-    
-    // Add each announcement
     announcements.forEach(announcement => {
-        const announcementItem = document.createElement('div');
-        announcementItem.className = 'announcement-item';
-        
-        // Format the date
+        // Format date
         const date = new Date(announcement.date);
         const formattedDate = date.toLocaleDateString('en-US', {
             month: 'short',
@@ -259,57 +217,70 @@ function updateAnnouncements(announcements) {
             year: 'numeric'
         });
         
-        // Create the announcement HTML
+        const announcementItem = document.createElement('div');
+        announcementItem.className = 'announcement-item';
         announcementItem.innerHTML = `
             <h4>${announcement.title}</h4>
             <div class="announcement-date">${formattedDate}</div>
             <p>${announcement.content}</p>
         `;
         
-        // Add to container
-        announcementContainer.appendChild(announcementItem);
+        announcementsContainer.appendChild(announcementItem);
     });
-    
-    console.log('Announcements updated successfully');
 }
-
-function updateAssignments(assignments) {
+// Update the dashboard assignments function
+function updateDashboardAssignments(assignments) {
+    const dashboardAssignments = document.querySelector('.dashboard-assignments');
+    if (!dashboardAssignments) return;
+    
+    // Clear loading message
+    dashboardAssignments.innerHTML = '';
+    
     if (!assignments || assignments.length === 0) {
-        console.log('No assignments to display');
+        dashboardAssignments.innerHTML = '<p style="text-align: center; color: #666;">No assignments found</p>';
         return;
     }
     
-    console.log('Updating assignments:', assignments);
+    // Get current user ID
+    const currentUser = ELC.getCurrentUser();
+    const currentUserId = currentUser._id || currentUser.id;
     
-    // Find the assignments container
-    const assignmentsContainer = document.querySelector('.dashboard-assignments');
-    if (!assignmentsContainer) {
-        console.error('Could not find assignments container');
-        return;
-    }
+    // Show only the first 3 assignments
+    const displayAssignments = assignments.slice(0, 3);
     
-    // Clear existing content
-    assignmentsContainer.innerHTML = '';
-    
-    // Add each assignment
-    assignments.forEach(assignment => {
+    displayAssignments.forEach(assignment => {
+        // Check if current user has submitted
+        let hasSubmitted = false;
+        
+        if (assignment.submissions && assignment.submissions.length > 0) {
+            const userSubmission = assignment.submissions.find(sub => {
+                const studentId = typeof sub.student === 'object' ? sub.student._id : sub.student;
+                return studentId === currentUserId;
+            });
+            hasSubmitted = !!userSubmission;
+        }
+        
         let statusClass = 'pending-indicator';
         
-        if (assignment.status === 'completed') {
+        if (hasSubmitted) {
             statusClass = 'completed-indicator';
-        } else if (assignment.status === 'overdue') {
+        } else if (assignment.dueDate && new Date(assignment.dueDate) < new Date()) {
             statusClass = 'overdue-indicator';
         }
         
         // Format the date
-        const date = new Date(assignment.dueDate);
-        const formattedDate = date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+        let formattedDate = '';
+        try {
+            const date = new Date(assignment.dueDate);
+            formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        } catch (error) {
+            formattedDate = 'No due date';
+        }
         
-        // Create the assignment item
         const assignmentItem = document.createElement('div');
         assignmentItem.className = 'dashboard-assignment-item';
         assignmentItem.innerHTML = `
@@ -320,11 +291,8 @@ function updateAssignments(assignments) {
             <div class="status-indicator ${statusClass}"></div>
         `;
         
-        // Add to container
-        assignmentsContainer.appendChild(assignmentItem);
+        dashboardAssignments.appendChild(assignmentItem);
     });
-    
-    console.log('Assignments updated successfully');
 }
 // Update the initCourseMaterialsNavigation function
 function initCourseMaterialsNavigation() {
@@ -734,7 +702,6 @@ function loadCoursesForDropdown() {
             return [];
         });
 }
-// In student.js, update the loadMaterialsData function
 function loadMaterialsData() {
     console.log('Loading materials data...');
     ELC.showNotification('Loading your course materials...', 'info');
@@ -743,21 +710,12 @@ function loadMaterialsData() {
     ELC.apiRequest('/students/courses', 'GET')
         .then(coursesResponse => {
             if (coursesResponse.success && coursesResponse.data.length > 0) {
-                const enrolledCourse = coursesResponse.data[0]; // Since student has only one course
-                
-                // Hide the filter dropdown since student has only one course
-                const filterDropdown = document.querySelector('.filter-dropdown');
-                if (filterDropdown) {
-                    filterDropdown.style.display = 'none';
-                }
+                const enrolledCourse = coursesResponse.data[0];
                 
                 // Update header to show the course name
-                const materialsHeader = document.querySelector('.materials-header');
-                if (materialsHeader) {
-                    const sectionTitle = materialsHeader.querySelector('.section-title');
-                    if (sectionTitle) {
-                        sectionTitle.textContent = `Course Materials - ${enrolledCourse.name}`;
-                    }
+                const sectionTitle = document.querySelector('#materials-section .section-title');
+                if (sectionTitle) {
+                    sectionTitle.textContent = `Course Materials - ${enrolledCourse.name}`;
                 }
                 
                 // Now fetch materials for this specific course

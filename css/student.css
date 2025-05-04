@@ -270,7 +270,8 @@ body {
     display: block;
     width: 100%;
 }
-/* Add to your CSS file */
+
+/* Loading and Error Messages */
 .loading-message, .error-message, .no-materials {
     text-align: center;
     padding: 20px;
@@ -284,7 +285,8 @@ body {
 .no-materials {
     color: #999;
 }
-/* Add to your CSS file */
+
+/* Submission Status Section */
 .submission-status-section {
     background: #f8f9fa;
     border-radius: 8px;
@@ -344,7 +346,10 @@ body {
     color: #6c757d;
     font-size: 0.875rem;
 }
-.no-course-message {
+
+/* No Course/Assignment Messages */
+.no-course-message,
+.no-assignments-message {
     text-align: center;
     padding: 40px;
     background: #f8f9fa;
@@ -352,15 +357,18 @@ body {
     margin: 20px;
 }
 
-.no-course-message h3 {
+.no-course-message h3,
+.no-assignments-message h3 {
     color: #333;
     margin-bottom: 10px;
 }
 
-.no-course-message p {
+.no-course-message p,
+.no-assignments-message p {
     color: #666;
 }
-/* When dropdown is hidden, adjust the header layout */
+
+/* Assignments Header */
 .assignments-header {
     display: flex;
     justify-content: space-between;
@@ -376,22 +384,112 @@ body {
     transition: opacity 0.3s ease;
 }
 
-.no-assignments-message,
-.no-course-message {
-    text-align: center;
-    padding: 40px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin: 20px;
+/* Materials Section Styles */
+.materials-header {
+    margin-bottom: 20px;
+    padding: 10px 0;
 }
 
-.no-assignments-message h3,
-.no-course-message h3 {
+.materials-header .section-title {
+    margin: 0;
     color: #333;
-    margin-bottom: 10px;
+    font-size: 24px;
 }
 
-.no-assignments-message p,
-.no-course-message p {
+.materials-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.material-row {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.material-row:last-child {
+    border-bottom: none;
+}
+
+.material-row:hover {
+    background-color: #f8f9fa;
+}
+
+.material-icon {
+    width: 40px;
+    height: 40px;
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 20px;
+    color: #1e40af;
+}
+
+.material-content {
+    flex-grow: 1;
+}
+
+.material-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.material-subtitle {
+    font-size: 14px;
     color: #666;
+    margin-bottom: 3px;
+}
+
+.material-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.material-action {
+    margin-left: 15px;
+}
+
+/* Button styles for material actions */
+.material-action .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.material-action .btn-primary {
+    background-color: #1e40af;
+    color: white;
+    border: none;
+}
+
+.material-action .btn-primary:hover {
+    background-color: #1c3879;
+}
+
+.material-action .btn-secondary {
+    background-color: #e5e7eb;
+    color: #6b7280;
+    border: none;
+}
+
+.material-action .btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Hide the dropdown completely when needed */
+.filter-dropdown[style*="display: none"] {
+    display: none !important;
 }

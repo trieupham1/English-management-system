@@ -68,22 +68,16 @@
 <section id="dashboard-section" class="content-section">
     <div class="welcome-card">
         <h2>Welcome back, <span id="welcome-name">John</span>!</h2>
-        <p>Your next class "<span id="next-class">Conversational English</span>" starts in <span id="next-class-time">2 hours</span>. Don't forget to complete your pending assignments.</p>
+        <p>Your next class "<span id="next-class">Loading...</span>" starts in <span id="next-class-time">...</span>. Don't forget to complete your pending assignments.</p>
     </div>
     
     <div class="card">
         <div class="card-header">
             <h3>Announcements</h3>
         </div>
-        <div class="announcement-item">
-            <h4>Holiday Schedule</h4>
-            <div class="announcement-date">Apr 12, 2025</div>
-            <p>Center will be closed on April 30 for public holiday.</p>
-        </div>
-        <div class="announcement-item">
-            <h4>New Learning Resources</h4>
-            <div class="announcement-date">Apr 10, 2025</div>
-            <p>Additional practice materials have been uploaded for IELTS courses.</p>
+        <div id="announcements-container">
+            <!-- Announcements will be loaded dynamically -->
+            <div class="loading-message">Loading announcements...</div>
         </div>
     </div>
     
@@ -93,27 +87,8 @@
             <a href="#" class="view-all" id="assignments-view-all">View All</a>
         </div>
         <div class="dashboard-assignments">
-            <div class="dashboard-assignment-item">
-                <div class="assignment-content">
-                    <div class="assignment-title">Writing Essay</div>
-                    <div class="assignment-due">Due: Apr 18, 2025</div>
-                </div>
-                <div class="status-indicator pending-indicator"></div>
-            </div>
-            <div class="dashboard-assignment-item">
-                <div class="assignment-content">
-                    <div class="assignment-title">Grammar Quiz</div>
-                    <div class="assignment-due">Due: Apr 20, 2025</div>
-                </div>
-                <div class="status-indicator completed-indicator"></div>
-            </div>
-            <div class="dashboard-assignment-item">
-                <div class="assignment-content">
-                    <div class="assignment-title">Vocabulary Test</div>
-                    <div class="assignment-due">Due: Apr 10, 2025</div>
-                </div>
-                <div class="status-indicator overdue-indicator"></div>
-            </div>
+            <!-- Assignments will be loaded dynamically -->
+            <div class="loading-message">Loading assignments...</div>
         </div>
     </div>
 </section>
@@ -173,18 +148,14 @@
 <section id="materials-section" class="content-section" style="display: none;">
     <div class="materials-header">
         <h2 class="section-title">Course Materials</h2>
-        
-            <select id="material-filter" class="form-control">
-            
-            </select>
-        </div>
+        <!-- Remove the broken filter dropdown -->
     </div>
     
     <div class="materials-container">
         <!-- Materials will be loaded dynamically -->
     </div>
 </section>
-            
+
 <!-- Assignments Section -->
 <section id="assignments-section" class="content-section" style="display: none;">
     <div class="assignments-header">
