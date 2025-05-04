@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Page initialization complete');
 });
 
+
 // Function to setup material type dropdown behavior
 function setupMaterialTypeField() {
     const materialType = document.getElementById('materialType');
@@ -261,6 +262,213 @@ function initializeReportForm() {
         }
     }
 }
+async function loadTeacherCourses() {
+    const classDropdown = document.getElementById('assignmentClass');
+    if (!classDropdown) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // Show loading state
+        classDropdown.innerHTML = '<option value="">Loading your courses...</option>';
+        classDropdown.disabled = true;
+        
+        // Use the new my-courses endpoint
+        const response = await fetch('/api/teachers/my-courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+            classDropdown.innerHTML = '<option value="">Select a course</option>';
+            
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level})`;
+                classDropdown.appendChild(option);
+            });
+        } else {
+            classDropdown.innerHTML = '<option value="">No courses assigned to you</option>';
+        }
+        
+        classDropdown.disabled = false;
+    } catch (error) {
+        console.error('Error loading courses:', error);
+        classDropdown.innerHTML = '<option value="">Error loading courses</option>';
+        classDropdown.disabled = false;
+    }
+}
+async function handleAssignmentSubmission(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    
+    // Get form values
+    const title = document.getElementById('assignmentTitle').value;
+    const courseId = document.getElementById('assignmentClass').value;
+    const dueDate = document.getElementById('assignmentDueDate').value;
+    const totalPoints = document.getElementById('assignmentPoints').value;
+    const instructions = document.getElementById('assignmentInstructions').value;
+    const attachmentFile = document.getElementById('assignmentFile').files[0];
+    
+    // Validate required fields
+    if (!title || !courseId || !dueDate || !instructions) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        // Disable submit button and show loading state
+        submitButton.disabled = true;
+        submitButton.textContent = 'Creating assignment...';
+        
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('course', courseId);
+        formData.append('dueDate', dueDate);
+        formData.append('totalPoints', totalPoints || '100');
+        formData.append('instructions', instructions);
+        
+        if (attachmentFile) {
+            formData.append('file', attachmentFile);
+        }
+        
+        // Log the form data for debugging
+        console.log('Submitting form data:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+        
+        // Submit to API
+        const response = await fetch('/api/assignments', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // Don't set Content-Type header when sending FormData
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Assignment created successfully!');
+            form.reset();
+            
+            // Reset file upload UI
+            const fileUploadArea = form.querySelector('.file-upload');
+            if (fileUploadArea) {
+                const fileText = fileUploadArea.querySelector('p');
+                const fileIcon = fileUploadArea.querySelector('i');
+                
+                if (fileText) {
+                    fileText.textContent = 'Drag & drop files here or click to browse';
+                }
+                
+                if (fileIcon) {
+                    fileIcon.className = 'fas fa-cloud-upload-alt';
+                }
+                
+                fileUploadArea.classList.remove('file-selected');
+            }
+            
+            // Optional: Redirect to assignments page or refresh assignment list
+            const assignmentsTab = document.querySelector('[data-section="assignments"]');
+            if (assignmentsTab) {
+                assignmentsTab.click();
+            }
+        } else {
+            throw new Error(data.message || 'Failed to create assignment');
+        }
+    } catch (error) {
+        console.error('Error creating assignment:', error);
+        alert('Error creating assignment: ' + error.message);
+    } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+    }
+}
+
+// Initialize when document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Load teacher's courses when page loads
+    loadTeacherCourses();
+    
+    // Add submit handler to assignment form
+    const assignmentForm = document.getElementById('createAssignmentForm');
+    if (assignmentForm) {
+        assignmentForm.addEventListener('submit', handleAssignmentSubmission);
+    }
+    
+    // Add file upload handling
+    const fileUploadArea = document.querySelector('#createAssignmentForm .file-upload');
+    const fileInput = document.getElementById('assignmentFile');
+    
+    if (fileUploadArea && fileInput) {
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2); // Convert to MB
+                
+                // Update the upload area to show selected file
+                const uploadText = fileUploadArea.querySelector('p');
+                if (uploadText) {
+                    uploadText.textContent = `Selected: ${fileName} (${fileSize} MB)`;
+                }
+                
+                // Optionally change the icon
+                const uploadIcon = fileUploadArea.querySelector('i');
+                if (uploadIcon) {
+                    uploadIcon.className = 'fas fa-file-check';
+                }
+            }
+        });
+        
+        // Handle drag and drop
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.backgroundColor = '#f0f0f0';
+        });
+        
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.backgroundColor = '';
+        });
+        
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                
+                // Trigger change event to update UI
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+    }
+});
 
 // Function to setup tab navigation
 function setupTabNavigation() {

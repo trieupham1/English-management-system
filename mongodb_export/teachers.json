@@ -18,7 +18,7 @@
     },
     "classes": [],
     "salary": 0,
-    "lastLogin": null,
+    "lastLogin": "2025-05-04T15:13:47.490Z",
     "isActive": true,
     "schedule": [],
     "hireDate": "2025-05-01T08:42:29.343Z",
@@ -43,9 +43,12 @@
       ],
       "certifications": []
     },
-    "classes": [],
+    "classes": [
+      "681324ee882466c61f8985ef",
+      "681324ee882466c61f8985ee"
+    ],
     "salary": 0,
-    "lastLogin": "2025-05-02T12:55:11.062Z",
+    "lastLogin": "2025-05-04T14:41:19.878Z",
     "isActive": true,
     "schedule": [],
     "hireDate": "2025-05-01T08:42:29.342Z",
@@ -70,9 +73,12 @@
       ],
       "certifications": []
     },
-    "classes": [],
+    "classes": [
+      "681324ee882466c61f8985ed",
+      "681324ee882466c61f8985ec"
+    ],
     "salary": 0,
-    "lastLogin": null,
+    "lastLogin": "2025-05-04T15:13:38.336Z",
     "isActive": true,
     "schedule": [],
     "hireDate": "2025-05-01T08:42:29.342Z",

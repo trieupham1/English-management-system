@@ -63,15 +63,67 @@ exports.getAssignment = async (req, res) => {
         });
     }
 };
+// In your createAssignment function, update to handle FormData properly:
 
-// Create a new assignment
 exports.createAssignment = async (req, res) => {
     try {
-        // Add the teacher's ID as the creator
-        req.body.createdBy = req.user.id;
+        console.log('Creating assignment with data:', req.body);
+        console.log('File received:', req.file);
         
-        const assignment = await Assignment.create(req.body);
-
+        const { title, course, dueDate, totalPoints, instructions } = req.body;
+        
+        // Get the teacher ID from the authenticated user
+        const teacherId = req.user._id;
+        
+        console.log('Teacher ID:', teacherId);
+        console.log('Course ID:', course);
+        
+        // Verify the teacher is assigned to this course
+        const courseExists = await Course.findOne({
+            _id: course,
+            teacher: teacherId
+        });
+        
+        if (!courseExists) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to create assignments for this course'
+            });
+        }
+        
+        // Create assignment data
+        const assignmentData = {
+            title,
+            course,
+            instructions,
+            dueDate,
+            totalPoints: totalPoints || 100,
+            createdBy: teacherId,
+            isActive: true,
+            attachments: [],
+            submissions: []
+        };
+        
+        // Handle file attachment if provided
+        if (req.file) {
+            assignmentData.attachments = [{
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                path: req.file.path,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            }];
+        }
+        
+        console.log('Assignment data to create:', assignmentData);
+        
+        // Create the assignment
+        const assignment = await Assignment.create(assignmentData);
+        
+        // Populate the course information for the response
+        await assignment.populate('course', 'name level');
+        await assignment.populate('createdBy', 'fullName');
+        
         res.status(201).json({
             success: true,
             data: assignment

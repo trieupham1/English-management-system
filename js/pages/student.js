@@ -598,65 +598,53 @@ function loadCoursesData() {
             ELC.showNotification('Failed to connect to server', 'error');
         });
 }
-
-// Update the updateCoursesUI function to use the correct course IDs
+// In student.js, update the updateCoursesUI function
 function updateCoursesUI(courses) {
     console.log('Updating courses UI with data:', courses);
     
-    // Find the courses container
     const coursesGrid = document.querySelector('.courses-grid');
     if (!coursesGrid) {
         console.error('Could not find courses grid');
         return;
     }
     
-    // Clear existing content
     coursesGrid.innerHTML = '';
     
-    // Add each course
     courses.forEach((course, index) => {
         console.log(`Processing course ${index}:`, course);
         
-        // Generate background color based on level
+        // Generate background color based on IELTS level
         let bgColor = '#e0f2fe'; // Default blue
         
         if (course.level) {
-            switch (course.level.toLowerCase()) {
-                case 'beginner':
+            switch (course.level) {
+                case '0-3':
                     bgColor = '#e0f2fe'; // Light blue
                     break;
-                case 'intermediate':
+                case '4-5.5':
                     bgColor = '#dcfce7'; // Light green
                     break;
-                case 'upper-intermediate':
+                case '5.5-6.5':
                     bgColor = '#fef9c3'; // Light yellow
                     break;
-                case 'advanced':
+                case '6.5+':
                     bgColor = '#ede9fe'; // Light purple
                     break;
-                case 'proficient':
-                    bgColor = '#fee2e2'; // Light red
-                    break;
             }
         }
         
-        // Get teacher name
+        // Get teacher name - check if teacher is populated correctly
         let teacherName = 'Unknown Teacher';
         if (course.teacher) {
-            if (typeof course.teacher === 'string') {
-                teacherName = course.teacher;
-            } else if (course.teacher.fullName) {
+            if (typeof course.teacher === 'object' && course.teacher.fullName) {
                 teacherName = course.teacher.fullName;
+            } else if (typeof course.teacher === 'string') {
+                // If teacher is still just an ID, we need to fix the population
+                teacherName = `Teacher ID: ${course.teacher}`;
             }
         }
         
-        // Get duration
-        let durationText = '3 months'; // Default
-        if (course.duration) {
-            durationText = `${course.duration.value || 3} ${course.duration.unit || 'months'}`;
-        }
-        
-        // Create course card with correct course._id
+        // Create course card
         const courseCard = document.createElement('div');
         courseCard.className = 'course-card';
         courseCard.innerHTML = `
@@ -669,7 +657,7 @@ function updateCoursesUI(courses) {
                     <i class="fas fa-user"></i> Teacher: ${teacherName}
                 </div>
                 <div class="course-duration">
-                    <i class="fas fa-calendar"></i> Duration: ${durationText}
+                    <i class="fas fa-calendar"></i> Duration: 3 months
                 </div>
                 <div class="course-description">
                     <p>${course.description || `Improve your skills with our ${course.name} course.`}</p>
@@ -683,7 +671,6 @@ function updateCoursesUI(courses) {
         coursesGrid.appendChild(courseCard);
     });
     
-    // Reinitialize the material buttons
     initCourseMaterialsNavigation();
     console.log('Courses UI updated successfully');
 }

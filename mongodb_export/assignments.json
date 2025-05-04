@@ -7,7 +7,20 @@
     "attachments": [],
     "createdBy": "681324ee882466c61f8985e9",
     "createdAt": "2025-05-01T07:38:23.326Z",
-    "__v": 0
+    "__v": 5,
+    "isActive": true,
+    "submissions": [
+      {
+        "student": "681333f473460c095068d899",
+        "content": "",
+        "file": "uploads\\assignments\\file-1746336963757-223358127.jpg",
+        "submittedAt": "2025-05-04T05:36:03.811Z",
+        "isLate": false,
+        "_id": "6816fcc3b47c2fca6e80e7e8"
+      }
+    ],
+    "totalPoints": 100,
+    "updatedAt": "2025-05-02T20:20:37.816Z"
   },
   {
     "_id": "681324ef882466c61f898603",
@@ -17,7 +30,19 @@
     "attachments": [],
     "createdBy": "681324ee882466c61f8985e8",
     "createdAt": "2025-05-01T07:38:23.326Z",
-    "__v": 0
+    "__v": 3,
+    "isActive": true,
+    "submissions": [
+      {
+        "student": "681333f473460c095068d899",
+        "file": "uploads\\assignments\\file-1746272229007-832699411.docx",
+        "submittedAt": "2025-05-04T05:35:32.128Z",
+        "isLate": false,
+        "_id": "681529248e2379e0501ce6e3"
+      }
+    ],
+    "totalPoints": 100,
+    "updatedAt": "2025-05-02T20:20:52.726Z"
   },
   {
     "_id": "681324ef882466c61f898604",
@@ -27,6 +52,42 @@
     "attachments": [],
     "createdBy": "681324ee882466c61f8985e8",
     "createdAt": "2025-05-01T07:38:23.326Z",
+    "__v": 1,
+    "isActive": true,
+    "submissions": [
+      {
+        "student": "681333f473460c095068d899",
+        "content": "",
+        "file": "uploads\\assignments\\file-1746217188577-409856918.docx",
+        "submittedAt": "2025-05-02T20:19:48.648Z",
+        "isLate": false,
+        "_id": "681528e48e2379e0501ce6af"
+      }
+    ],
+    "totalPoints": 100,
+    "updatedAt": "2025-05-02T20:19:48.648Z"
+  },
+  {
+    "_id": "681782eec26ef51a86344fea",
+    "title": "sasas",
+    "course": "681324ee882466c61f8985ef",
+    "instructions": "vsdsd",
+    "dueDate": "2025-05-13T00:00:00.000Z",
+    "totalPoints": 12,
+    "isActive": true,
+    "attachments": [
+      {
+        "filename": "file-1746371309956-555377112.docx",
+        "originalName": "C3_8-9+C4_5.docx",
+        "path": "uploads\\assignments\\file-1746371309956-555377112.docx",
+        "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "size": 18344
+      }
+    ],
+    "submissions": [],
+    "createdBy": "681333f573460c095068d8a6",
+    "createdAt": "2025-05-04T15:08:30.013Z",
+    "updatedAt": "2025-05-04T15:08:30.013Z",
     "__v": 0
   }
 ]

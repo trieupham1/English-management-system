@@ -119,59 +119,56 @@
                     </div>
                 
                     <!-- Create Assignment -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Create New Assignment</h3>
-                        </div>
-                        <form id="createAssignmentForm">
-                            <div class="form-group">
-                                <label for="assignmentTitle">Assignment Title</label>
-                                <input type="text" id="assignmentTitle" class="form-control" placeholder="Enter assignment title" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="assignmentClass">Select Class</label>
-                                <select id="assignmentClass" class="form-control" required>
-                                    <option value="">Choose a class</option>
-                                    <option value="1">Conversational English</option>
-                                    <option value="2">Business English</option>
-                                    <option value="3">Beginner English</option>
-                                    <option value="4">IELTS Preparation</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group half-width">
-                                    <label for="assignmentDueDate">Due Date</label>
-                                    <input type="date" id="assignmentDueDate" class="form-control" required>
-                                </div>
-                                
-                                <div class="form-group half-width">
-                                    <label for="assignmentPoints">Total Points</label>
-                                    <input type="number" id="assignmentPoints" class="form-control" placeholder="Enter total points" min="1" max="100" required>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="assignmentInstructions">Instructions</label>
-                                <textarea id="assignmentInstructions" class="form-control" placeholder="Provide detailed instructions for students" rows="4" required></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="assignmentFile">Attachment (Optional)</label>
-                                <div class="file-upload" onclick="document.getElementById('assignmentFile').click();">
-                                    <i class="fas fa-cloud-upload-alt"></i>
-                                    <p>Drag & drop files here or click to browse</p>
-                                    <input type="file" id="assignmentFile" style="display: none;">
-                                </div>
-                            </div>
-                            
-                            <div class="form-actions">
-                            <button type="submit" class="btn btn-primary btn-block">Create Assignment</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<div class="card">
+    <div class="card-header">
+        <h3>Create New Assignment</h3>
+    </div>
+    <form id="createAssignmentForm">
+        <div class="form-group">
+            <label for="assignmentTitle">Assignment Title</label>
+            <input type="text" id="assignmentTitle" class="form-control" placeholder="Enter assignment title" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="assignmentClass">Select Class</label>
+            <select id="assignmentClass" class="form-control" required>
+                <!-- Options will be loaded dynamically -->
+                <option value="">Loading courses...</option>
+            </select>
+        </div>
+        
+        <!-- Rest of the form remains the same -->
+        <div class="form-row">
+            <div class="form-group half-width">
+                <label for="assignmentDueDate">Due Date</label>
+                <input type="date" id="assignmentDueDate" class="form-control" required>
+            </div>
+            
+            <div class="form-group half-width">
+                <label for="assignmentPoints">Total Points</label>
+                <input type="number" id="assignmentPoints" class="form-control" placeholder="Enter total points" min="1" max="100" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="assignmentInstructions">Instructions</label>
+            <textarea id="assignmentInstructions" class="form-control" placeholder="Provide detailed instructions for students" rows="4" required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="assignmentFile">Attachment (Optional)</label>
+            <div class="file-upload" onclick="document.getElementById('assignmentFile').click();">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Drag & drop files here or click to browse</p>
+                <input type="file" id="assignmentFile" style="display: none;">
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-block">Create Assignment</button>
+        </div>
+    </form>
+</div>
 
                 
                 <div class="card">

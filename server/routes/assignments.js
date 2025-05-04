@@ -13,12 +13,13 @@ router.get('/', protect, assignmentController.getAssignments);
 // GET /api/assignments/:id
 router.get('/:id', protect, assignmentController.getAssignment);
 
-// Create a new assignment
+// Create a new assignment (with file upload support)
 // POST /api/assignments
 router.post(
     '/', 
     protect, 
-    authorize('teacher', 'admin'), 
+    authorize('teacher'), // Remove 'admin' if you only want teachers to create assignments
+    upload.single('file'), // Add this line to handle file uploads
     assignmentController.createAssignment
 );
 

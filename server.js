@@ -56,6 +56,23 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/assignments', assignmentRoutes); 
 app.use('/api/materials', materialRoutes); 
 
+// Add this after your routes
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    
+    if (err.name === 'MulterError') {
+        return res.status(400).json({
+            success: false,
+            message: err.message
+        });
+    }
+    
+    res.status(500).json({
+        success: false,
+        message: 'Server Error',
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    });
+});
 // Create uploads directory for file uploads
 const fs = require('fs');
 const uploadsDir = path.join(__dirname, 'uploads');

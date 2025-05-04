@@ -44,20 +44,37 @@
     "__v": 0
   },
   {
-    "_id": "6814cc6368c296a482b2ee82",
-    "title": "VÃI c",
-    "description": "ewewewe",
+    "_id": "6815debac908f12c60adeefb",
+    "title": "Vis ass",
+    "description": "edqwee",
     "type": "slides",
-    "course": "6814cc6368c296a482b2ee81",
-    "file": "file-1746193506727-113454250.mp4",
+    "course": "681324ee882466c61f8985ed",
+    "file": "file-1746263738808-766641363.jpg",
     "uploadedBy": "681333f573460c095068d8a6",
     "tags": [
       "presentation"
     ],
+    "downloadCount": 7,
+    "viewCount": 18,
+    "createdAt": "2025-05-03T09:15:38.856Z",
+    "updatedAt": "2025-05-03T09:15:38.856Z",
+    "__v": 0
+  },
+  {
+    "_id": "68177d0af764d6965c60ded7",
+    "title": "Up uop",
+    "description": "Up ",
+    "type": "document",
+    "course": "681324ee882466c61f8985ef",
+    "file": "file-1746369802729-355180273.docx",
+    "uploadedBy": "681333f573460c095068d8a6",
+    "tags": [
+      "worksheet"
+    ],
     "downloadCount": 0,
     "viewCount": 0,
-    "createdAt": "2025-05-02T13:45:06.735Z",
-    "updatedAt": "2025-05-02T13:45:06.735Z",
+    "createdAt": "2025-05-04T14:43:22.786Z",
+    "updatedAt": "2025-05-04T14:43:22.786Z",
     "__v": 0
   }
 ]

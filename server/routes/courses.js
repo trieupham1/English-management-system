@@ -44,7 +44,8 @@ router.get('/teacher/:teacherId', protect, courseController.getTeacherCourses);
 
 // Get all students enrolled in a specific course
 router.get('/:id/students', protect, courseController.getCourseStudents);
-
+// In routes/courses.js
+router.get('/teacher-courses', protect, authorize('teacher'), courseController.getTeacherCourses);
 
 
 module.exports = router;

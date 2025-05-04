@@ -44,6 +44,6 @@ router.get('/debug-courses', async (req, res) => {
 });
 router.get('/courses/dropdown', protect, studentController.getCoursesForDropdown);
 router.get('/materials/course/:courseId', protect, studentController.getMaterialsByCourse);
-
+router.get('/courses', protect, studentController.getStudentCourses)
 
 module.exports = router;

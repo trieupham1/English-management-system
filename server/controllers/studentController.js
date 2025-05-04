@@ -329,8 +329,16 @@ exports.deleteStudent = async (req, res) => {
 exports.getStudentCourses = async (req, res) => {
     try {
         const userId = req.user._id;
+        
+        // Find the student and populate the course and teacher information
         const student = await Student.findOne({ _id: userId })
-            .populate('studentInfo.course');  // Changed from courses to course
+            .populate({
+                path: 'studentInfo.course',
+                populate: {
+                    path: 'teacher',
+                    select: 'fullName email teacherInfo.teacherId'
+                }
+            });
         
         if (!student || !student.studentInfo.course) {
             return res.status(200).json({
