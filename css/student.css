@@ -237,12 +237,6 @@ body {
     flex-shrink: 0;
 }
 
-#create-user-form, #create-course-form {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
 .form-fields {
     flex-grow: 1;
 }
@@ -378,6 +372,8 @@ body {
 
 .assignments-header .section-title {
     margin: 0;
+    color: #333;
+    font-size: 20px;
 }
 
 .filter-dropdown {
@@ -386,14 +382,16 @@ body {
 
 /* Materials Section Styles */
 .materials-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
-    padding: 10px 0;
 }
 
 .materials-header .section-title {
     margin: 0;
     color: #333;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .materials-container {

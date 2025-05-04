@@ -740,163 +740,68 @@ textarea.form-control {
             }
         }
 
-        /* Course Cards Styling */
-        .section-title {
-            margin-bottom: 20px;
-            color: #1e40af;
-            font-size: 24px;
-        }
-        
         .courses-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
         
         .course-card {
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: 320px;
         }
         
         .course-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
         }
         
         .course-header {
-            padding: 15px 20px;
+            padding: 20px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #eee;
-        }
-        
-        .course-header h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-        
-        .course-level {
-            background-color: rgba(255, 255, 255, 0.5);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+            min-height: 75px;
         }
         
         .course-content {
-            padding: 20px;
-        }
-        
-        .course-progress {
-            margin-bottom: 15px;
-        }
-        
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        
-        .course-instructor, 
-        .course-schedule, 
-        .course-students {
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #666;
+            padding: 24px;
         }
         
         .course-description {
-            margin: 15px 0;
-            font-size: 14px;
-            line-height: 1.5;
+            margin: 20px 0;
+            font-size: 15px;
+            line-height: 1.6;
+            min-height: 48px;
         }
         
         .course-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        /* For when there's only one course */
+        @media (min-width: 768px) {
+            .courses-grid:has(.course-card:only-child) {
+                grid-template-columns: minmax(380px, 600px);
+                justify-content: center;
+            }
         }
         
         @media (max-width: 768px) {
             .courses-grid {
                 grid-template-columns: 1fr;
+                padding: 0 16px;
             }
-}      
-        /* Courses Grid Styling */
-        .section-title {
-            margin-bottom: 20px;
-            color: #1e40af;
-            font-size: 24px;
-        }
-        
-        .courses-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 20px;
-        }
-        
-        .course-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .course-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-        }
-        
-        .course-header {
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .course-header h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-        
-        .course-level {
-            background-color: rgba(255, 255, 255, 0.5);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .course-content {
-            padding: 20px;
-        }
-        
-        .course-instructor, 
-        .course-duration {
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .course-description {
-            margin: 15px 0;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .course-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
         }
         
         /* Materials Section Styling */
