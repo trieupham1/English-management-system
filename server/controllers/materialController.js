@@ -17,29 +17,21 @@ const extractUserId = (user) => {
 exports.getAllMaterials = async (req, res) => {
     try {
         // Get query parameters for filtering
-        const { course, type, search } = req.query;
+        const { courseIds, type, search } = req.query;
         
         // Build query object
         const query = {};
         
-        if (course) {
-            // Find the course ID first if needed
-            try {
-                const foundCourse = await Course.findOne({ 
-                    $or: [
-                        { _id: mongoose.isValidObjectId(course) ? course : null },
-                        { name: new RegExp(course, 'i') },
-                        { category: new RegExp(course, 'i') }
-                    ]
-                });
-                
-                if (foundCourse) {
-                    query.course = foundCourse._id;
-                }
-            } catch (error) {
-                console.error('Error finding course for filter:', error);
-                // If course can't be found, just use the value directly
-                query.course = course;
+        // Handle courseIds parameter (could be single value or array)
+        if (courseIds) {
+            // Convert to array if it's not already
+            const courseIdArray = Array.isArray(courseIds) ? courseIds : [courseIds];
+            
+            // Only include valid ObjectIds
+            const validCourseIds = courseIdArray.filter(id => mongoose.isValidObjectId(id));
+            
+            if (validCourseIds.length > 0) {
+                query.course = { $in: validCourseIds };
             }
         }
         
@@ -50,6 +42,8 @@ exports.getAllMaterials = async (req, res) => {
         if (search) {
             query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
         }
+        
+        console.log('Materials query:', query);
         
         // Find materials that match query
         const materials = await Material.find(query).sort({ createdAt: -1 });

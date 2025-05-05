@@ -8,14 +8,38 @@ exports.getAssignments = async (req, res) => {
     try {
         const filter = {};
         
-        // Apply filters if provided
-        if (req.query.courseId) {
-            filter.course = req.query.courseId;
+        // Check for teacher's courses filtering (array of course IDs)
+        if (req.query.courseIds) {
+            // Convert to array if it's not already (handles both single value and array)
+            const courseIds = Array.isArray(req.query.courseIds) 
+                ? req.query.courseIds 
+                : [req.query.courseIds];
+            
+            console.log('Filtering assignments by teacher courses:', courseIds);
+            
+            // Use MongoDB $in operator to filter by multiple course IDs
+            filter.course = { $in: courseIds };
+        }
+        // Backward compatibility for single course filtering
+        else if (req.query.courseId || req.query.course) {
+            filter.course = req.query.courseId || req.query.course;
         }
         
+        // Status filtering
         if (req.query.status) {
-            filter.isActive = req.query.status === 'active';
+            if (req.query.status === 'active') {
+                filter.isActive = true;
+            } else if (req.query.status === 'inactive' || req.query.status === 'closed') {
+                filter.isActive = false;
+            }
         }
+        
+        // Search filtering
+        if (req.query.search) {
+            filter.title = { $regex: req.query.search, $options: 'i' };
+        }
+        
+        console.log('Assignment filter query:', filter);
 
         const assignments = await Assignment.find(filter)
             .populate('course', 'name')
@@ -35,7 +59,6 @@ exports.getAssignments = async (req, res) => {
         });
     }
 };
-
 // Get a single assignment
 exports.getAssignment = async (req, res) => {
     try {

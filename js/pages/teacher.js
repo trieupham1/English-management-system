@@ -1815,91 +1815,69 @@ function clearExistingModals() {
 }
 
 // ===== MATERIALS SECTION FILTERING =====
+// Function to setup materials filtering
 function setupMaterialsFiltering() {
     // Get the filter elements
     const classFilter = document.querySelector('#materials-section select:first-child, .filter-bar select:first-child');
     const typeFilter = document.querySelector('#materials-section select:nth-child(2), .filter-bar select:nth-child(2)');
     const searchInput = document.querySelector('#materials-section .search-bar input');
     const searchButton = document.querySelector('#materials-section .search-bar button');
-    const materialsList = document.querySelector('.materials-list'); // Added this line
+    const materialsList = document.querySelector('.materials-list');
     
     // Check if materials list exists
     if (!materialsList) {
         console.error('Materials list container not found');
         return;
     }
-
-    // Load actual courses from the database for the filter dropdown
-    function loadActualCoursesForFilter() {
+    // Load teacher's courses for the filter dropdown
+    async function loadTeacherCoursesForFilter() {
         if (!classFilter) return;
         
-        // Show loading state
-        classFilter.innerHTML = '<option value="">Loading courses...</option>';
-        classFilter.disabled = true;
-        
-        // Fetch courses from API
-        fetch('/api/courses/dropdown')
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Courses loaded for filter:', data);
-                
-                if (data.success && data.data && data.data.length > 0) {
-                    // Start with "All Classes" option
-                    classFilter.innerHTML = '<option value="">All Classes</option>';
-                    
-                    // Add each course with its category in parentheses
-                    data.data.forEach(course => {
-                        const option = document.createElement('option');
-                        option.value = course._id;
-                        
-                        // Format like "Course Name (Category)" similar to your upload dropdown
-                        let displayText = course.name;
-                        if (course.category) {
-                            displayText += ` (${course.category})`;
-                        } else if (course.level) {
-                            displayText += ` (${course.level})`;
-                        }
-                        
-                        option.textContent = displayText;
-                        classFilter.appendChild(option);
-                    });
-                } else {
-                    // Fallback to default if no courses found
-                    setDefaultClassOptions();
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            
+            // Show loading state
+            classFilter.innerHTML = '<option value="">Loading your courses...</option>';
+            classFilter.disabled = true;
+            
+            // Fetch teacher's courses from API
+            const response = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
-            })
-            .catch(error => {
-                console.error('Error loading courses for filter:', error);
-                // Fallback to default options on error
-                setDefaultClassOptions();
-            })
-            .finally(() => {
-                classFilter.disabled = false;
             });
-    }
-    
-    // Fallback function to set default options if API call fails
-    function setDefaultClassOptions() {
-        if (!classFilter) return;
-        
-        classFilter.innerHTML = '<option value="">All Classes</option>';
-        
-        const defaultClasses = [
-            { value: 'conversational', text: 'Conversational English' },
-            { value: 'business', text: 'Business English' },
-            { value: 'beginner', text: 'Beginner English' },
-            { value: 'ielts', text: 'IELTS Preparation' }
-        ];
-        
-        defaultClasses.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.value;
-            option.textContent = cls.text;
-            classFilter.appendChild(option);
-        });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Teacher courses loaded for materials filter:', data);
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Start with "All Classes" option
+                classFilter.innerHTML = '<option value="">All Classes</option>';
+                
+                // Add each course to the filter
+                data.data.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course._id;
+                    option.textContent = `${course.name} (${course.level})`;
+                    classFilter.appendChild(option);
+                });
+            } else {
+                classFilter.innerHTML = '<option value="">No courses assigned to you</option>';
+            }
+        } catch (error) {
+            console.error('Error loading teacher courses for filter:', error);
+            classFilter.innerHTML = '<option value="">Error loading courses</option>';
+        } finally {
+            classFilter.disabled = false;
+        }
     }
 
     // Populate type filter with material types
@@ -1923,72 +1901,103 @@ function setupMaterialsFiltering() {
         });
     }
 
-    // Function to load materials from the database
-    function loadMaterials(filters = {}) {
-        // Show loading state
-        materialsList.innerHTML = `
-            <div class="loading-indicator">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Loading materials...</p>
-            </div>
-        `;
+   // Function to load materials from the database - NEEDS FIXING TO FILTER BY TEACHER'S COURSES ONLY
+async function loadMaterials(filters = {}) {
+    // Show loading state
+    materialsList.innerHTML = `
+        <div class="loading-indicator">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading materials...</p>
+        </div>
+    `;
+    
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
         
         // Build query string from filters
         const queryParams = new URLSearchParams();
-        if (filters.class) queryParams.append('course', filters.class);
+        
+        // If class filter is specified, use just that course ID
+        if (filters.class) {
+            queryParams.append('courseIds', filters.class);
+        } else {
+            // Otherwise, fetch all teacher's courses first
+            const coursesResponse = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!coursesResponse.ok) {
+                throw new Error(`HTTP error ${coursesResponse.status}`);
+            }
+            
+            const coursesData = await coursesResponse.json();
+            
+            // If teacher has no courses, show empty state
+            if (!coursesData.success || !coursesData.data || coursesData.data.length === 0) {
+                materialsList.innerHTML = '';
+                showMaterialsEmptyState(true);
+                return;
+            }
+            
+            // Add each course ID to the query
+            coursesData.data.forEach(course => {
+                queryParams.append('courseIds', course._id);
+            });
+        }
+        
+        // Add other filters
         if (filters.type) queryParams.append('type', filters.type);
         if (filters.search) queryParams.append('search', filters.search);
         
-        // Fetch materials from API
-        fetch(`/api/materials?${queryParams.toString()}`)
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Materials loaded:', data);
-                
-                // Clear loading indicator
-                materialsList.innerHTML = '';
-                
-                if (data.success && data.data && data.data.length > 0) {
-                    // Add each material to the list
-                    data.data.forEach(material => {
-                        addMaterialToList(material);
-                    });
-                } else {
-                    // Show empty state if no materials found
-                    showMaterialsEmptyState(true);
-                }
-            })
-            .catch(error => {
-                console.error('Error loading materials:', error);
-                materialsList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <h3>Error loading materials</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-            });
-    }
-
-    // Function to handle filter changes
-    function applyFilters() {
-        const classValue = classFilter ? classFilter.value : '';
-        const typeValue = typeFilter ? typeFilter.value : '';
-        const searchValue = searchInput ? searchInput.value.trim() : '';
+        console.log('Materials filter query params:', queryParams.toString());
         
-        console.log('Applying filters:', { class: classValue, type: typeValue, search: searchValue });
-        
-        // Load filtered materials from API
-        loadMaterials({
-            class: classValue,
-            type: typeValue,
-            search: searchValue
+        // Fetch materials for teacher's courses
+        const materialsResponse = await fetch(`/api/materials?${queryParams.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
+        
+        // Process response...
+        if (!materialsResponse.ok) {
+            throw new Error(`HTTP error ${materialsResponse.status}`);
+        }
+        
+        const materialsData = await materialsResponse.json();
+        console.log('Materials data received:', materialsData);
+        
+        if (materialsData.success && materialsData.data && materialsData.data.length > 0) {
+            // Clear loading indicator
+            materialsList.innerHTML = '';
+            
+            // Add each material to the list
+            materialsData.data.forEach(material => {
+                addMaterialToList(material);
+            });
+        } else {
+            // Show empty state if no materials
+            materialsList.innerHTML = '';
+            showMaterialsEmptyState(true);
+        }
+        
+    } catch (error) {
+        console.error('Error fetching materials:', error);
+        materialsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error loading materials</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
     }
-
+}
     // Show empty state when no materials match
     function showMaterialsEmptyState(show) {
         let emptyState = document.querySelector('#materials-section .empty-state');
@@ -2004,16 +2013,9 @@ function setupMaterialsFiltering() {
                 <button class="btn btn-primary add-material-btn"><i class="fas fa-plus"></i> Upload New Material</button>
             `;
             
-            // Get materials section
-            const materialsSection = document.getElementById('materials-section');
-            if (materialsSection) {
-                // Insert empty state after materials list if it exists
-                if (materialsList && materialsList.parentNode) {
-                    materialsList.parentNode.insertBefore(emptyState, materialsList.nextSibling);
-                } else {
-                    // Append to section if materials list not found
-                    materialsSection.appendChild(emptyState);
-                }
+            // Insert after materials list
+            if (materialsList.parentNode) {
+                materialsList.parentNode.insertBefore(emptyState, materialsList.nextSibling);
             }
             
             // Add click event to upload button
@@ -2039,6 +2041,22 @@ function setupMaterialsFiltering() {
         }
     }
 
+     // Function to handle filter changes
+     function applyFilters() {
+        const classValue = classFilter ? classFilter.value : '';
+        const typeValue = typeFilter ? typeFilter.value : '';
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        console.log('Applying filters:', { class: classValue, type: typeValue, search: searchValue });
+        
+        // Load filtered materials from API
+        loadMaterials({
+            class: classValue,
+            type: typeValue,
+            search: searchValue
+        });
+    }
+
     // Add event listeners for filtering
     if (classFilter) classFilter.addEventListener('change', applyFilters);
     if (typeFilter) typeFilter.addEventListener('change', applyFilters);
@@ -2053,13 +2071,14 @@ function setupMaterialsFiltering() {
         });
     }
 
-    // Initialize: load courses for filter and load initial materials
-    loadActualCoursesForFilter();
-    loadMaterials();
+    // Initialize: load teacher's courses for filter and load initial materials
+    loadTeacherCoursesForFilter();
+    setTimeout(() => loadMaterials(), 300); // Add short delay to ensure courses load first
     
     // Return public methods
     return {
-        refresh: loadMaterials
+        refresh: loadMaterials,
+        refreshCourses: loadTeacherCoursesForFilter
     };
 }
 
@@ -2073,8 +2092,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (materialsTab) {
         materialsTab.addEventListener('click', function() {
             console.log('Materials tab clicked, refreshing materials');
-            if (materialsModule && typeof materialsModule.refresh === 'function') {
-                materialsModule.refresh();
+            if (materialsModule && typeof materialsModule.refreshCourses === 'function') {
+                materialsModule.refreshCourses();
+                setTimeout(() => {
+                    if (materialsModule && typeof materialsModule.refresh === 'function') {
+                        materialsModule.refresh();
+                    }
+                }, 300);
             }
         });
     }
@@ -2318,58 +2342,224 @@ function setupProgressReportsFiltering() {
 }
 
 // ===== ASSIGNMENTS SECTION FILTERING =====
+// ===== ASSIGNMENTS SECTION FILTERING =====
 function setupAssignmentsFiltering() {
-    // Get filter elements
-    const classFilter = document.querySelector('#assignments-section select:nth-child(1)');
+    // More specific selector for the dropdown that's visible in the screenshot
+    const classFilter = document.querySelector('#assignments-section select:first-child');
     const statusFilter = document.querySelector('#assignments-section select:nth-child(2)');
-    const searchInput = document.querySelector('#assignments-section input[type="text"]');
+    const searchInput = document.querySelector('#assignments-section .search-bar input');
     const searchButton = document.querySelector('#assignments-section .search-bar button');
+    const assignmentsList = document.querySelector('.assignments-list');
 
-    // Get the assignments list container
-    const assignmentsContainer = document.querySelector('.assignments-list');
-
-    // If any elements are missing, exit function
-    if (!classFilter || !statusFilter || !searchInput || !assignmentsContainer) {
-        console.error('Could not find filtering elements or assignments container');
+    // Check if assignments list exists
+    if (!assignmentsList) {
+        console.error('Assignments list container not found');
         return;
     }
 
-    // Function to filter assignments
-    function filterAssignments() {
-        const classValue = classFilter.value.toLowerCase();
-        const statusValue = statusFilter.value.toLowerCase();
-        const searchValue = searchInput.value.toLowerCase().trim();
+    // Load teacher's courses for the filter dropdown - modified for better error handling
+    async function loadTeacherCoursesForFilter() {
+        if (!classFilter) {
+            console.error('Class filter dropdown not found');
+            return;
+        }
         
-        // Get all assignment items
-        const assignmentItems = document.querySelectorAll('.assignment-item');
-        let visibleCount = 0;
-        
-        assignmentItems.forEach(item => {
-            // Get the assignment's class
-            const assignmentClass = item.querySelector('.assignment-details div:first-child')?.textContent.toLowerCase() || '';
-            
-            // Get the assignment's status
-            const assignmentStatus = item.querySelector('.badge')?.textContent.toLowerCase() || '';
-            
-            // Get the assignment's title
-            const assignmentTitle = item.querySelector('.assignment-title')?.textContent.toLowerCase() || '';
-            
-            // Check if the assignment matches all filters
-            const matchesClass = classValue === '' || assignmentClass.includes(classValue);
-            const matchesStatus = statusValue === '' || assignmentStatus.includes(statusValue);
-            const matchesSearch = searchValue === '' || assignmentTitle.includes(searchValue);
-            
-            // Show or hide based on filter matches
-            if (matchesClass && matchesStatus && matchesSearch) {
-                item.style.display = 'block';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
-        });
+            
+            // Show loading state
+            classFilter.innerHTML = '<option value="">Loading your courses...</option>';
+            classFilter.disabled = true;
+            
+            // Fetch teacher's courses from API
+            const response = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Start with "All Classes" option
+                classFilter.innerHTML = '<option value="">All Classes</option>';
+                
+                // Add each course to the filter
+                data.data.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course._id;
+                    option.textContent = `${course.name} (${course.level})`;
+                    classFilter.appendChild(option);
+                });
+            } else {
+                classFilter.innerHTML = '<option value="">No courses assigned to you</option>';
+            }
+        } catch (error) {
+            console.error('Error loading teacher courses for filter:', error);
+            classFilter.innerHTML = '<option value="">Error loading courses</option>';
+        } finally {
+            classFilter.disabled = false;
+        }
+    }
+
+    // Populate status filter with options
+    if (statusFilter) {
+        statusFilter.innerHTML = `
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="closed">Closed</option>
+        `;
+    }
+
+    // Function to load assignments from database - only for teacher's courses
+    async function loadAssignments(filters = {}) {
+        // Show loading state
+        assignmentsList.innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading assignments...</p>
+            </div>
+        `;
         
-        // Show empty state if no results
-        showAssignmentsEmptyState(visibleCount === 0);
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            
+            // First, fetch teacher's courses if not filtered by a specific course
+            let courseIds = [];
+            if (!filters.class) {
+                // Get teacher's courses
+                const coursesResponse = await fetch('/api/teachers/my-courses', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!coursesResponse.ok) {
+                    throw new Error(`HTTP error ${coursesResponse.status}`);
+                }
+                
+                const coursesData = await coursesResponse.json();
+                
+                // If teacher has no courses, show empty state
+                if (!coursesData.success || !coursesData.data || coursesData.data.length === 0) {
+                    assignmentsList.innerHTML = '';
+                    showAssignmentsEmptyState(true);
+                    return;
+                }
+                
+                // Extract course IDs
+                courseIds = coursesData.data.map(course => course._id);
+                console.log('Teacher courses for assignment filtering:', courseIds);
+            } else {
+                // If filtering by a specific course, use that ID
+                courseIds = [filters.class];
+            }
+            
+            // Build query string from filters
+            const queryParams = new URLSearchParams();
+            
+            // Add course IDs to query
+            courseIds.forEach(id => queryParams.append('courseIds', id));
+            
+            // Add other filters
+            if (filters.status) queryParams.append('status', filters.status);
+            if (filters.search) queryParams.append('search', filters.search);
+            
+            console.log('Assignment filter query params:', queryParams.toString());
+            
+            // Fetch assignments for teacher's courses
+            const response = await fetch(`/api/assignments?${queryParams.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Assignments loaded:', data);
+            
+            // Clear loading indicator
+            assignmentsList.innerHTML = '';
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Add each assignment to the list
+                data.data.forEach(assignment => {
+                    addAssignmentToList(assignment);
+                });
+            } else {
+                // Show empty state if no assignments found
+                showAssignmentsEmptyState(true);
+            }
+        } catch (error) {
+            console.error('Error loading assignments:', error);
+            assignmentsList.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Error loading assignments</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Function to add assignment to the list
+    function addAssignmentToList(assignment) {
+        // Format date
+        const dueDate = new Date(assignment.dueDate).toLocaleDateString();
+        
+        // Determine status based on active state and due date
+        let status = assignment.isActive ? 'active' : 'closed';
+        if (assignment.isActive && new Date(assignment.dueDate) > new Date()) {
+            status = 'upcoming';
+        }
+        
+        // Determine status badge class
+        let statusClass = 'badge-success'; // active
+        if (status === 'upcoming') statusClass = 'badge-primary';
+        if (status === 'closed') statusClass = 'badge-secondary';
+        
+        // Create assignment HTML
+        const assignmentHTML = `
+            <div class="assignment-item" data-id="${assignment._id}">
+                <div class="assignment-header">
+                    <div class="assignment-title">${assignment.title}</div>
+                    <span class="badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                </div>
+                <div class="assignment-details">
+                    <div><i class="fas fa-book"></i> ${assignment.course && assignment.course.name ? assignment.course.name : 'Unknown'}</div>
+                    <div><i class="fas fa-calendar"></i> Due: ${dueDate}</div>
+                    <div><i class="fas fa-file-alt"></i> ${assignment.submissions ? assignment.submissions.length : 0}/${assignment.totalStudents || '?'} submitted</div>
+                </div>
+                <div class="assignment-actions">
+                    <button class="btn btn-primary grade-btn" data-id="${assignment._id}"><i class="fas fa-check-square"></i> Grade</button>
+                    <button class="btn btn-secondary edit-btn" data-id="${assignment._id}"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn btn-danger delete-btn" data-id="${assignment._id}"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        `;
+        
+        // Add to container
+        assignmentsList.innerHTML += assignmentHTML;
+        
+        // Set up button event listeners
+        setupAssignmentButtons();
     }
 
     // Show empty state when no assignments match
@@ -2388,12 +2578,14 @@ function setupAssignmentsFiltering() {
             `;
             
             // Insert after assignments list
-            assignmentsContainer.parentNode.insertBefore(emptyState, assignmentsContainer.nextSibling);
+            if (assignmentsList.parentNode) {
+                assignmentsList.parentNode.insertBefore(emptyState, assignmentsList.nextSibling);
+            }
             
-            // Add click event to create assignment button
-            const createAssignmentBtn = emptyState.querySelector('.create-assignment-btn');
-            if (createAssignmentBtn) {
-                createAssignmentBtn.addEventListener('click', function() {
+            // Add click event to create button
+            const createButton = emptyState.querySelector('.create-assignment-btn');
+            if (createButton) {
+                createButton.addEventListener('click', function() {
                     // Switch to dashboard and scroll to assignment form
                     const dashboardTab = document.querySelector('.menu-item[data-section="dashboard"]');
                     if (dashboardTab) {
@@ -2408,28 +2600,74 @@ function setupAssignmentsFiltering() {
         }
         
         // Show or hide empty state
-        emptyState.style.display = show ? 'block' : 'none';
+        if (emptyState) {
+            emptyState.style.display = show ? 'block' : 'none';
+        }
     }
+
+    // Function to handle filter changes
+    function applyFilters() {
+        const classValue = classFilter ? classFilter.value : '';
+        const statusValue = statusFilter ? statusFilter.value : '';
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        console.log('Applying assignment filters:', { class: classValue, status: statusValue, search: searchValue });
+        
+        // Load filtered assignments from API
+        loadAssignments({
+            class: classValue,
+            status: statusValue,
+            search: searchValue
+        });
+    }
+
+    // Add event listeners for filtering
+    if (classFilter) classFilter.addEventListener('change', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
     
-    // Add event listeners
-    if (classFilter) classFilter.addEventListener('change', filterAssignments);
-    if (statusFilter) statusFilter.addEventListener('change', filterAssignments);
+    if (searchButton) {
+        searchButton.addEventListener('click', applyFilters);
+    }
     
     if (searchInput) {
         searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterAssignments();
+            if (e.key === 'Enter') applyFilters();
+        });
+    }
+
+    // Initialize: load teacher's courses for filter and load initial assignments
+    loadTeacherCoursesForFilter(); // Make sure this runs first
+    setTimeout(() => loadAssignments(), 500); // Add a delay to ensure courses are loaded first
+    
+    // Return public methods
+    return {
+        refresh: loadAssignments,
+        refreshCourses: loadTeacherCoursesForFilter // Add this method so it can be called externally
+    };
+}
+
+// Call this when the page is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize assignments filtering and loading
+    const assignmentsModule = setupAssignmentsFiltering();
+    
+    // Add tab change handler to reload assignments when switching to the tab
+    const assignmentsTab = document.querySelector('.menu-item[data-section="assignments"]');
+    if (assignmentsTab) {
+        assignmentsTab.addEventListener('click', function() {
+            console.log('Assignments tab clicked, refreshing assignments');
+            if (assignmentsModule && typeof assignmentsModule.refreshCourses === 'function') {
+                assignmentsModule.refreshCourses(); // Refresh courses first
+                setTimeout(() => {
+                    if (assignmentsModule && typeof assignmentsModule.refresh === 'function') {
+                        assignmentsModule.refresh(); // Then refresh assignments after a delay
+                    }
+                }, 500);
             }
         });
     }
-    
-    if (searchButton) {
-        searchButton.addEventListener('click', filterAssignments);
-    }
-    
-    // Initial filtering
-    filterAssignments();
-}
+});
+
 
 // ===== ASSIGNMENT FUNCTIONS =====
 // Function to handle grading an assignment
@@ -2452,71 +2690,295 @@ function gradeAssignment(assignmentId) {
             ELC.showNotification('Failed to load submissions. Please try again.', 'error');
         });
 }
-// Function to load materials from database
-function loadMaterialsFromDatabase() {
+// Function to load materials from database for teacher's courses only
+async function loadMaterialsFromDatabase() {
     const materialsList = document.querySelector('.materials-list');
     if (!materialsList) return;
     
+    try {
+        // Show loading state
+        materialsList.innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading materials...</p>
+            </div>
+        `;
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // First, fetch teacher's courses
+        const coursesResponse = await fetch('/api/teachers/my-courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!coursesResponse.ok) {
+            throw new Error(`HTTP error ${coursesResponse.status}`);
+        }
+        
+        const coursesData = await coursesResponse.json();
+        
+        // If teacher has no courses, show empty state
+        if (!coursesData.success || !coursesData.data || coursesData.data.length === 0) {
+            materialsList.innerHTML = '';
+            showMaterialsEmptyState(true);
+            return;
+        }
+        
+        // Extract course IDs
+        const courseIds = coursesData.data.map(course => course._id);
+        
+        // Now fetch materials, filtered by teacher's courses
+        const queryParams = new URLSearchParams();
+        courseIds.forEach(id => queryParams.append('courseIds[]', id));
+        
+        const materialsResponse = await fetch(`/api/materials?${queryParams.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!materialsResponse.ok) {
+            throw new Error(`HTTP error ${materialsResponse.status}`);
+        }
+        
+        const materialsData = await materialsResponse.json();
+        console.log('Materials data received:', materialsData);
+        
+        if (materialsData.success && materialsData.data && materialsData.data.length > 0) {
+            // Clear loading indicator
+            materialsList.innerHTML = '';
+            
+            // Add each material to the list
+            materialsData.data.forEach(material => {
+                addMaterialToList(material);
+            });
+        } else {
+            // Show empty state if no materials
+            materialsList.innerHTML = '';
+            showMaterialsEmptyState(true);
+        }
+        
+    } catch (error) {
+        console.error('Error fetching materials:', error);
+        materialsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error loading materials</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+// Function to load assignments from database - only for teacher's courses
+async function loadAssignments(filters = {}) {
     // Show loading state
-    materialsList.innerHTML = `
+    assignmentsList.innerHTML = `
         <div class="loading-indicator">
             <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading materials...</p>
+            <p>Loading assignments...</p>
         </div>
     `;
     
-    // Fetch materials from API
-    fetch('/api/materials')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Materials data received:', data);
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // First, fetch teacher's courses if not filtered by a specific course
+        let courseIds = [];
+        if (!filters.class) {
+            // Get teacher's courses
+            const coursesResponse = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
             
-            if (data.success && data.data && data.data.length > 0) {
-                // Clear loading indicator
-                materialsList.innerHTML = '';
-                
-                // Add each material to the list
-                data.data.forEach(material => {
-                    addMaterialToList(material);
-                });
-            } else {
-                // Show empty state if no materials
-                materialsList.innerHTML = '';
-                showMaterialsEmptyState(true);
+            if (!coursesResponse.ok) {
+                throw new Error(`HTTP error ${coursesResponse.status}`);
             }
-        })
-        .catch(error => {
-            console.error('Error fetching materials:', error);
-            materialsList.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h3>Error loading materials</h3>
-                    <p>${error.message}</p>
-                </div>
-            `;
+            
+            const coursesData = await coursesResponse.json();
+            
+            // If teacher has no courses, show empty state
+            if (!coursesData.success || !coursesData.data || coursesData.data.length === 0) {
+                assignmentsList.innerHTML = '';
+                showAssignmentsEmptyState(true);
+                return;
+            }
+            
+            // Extract course IDs
+            courseIds = coursesData.data.map(course => course._id);
+            console.log('Teacher courses for assignment filtering:', courseIds);
+        } else {
+            // If filtering by a specific course, use that ID
+            courseIds = [filters.class];
+        }
+        
+        // Build query string from filters
+        const queryParams = new URLSearchParams();
+        
+        // Add course IDs to query - use courseIds (not courseIds[])
+        courseIds.forEach(id => queryParams.append('courseIds', id));
+        
+        // Add other filters
+        if (filters.status) queryParams.append('status', filters.status);
+        if (filters.search) queryParams.append('search', filters.search);
+        
+        console.log('Assignment filter query params:', queryParams.toString());
+        
+        // Fetch assignments for teacher's courses
+        const response = await fetch(`/api/assignments?${queryParams.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Assignments loaded:', data);
+        
+        // Clear loading indicator
+        assignmentsList.innerHTML = '';
+        
+        if (data.success && data.data && data.data.length > 0) {
+            // Add each assignment to the list
+            data.data.forEach(assignment => {
+                addAssignmentToList(assignment);
+            });
+        } else {
+            // Show empty state if no assignments found
+            showAssignmentsEmptyState(true);
+        }
+    } catch (error) {
+        console.error('Error loading assignments:', error);
+        assignmentsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error loading assignments</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
 }
-// Call this function when the page loads or when navigating to materials tab
+
+// Function to add assignment to the list
+function addAssignmentToList(assignment) {
+    // Format date
+    const dueDate = new Date(assignment.dueDate).toLocaleDateString();
+    
+    // Determine status based on active state and due date
+    let status = assignment.isActive ? 'active' : 'closed';
+    if (assignment.isActive && new Date(assignment.dueDate) > new Date()) {
+        status = 'upcoming';
+    }
+    
+    // Determine status badge class
+    let statusClass = 'badge-success';
+    if (status === 'upcoming') statusClass = 'badge-primary';
+    if (status === 'closed') statusClass = 'badge-secondary';
+    
+    // Create assignment HTML
+    const assignmentHTML = `
+        <div class="assignment-item" data-id="${assignment._id}">
+            <div class="assignment-header">
+                <div class="assignment-title">${assignment.title}</div>
+                <span class="badge ${statusClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+            </div>
+            <div class="assignment-details">
+                <div><i class="fas fa-book"></i> ${assignment.course && assignment.course.name ? assignment.course.name : 'Unknown'}</div>
+                <div><i class="fas fa-calendar"></i> Due: ${dueDate}</div>
+                <div><i class="fas fa-file-alt"></i> ${assignment.submissions ? assignment.submissions.length : 0}/${assignment.totalStudents || '?'} submitted</div>
+            </div>
+            <div class="assignment-actions">
+                <button class="btn btn-primary grade-btn" data-id="${assignment._id}"><i class="fas fa-check-square"></i> Grade</button>
+                <button class="btn btn-secondary edit-btn" data-id="${assignment._id}"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn btn-danger delete-btn" data-id="${assignment._id}"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>
+    `;
+    
+    // Add to container
+    assignmentsList.innerHTML += assignmentHTML;
+    
+    // Set up button event listeners
+    setupAssignmentButtons();
+}
+
+// Initialize the page when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Add tab change handler to load materials when tab is clicked
+    // Initialize components
+    setupTabNavigation();
+    
+    // Remove any existing event listeners from buttons
+    replaceAllButtons();
+    
+    // Setup filtering for all sections
+    const materialsModule = setupMaterialsFiltering();
+    const assignmentsModule = setupAssignmentsFiltering();
+    setupStudentsFiltering();
+    setupProgressReportsFiltering();
+    
+    // Add button event listeners
+    addButtonListeners();
+    
+    // Add required CSS styles
+    addModalStyles();
+    addFileUploadStyles();
+    
+    // Initialize material upload functionality
+    const uploadMaterialForm = document.getElementById('uploadMaterialForm');
+    if (uploadMaterialForm && !uploadMaterialForm.hasAttribute('data-initialized')) {
+        console.log('Initializing material upload functionality');
+        setupMaterialUpload();
+        fixFileUploadDisplay();
+    }
+    
+    // Setup material actions
+    setupMaterialActions();
+    
+    // Setup material type field selection
+    setupMaterialTypeField();
+    
+    // Initialize report form
+    initializeReportForm();
+    
+    // Add tab change handlers to refresh content when tabs are clicked
     const materialsTab = document.querySelector('.menu-item[data-section="materials"]');
     if (materialsTab) {
         materialsTab.addEventListener('click', function() {
-            // Load materials when tab is clicked
-            loadMaterialsFromDatabase();
+            console.log('Materials tab clicked, refreshing materials');
+            if (materialsModule && typeof materialsModule.refresh === 'function') {
+                materialsModule.refresh();
+            }
         });
     }
     
-    // If materials section is visible on page load, load materials
-    const materialsSection = document.getElementById('materials-section');
-    if (materialsSection && window.getComputedStyle(materialsSection).display !== 'none') {
-        loadMaterialsFromDatabase();
+    const assignmentsTab = document.querySelector('.menu-item[data-section="assignments"]');
+    if (assignmentsTab) {
+        assignmentsTab.addEventListener('click', function() {
+            console.log('Assignments tab clicked, refreshing assignments');
+            if (assignmentsModule && typeof assignmentsModule.refresh === 'function') {
+                assignmentsModule.refresh();
+            }
+        });
     }
+    
+    // Log initialization complete
+    console.log('Page initialization complete');
 });
 // Function to display grading modal
 function displayGradingModal(assignmentData) {
