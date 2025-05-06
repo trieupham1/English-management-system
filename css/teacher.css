@@ -958,3 +958,69 @@ textarea.form-control {
         margin-top: 5px;
     }
 }
+/* Student profile modal styles */
+.student-avatar {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.student-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.profile-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.student-basic-info {
+    flex: 1;
+    margin-left: 30px;
+}
+
+.enrollment-section,
+.performance-section,
+.guardian-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.enrollment-section h3,
+.performance-section h3,
+.guardian-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.status-badge.inactive {
+    background-color: #F44336;
+    color: white;
+}
+
+.status-badge.pending {
+    background-color: #FFC107;
+    color: black;
+}

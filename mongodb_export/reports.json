@@ -1,0 +1,32 @@
+[
+  {
+    "_id": "6819a820906adb663185d06d",
+    "title": "Vãi ò",
+    "description": "sjxxnxbc",
+    "type": "individual",
+    "course": "681324ee882466c61f8985ee",
+    "generatedBy": "681333f573460c095068d8a6",
+    "academicPeriod": "monthly",
+    "studentCount": 0,
+    "downloadCount": 1,
+    "viewCount": 1,
+    "createdAt": "2025-05-06T06:11:44.537Z",
+    "updatedAt": "2025-05-06T06:11:44.537Z",
+    "__v": 0
+  },
+  {
+    "_id": "6819a970fc864730033465eb",
+    "title": "Vãi ò",
+    "description": "sxxssasa",
+    "type": "individual",
+    "course": "681324ee882466c61f8985ef",
+    "generatedBy": "681333f573460c095068d8a6",
+    "academicPeriod": "monthly",
+    "studentCount": 0,
+    "downloadCount": 0,
+    "viewCount": 0,
+    "createdAt": "2025-05-06T06:17:20.871Z",
+    "updatedAt": "2025-05-06T06:17:20.871Z",
+    "__v": 0
+  }
+]

@@ -365,6 +365,84 @@ exports.getStudentCourses = async (req, res) => {
         });
     }
 };
+// Get students by teacher
+exports.getStudentsByTeacher = async (req, res) => {
+    try {
+        // Get the teacher ID from the authenticated user
+        const teacherId = req.user._id;
+        
+        // Get query parameters for filtering
+        const courseId = req.query.courseId;
+        const search = req.query.search;
+        
+        // Find courses taught by this teacher
+        let coursesQuery = { teacher: teacherId };
+        if (courseId) {
+            coursesQuery._id = courseId;
+        }
+        
+        const teacherCourses = await Course.find(coursesQuery).select('_id name level students');
+        
+        if (!teacherCourses || teacherCourses.length === 0) {
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+        
+        // Get all student IDs from these courses
+        const studentIds = [];
+        teacherCourses.forEach(course => {
+            if (course.students && course.students.length > 0) {
+                studentIds.push(...course.students);
+            }
+        });
+        
+        // Remove duplicates (in case a student is in multiple courses)
+        const uniqueStudentIds = [...new Set(studentIds)];
+        
+        if (uniqueStudentIds.length === 0) {
+            return res.status(200).json({
+                success: true,
+                count: 0,
+                data: []
+            });
+        }
+        
+        // Build the query for students
+        let studentsQuery = { _id: { $in: uniqueStudentIds } };
+        
+        // Add search filter if provided
+        if (search) {
+            studentsQuery.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { 'studentInfo.studentId': { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Fetch students
+        const students = await Student.find(studentsQuery)
+            .select('-password')
+            .populate('studentInfo.course', 'name level category')
+            .lean();
+        
+        // Return the results
+        res.status(200).json({
+            success: true,
+            count: students.length,
+            data: students
+        });
+    } catch (error) {
+        console.error('Error fetching students by teacher:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+};
 // Update course enrollment function
 exports.enrollInCourse = async (req, res) => {
     try {

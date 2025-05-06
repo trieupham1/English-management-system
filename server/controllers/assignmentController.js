@@ -387,13 +387,19 @@ exports.gradeSubmission = async (req, res) => {
         });
     }
 };
-
 // Get all submissions for an assignment
 exports.getSubmissions = async (req, res) => {
     try {
         const assignment = await Assignment.findById(req.params.id)
-            .populate('submissions.student', 'name email')
-            .populate('course', 'name');
+            .populate({
+                path: 'submissions.student',
+                select: 'name email',
+                // Add error handling for missing student
+                options: { 
+                    strictPopulate: false 
+                }
+            })
+            .populate('course', 'name students');
 
         if (!assignment) {
             return res.status(404).json({
@@ -409,18 +415,25 @@ exports.getSubmissions = async (req, res) => {
                 dueDate: assignment.dueDate,
                 totalPoints: assignment.totalPoints,
                 className: assignment.course ? assignment.course.name : 'Unknown',
-                totalStudents: assignment.course ? assignment.course.students.length : 0,
-                submissions: assignment.submissions.map(sub => ({
-                    studentId: sub.student._id,
-                    studentName: sub.student.name || sub.student.email,
-                    submittedAt: sub.submittedAt,
-                    isLate: sub.isLate,
-                    grade: sub.grade,
-                    feedback: sub.feedback,
-                    content: sub.content,
-                    fileName: sub.file ? sub.file.split('/').pop() : null,
-                    fileUrl: sub.file ? `/uploads/${sub.file}` : null
-                }))
+                totalStudents: assignment.course?.students?.length || 0,
+                submissions: assignment.submissions.map(sub => {
+                    // Add fallback for missing student data
+                    const studentName = sub.student 
+                        ? (sub.student.name || sub.student.email || 'Unknown Student') 
+                        : 'Unknown Student';
+
+                    return {
+                        studentId: sub.student?._id || null,
+                        studentName: studentName,
+                        submittedAt: sub.submittedAt,
+                        isLate: sub.isLate,
+                        grade: sub.grade,
+                        feedback: sub.feedback,
+                        content: sub.content,
+                        fileName: sub.file ? sub.file.split('/').pop() : null,
+                        fileUrl: sub.file ? `/uploads/${sub.file}` : null
+                    };
+                })
             }
         });
     } catch (error) {

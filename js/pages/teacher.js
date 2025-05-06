@@ -207,61 +207,7 @@ function setupMaterialTypeField() {
     }
 }
 
-// Initialize report form handling
-function initializeReportForm() {
-    const reportForm = document.getElementById('writeReportForm');
-    if (reportForm) {
-        reportForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Collect form data
-            const formData = {
-                reportType: document.getElementById('reportType')?.value,
-                selectedClass: document.getElementById('selectedClass')?.value,
-                reportTitle: document.getElementById('reportTitle')?.value,
-                reportDescription: document.getElementById('reportDescription')?.value,
-                reportFile: document.getElementById('reportFile')?.files[0]
-            };
-        
-            // Send to server (to be implemented)
-            console.log('Report Data:', formData);
-        
-            // Show success notification
-            ELC.showNotification('Report generated successfully!', 'success');
-        });
-        
-        // File upload browse trigger for report file
-        const reportFileUpload = reportForm.querySelector('.file-upload');
-        if (reportFileUpload) {
-            reportFileUpload.addEventListener('click', function() {
-                document.getElementById('reportFile')?.click();
-            });
-            
-            // Show file name when selected
-            const reportFileInput = document.getElementById('reportFile');
-            if (reportFileInput) {
-                reportFileInput.addEventListener('change', function() {
-                    if (this.files.length > 0) {
-                        const fileName = this.files[0].name;
-                        const fileSize = formatFileSize(this.files[0].size);
-                        const fileText = reportFileUpload.querySelector('p');
-                        const fileIcon = reportFileUpload.querySelector('i');
-                        
-                        if (fileText) {
-                            fileText.innerHTML = `Selected: <strong>${fileName}</strong> (${fileSize})`;
-                        }
-                        
-                        if (fileIcon) {
-                            fileIcon.className = 'fas fa-check-circle';
-                        }
-                        
-                        reportFileUpload.classList.add('file-selected');
-                    }
-                });
-            }
-        }
-    }
-}
+
 async function loadTeacherCourses() {
     const classDropdown = document.getElementById('assignmentClass');
     if (!classDropdown) return;
@@ -2105,243 +2051,506 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 // ===== STUDENTS SECTION FILTERING =====
 function setupStudentsFiltering() {
-    // Get filter elements
-    const classFilter = document.querySelector('#students-section select, .filter-bar select');
+    // Get filter elements - matching your exact HTML structure
+    const classFilter = document.querySelector('#students-section .filter-bar select');
     const searchInput = document.querySelector('#students-section .search-bar input');
     const searchButton = document.querySelector('#students-section .search-bar button');
+    const studentsList = document.querySelector('.students-list');
 
-    // Populate class filter with the 4 default classes
-    if (classFilter) {
-        // Start with "All Classes" option
-        classFilter.innerHTML = '<option value="">All Classes</option>';
+    // Load teacher's courses for the filter dropdown
+    async function loadTeacherCoursesForStudentsFilter() {
+        if (!classFilter) return;
         
-        // Add default classes
-        const defaultClasses = [
-            { value: 'conversational', text: 'Conversational English' },
-            { value: 'business', text: 'Business English' },
-            { value: 'beginner', text: 'Beginner English' },
-            { value: 'ielts', text: 'IELTS Preparation' }
-        ];
-        
-        defaultClasses.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.value;
-            option.textContent = cls.text;
-            classFilter.appendChild(option);
-        });
-    }
-
-    // Filter students function
-    function filterStudents() {
-        const classValue = classFilter ? classFilter.value.toLowerCase() : '';
-        const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : '';
-        
-        // Get all student items
-        const studentItems = document.querySelectorAll('.student-item');
-        let visibleCount = 0;
-        
-        // If no students, show empty state
-        if (studentItems.length === 0) {
-            showStudentsEmptyState(true);
-            return;
-        }
-        
-        studentItems.forEach(item => {
-            // Get student details
-            const studentClasses = item.querySelector('.student-details div:first-child')?.textContent.toLowerCase() || '';
-            const studentName = item.querySelector('.student-name')?.textContent.toLowerCase() || '';
-            
-            // Check if student matches filters
-            const matchesClass = !classValue || studentClasses.includes(classValue);
-            const matchesSearch = !searchValue || studentName.includes(searchValue);
-            
-            // Show or hide based on filters
-            if (matchesClass && matchesSearch) {
-                item.style.display = '';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-        // Show empty state if no results
-        showStudentsEmptyState(visibleCount === 0);
-    }
-
-    // Show empty state when no students match
-    function showStudentsEmptyState(show) {
-        let emptyState = document.querySelector('#students-section .empty-state');
-        
-        // Create empty state if it doesn't exist
-        if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                <i class="fas fa-users"></i>
-                <h3>No students found</h3>
-                <p>There are no students matching your search criteria.</p>
-            `;
-            
-            // Insert after students list
-            const studentsContainer = document.querySelector('.students-list');
-            if (studentsContainer) {
-                studentsContainer.parentNode.insertBefore(emptyState, studentsContainer.nextSibling);
-            } else {
-                // Or append to section
-                const section = document.querySelector('#students-section');
-                if (section) section.appendChild(emptyState);
-            }
-        }
-        
-        // Show or hide empty state
-        emptyState.style.display = show ? 'block' : 'none';
-    }
-
-    // Add event listeners
-    if (classFilter) classFilter.addEventListener('change', filterStudents);
-
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') filterStudents();
-        });
-    }
-
-    if (searchButton) searchButton.addEventListener('click', filterStudents);
-
-    // Initial filtering
-    filterStudents();
-}
-
-// ===== PROGRESS REPORTS SECTION FILTERING =====
-function setupProgressReportsFiltering() {
-    // Get filter elements
-    const classFilter = document.querySelector('#progress-section select:first-child, .filter-bar select:first-child');
-    const typeFilter = document.querySelector('#progress-section select:nth-child(2), .filter-bar select:nth-child(2)');
-
-    // Populate class filter with the 4 default classes
-    if (classFilter) {
-        // Start with "All Classes" option
-        classFilter.innerHTML = '<option value="">All Classes</option>';
-        
-        // Add default classes
-        const defaultClasses = [
-            { value: 'conversational', text: 'Conversational English' },
-            { value: 'business', text: 'Business English' },
-            { value: 'beginner', text: 'Beginner English' },
-            { value: 'ielts', text: 'IELTS Preparation' }
-        ];
-        
-        defaultClasses.forEach(cls => {
-            const option = document.createElement('option');
-            option.value = cls.value;
-            option.textContent = cls.text;
-            classFilter.appendChild(option);
-        });
-    }
-
-    // Ensure type filter has options
-    if (typeFilter && typeFilter.options.length === 0) {
-        typeFilter.innerHTML = `
-            <option value="individual">Individual Reports</option>
-            <option value="class">Class Reports</option>
-        `;
-    }
-
-    // Filter reports function
-    function filterReports() {
-        const classValue = classFilter ? classFilter.value.toLowerCase() : '';
-        const typeValue = typeFilter ? typeFilter.value.toLowerCase() : '';
-        
-        // Get all report items
-        const reportItems = document.querySelectorAll('.report-item');
-        let visibleCount = 0;
-        
-        // If no reports, show empty state
-        if (reportItems.length === 0) {
-            showReportsEmptyState(true);
-            return;
-        }
-        
-        reportItems.forEach(item => {
-            // Get report details
-            const reportTitle = item.querySelector('.report-title')?.textContent.toLowerCase() || '';
-            
-            // Determine report type (class or individual)
-            const isClassReport = reportTitle.includes('class');
-            const reportType = isClassReport ? 'class' : 'individual';
-            
-            // Check if report matches filters
-            const matchesClass = !classValue || reportTitle.includes(classValue);
-            const matchesType = !typeValue || reportType === typeValue;
-            
-            // Show or hide based on filters
-            if (matchesClass && matchesType) {
-                item.style.display = '';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-        // Show empty state if no results
-        showReportsEmptyState(visibleCount === 0);
-    }
-
-    // Show empty state when no reports match
-    function showReportsEmptyState(show) {
-        let emptyState = document.querySelector('#progress-section .empty-state');
-        
-        // Create empty state if it doesn't exist
-        if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                <i class="fas fa-chart-line"></i>
-                <h3>No reports available</h3>
-                <p>There are no progress reports matching your search criteria.</p>
-                <button class="btn btn-primary create-report-btn"><i class="fas fa-plus"></i> Create New Report</button>
-            `;
-            
-            // Insert after reports list
-            const reportsContainer = document.querySelector('.reports-list');
-            if (reportsContainer) {
-                reportsContainer.parentNode.insertBefore(emptyState, reportsContainer.nextSibling);
-            } else {
-                // Or append to section
-                const section = document.querySelector('#progress-section');
-                if (section) section.appendChild(emptyState);
+        try {
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
             
-            // Add click event to create report button
-            const createReportBtn = emptyState.querySelector('.create-report-btn');
-            if (createReportBtn) {
-                createReportBtn.addEventListener('click', function() {
-                    // Switch to dashboard and scroll to report form
-                    const dashboardTab = document.querySelector('.menu-item[data-section="dashboard"]');
-                    if (dashboardTab) {
-                        dashboardTab.click();
-                        setTimeout(() => {
-                            const reportForm = document.getElementById('writeReportForm');
-                            if (reportForm) reportForm.scrollIntoView({ behavior: 'smooth' });
-                        }, 300);
-                    }
+            // Show loading state
+            classFilter.innerHTML = '<option value="">Loading your courses...</option>';
+            classFilter.disabled = true;
+            
+            // Fetch teacher's courses from API
+            const response = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Teacher courses loaded for students filter:', data);
+            
+            // Update dropdown options
+            if (data.success && data.data && data.data.length > 0) {
+                // Start with "All Classes" option
+                classFilter.innerHTML = '<option value="">All Classes</option>';
+                
+                // Add each course to the filter
+                data.data.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course._id;
+                    option.textContent = `${course.name} (${course.level})`;
+                    classFilter.appendChild(option);
+                });
+            } else {
+                // Fallback to default classes if API returns no data
+                classFilter.innerHTML = '<option value="">All Classes</option>';
+                
+                // Add default classes - keeping your original values
+                const defaultClasses = [
+                    { value: 'conversational', text: 'Conversational English' },
+                    { value: 'business', text: 'Business English' },
+                    { value: 'beginner', text: 'Beginner English' },
+                    { value: 'ielts', text: 'IELTS Preparation' }
+                ];
+                
+                defaultClasses.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.value;
+                    option.textContent = cls.text;
+                    classFilter.appendChild(option);
                 });
             }
+        } catch (error) {
+            console.error('Error loading teacher courses for filter:', error);
+            
+            // Fallback to default classes on error - keeping your original values
+            classFilter.innerHTML = '<option value="">All Classes</option>';
+            
+            // Add default classes
+            const defaultClasses = [
+                { value: 'conversational', text: 'Conversational English' },
+                { value: 'business', text: 'Business English' },
+                { value: 'beginner', text: 'Beginner English' },
+                { value: 'ielts', text: 'IELTS Preparation' }
+            ];
+            
+            defaultClasses.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls.value;
+                option.textContent = cls.text;
+                classFilter.appendChild(option);
+            });
+        } finally {
+            classFilter.disabled = false;
+        }
+    }
+
+    // Function to load students data from API with filtering
+async function loadStudents(filters = {}) {
+    // Show loading indicator
+    studentsList.innerHTML = `
+        <div class="loading-indicator">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading students...</p>
+        </div>
+    `;
+    
+    try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
         }
         
-        // Show or hide empty state
-        emptyState.style.display = show ? 'block' : 'none';
+        // Build query parameters
+        let apiUrl = '/api/students/byteacher';  // Use the correct endpoint
+        const queryParams = new URLSearchParams();
+        
+        // Add course filter if specified
+        if (filters.course) {
+            queryParams.append('courseId', filters.course);
+        }
+        
+        // Add search term if specified
+        if (filters.search) {
+            queryParams.append('search', filters.search);
+        }
+        
+        // Add query parameters if any exist
+        if (queryParams.toString()) {
+            apiUrl += '?' + queryParams.toString();
+        }
+        
+        console.log('Fetching students from:', apiUrl);
+        
+        // Fetch filtered students from API
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Students data received:', data);
+        
+        // Clear loading indicator
+        studentsList.innerHTML = '';
+        
+        if (data.success && data.data && data.data.length > 0) {
+            // Add each student to the list
+            data.data.forEach(student => {
+                addStudentToList(student);
+            });
+        } else {
+            // Show empty state if no students found
+            showStudentsEmptyState(true);
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        studentsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error loading students</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+    // Function to add a student to the list
+function addStudentToList(student) {
+    // Check if student data is valid
+    if (!student) return;
+    
+    // Get student name - handling possible undefined
+    const fullName = student.fullName || 'Unnamed Student';
+    
+    // Get course name - handling case when course might be null
+    let courseText = 'Classes: None';
+    if (student.studentInfo && student.studentInfo.course) {
+        if (typeof student.studentInfo.course === 'object' && student.studentInfo.course.name) {
+            courseText = `Classes: ${student.studentInfo.course.name}`;
+        } else if (typeof student.studentInfo.course === 'string') {
+            courseText = `Classes: ${student.studentInfo.course}`;
+        }
+    }
+    
+    // Create student HTML
+    const studentHTML = `
+        <div class="student-item" data-id="${student._id}">
+            <div class="student-info">
+                <div class="student-name">${fullName}</div>
+                <div class="student-details">
+                    <div><i class="fas fa-book"></i> ${courseText}</div>
+                </div>
+            </div>
+            <div class="student-actions">
+                <button class="btn btn-primary view-profile-btn" data-id="${student._id}">View Profile</button>
+                <button class="btn btn-secondary contact-btn" data-id="${student._id}">Contact</button>
+            </div>
+        </div>
+    `;
+    
+    // Add to container
+    const studentsList = document.querySelector('.students-list');
+    if (studentsList) {
+        studentsList.insertAdjacentHTML('beforeend', studentHTML);
+    }
+    
+    // Add button event listeners
+    setupStudentButtons(student._id);
+}
+    // Setup student action buttons
+    function setupStudentButtons(studentId) {
+        const viewProfileBtn = document.querySelector(`.view-profile-btn[data-id="${studentId}"]`);
+        const contactBtn = document.querySelector(`.contact-btn[data-id="${studentId}"]`);
+        
+        if (viewProfileBtn) {
+            viewProfileBtn.addEventListener('click', function() {
+                viewStudentProfile(studentId);
+            });
+        }
+        
+        if (contactBtn) {
+            contactBtn.addEventListener('click', function() {
+                contactStudent(studentId);
+            });
+        }
+    }
+// Function to view student profile
+function viewStudentProfile(studentId) {
+    // Show loading notification
+    ELC.showNotification('Loading student profile...', 'info');
+    
+    // Fetch student details from API
+    fetch(`/api/students/${studentId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // We have student data, but need to get course info if it's not populated
+            const student = data.data;
+            
+            if (student.studentInfo && student.studentInfo.course && 
+                typeof student.studentInfo.course === 'string') {
+                
+                // Use the courses dropdown for a course name lookup
+                fetchCourseName(student.studentInfo.course)
+                    .then(courseName => {
+                        // Create a populated course object
+                        student.courseDetails = {
+                            name: courseName
+                        };
+                        // Show modal with all data
+                        showStudentProfileModal(student);
+                    })
+                    .catch(error => {
+                        console.warn('Could not fetch course name:', error);
+                        // Still show modal even if course name fetch fails
+                        showStudentProfileModal(student);
+                    });
+            } else {
+                // Course info already populated or not present
+                showStudentProfileModal(student);
+            }
+        } else {
+            ELC.showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching student profile:', error);
+        ELC.showNotification('Failed to load student profile. Please try again.', 'error');
+    });
+}
+
+// Helper function to get course name from dropdown or API
+function fetchCourseName(courseId) {
+    return new Promise((resolve, reject) => {
+        // First try to get it from the dropdown
+        const courseSelect = document.querySelector('#class-filter');
+        if (courseSelect) {
+            const courseOption = courseSelect.querySelector(`option[value="${courseId}"]`);
+            if (courseOption) {
+                resolve(courseOption.textContent);
+                return;
+            }
+        }
+        
+        // If not in dropdown, fetch from the courses dropdown API
+        fetch(`/api/students/courses/dropdown`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to fetch courses');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                // Find the course in the returned data
+                const course = data.data.find(c => c._id === courseId);
+                if (course) {
+                    resolve(course.name);
+                } else {
+                    resolve('Unknown Course');
+                }
+            } else {
+                resolve('Unknown Course');
+            }
+        })
+        .catch(error => {
+            console.warn('Error fetching course dropdown:', error);
+            resolve('Unknown Course');
+        });
+    });
+}
+
+// Function to display student profile modal
+function showStudentProfileModal(student) {
+    try {
+        // Format dates
+        const dob = student.studentInfo.dateOfBirth ? new Date(student.studentInfo.dateOfBirth).toLocaleDateString() : 'Not provided';
+        const enrollmentDate = student.studentInfo.enrollmentDate ? new Date(student.studentInfo.enrollmentDate).toLocaleDateString() : 'Not provided';
+        
+        // Get course name
+        let courseName = 'Not enrolled';
+        
+        // Try different properties where course info might be stored
+        if (student.courseDetails && student.courseDetails.name) {
+            courseName = student.courseDetails.name;
+        } else if (student.studentInfo && student.studentInfo.course) {
+            if (typeof student.studentInfo.course === 'object' && student.studentInfo.course.name) {
+                courseName = student.studentInfo.course.name;
+            } else {
+                courseName = 'Enrolled in course';
+            }
+        }
+        
+        // Create modal element directly
+        const modal = document.createElement('div');
+        modal.id = 'student-profile-modal';
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        
+        // Set the modal content - without Performance section
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Student Profile: ${student.fullName}</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="student-info-section">
+                        <h3>Basic Information</h3>
+                        <p><strong>Student ID:</strong> ${student.studentInfo.studentId}</p>
+                        <p><strong>Email:</strong> ${student.email}</p>
+                        <p><strong>Phone:</strong> ${student.phone}</p>
+                        <p><strong>Date of Birth:</strong> ${dob}</p>
+                        <p><strong>Username:</strong> ${student.username}</p>
+                    </div>
+                    
+                    <div class="enrollment-section">
+                        <h3>Enrollment Information</h3>
+                        <p><strong>Current Level:</strong> ${student.studentInfo.currentLevel}</p>
+                        <p><strong>Course:</strong> ${courseName}</p>
+                        <p><strong>Enrollment Date:</strong> ${enrollmentDate}</p>
+                        <p><strong>Status:</strong> <span class="status-badge ${student.studentInfo.status}">${student.studentInfo.status.toUpperCase()}</span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-btn">Close</button>
+                    <button class="btn btn-primary edit-student-btn" data-id="${student._id}">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // First, remove any existing modals
+        document.querySelectorAll('.modal').forEach(existingModal => existingModal.remove());
+        
+        // Add modal directly to the body
+        document.body.appendChild(modal);
+        
+        // Add close event listeners
+        const closeButtons = modal.querySelectorAll('.close, .close-btn');
+        if (closeButtons.length > 0) {
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    modal.remove();
+                });
+            });
+        }
+        
+        // Add edit button event listener
+        const editButton = modal.querySelector('.edit-student-btn');
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                ELC.showNotification('Edit functionality coming soon!', 'info');
+            });
+        }
+        
+        // Close when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        console.log('Modal created and displayed successfully');
+    } catch (error) {
+        console.error('Error displaying student profile modal:', error);
+        ELC.showNotification('Error displaying student profile', 'error');
+    }
+}
+// Update the setupStudentButtons function to use the profile view
+function setupStudentButtons(studentId) {
+    const viewProfileBtn = document.querySelector(`.view-profile-btn[data-id="${studentId}"]`);
+    const contactBtn = document.querySelector(`.contact-btn[data-id="${studentId}"]`);
+    
+    if (viewProfileBtn) {
+        viewProfileBtn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            viewStudentProfile(id);
+        });
+    }
+    
+    if (contactBtn) {
+        contactBtn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            ELC.showNotification('Contact functionality coming soon!', 'info');
+        });
+    }
+}
+    // Function to contact student
+    function contactStudent(studentId) {
+        console.log('Contact student:', studentId);
+        // Implement contact logic here
+        ELC.showNotification('Contact feature coming soon!', 'info');
+    }
+
+    // Show empty state when no students match - using your existing HTML
+    function showStudentsEmptyState(show) {
+        const emptyState = document.querySelector('#students-section .empty-state');
+        
+        // Show or hide existing empty state
+        if (emptyState) {
+            emptyState.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    // Function to apply filters and load students
+    function applyFilters() {
+        const courseValue = classFilter ? classFilter.value : '';
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+        
+        console.log('Applying student filters:', { course: courseValue, search: searchValue });
+        
+        // Load filtered students
+        loadStudents({
+            course: courseValue,
+            search: searchValue
+        });
     }
 
     // Add event listeners
-    if (classFilter) classFilter.addEventListener('change', filterReports);
-    if (typeFilter) typeFilter.addEventListener('change', filterReports);
+    if (classFilter) {
+        classFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (searchButton) {
+        searchButton.addEventListener('click', applyFilters);
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') applyFilters();
+        });
+    }
 
-    // Initial filtering
-    filterReports();
+    // Initialize: load teacher's courses for filter and initial students
+    loadTeacherCoursesForStudentsFilter();
+    setTimeout(() => loadStudents(), 500); // Slight delay to ensure courses load first
+    
+    // Return public methods for external use
+    return {
+        refresh: applyFilters,
+        refreshCourses: loadTeacherCoursesForStudentsFilter
+    };
 }
 
-// ===== ASSIGNMENTS SECTION FILTERING =====
 // ===== ASSIGNMENTS SECTION FILTERING =====
 function setupAssignmentsFiltering() {
     // More specific selector for the dropdown that's visible in the screenshot
@@ -2670,25 +2879,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ===== ASSIGNMENT FUNCTIONS =====
-// Function to handle grading an assignment
+// Update gradeAssignment to pass assignment ID
 function gradeAssignment(assignmentId) {
-    // Show loading notification
+    console.group('Grade Assignment Debug');
+    console.log('Assignment ID:', assignmentId);
+
+    if (!assignmentId) {
+        console.error('Invalid assignment ID');
+        console.groupEnd();
+        ELC.showNotification('Invalid assignment ID', 'error');
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No authentication token');
+        console.groupEnd();
+        ELC.showNotification('Authentication required', 'error');
+        return;
+    }
+
     ELC.showNotification('Loading submissions...', 'info');
-    
-    // Fetch assignment submissions from API
-    fetch(`/api/assignments/${assignmentId}/submissions`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayGradingModal(data.data);
-            } else {
-                ELC.showNotification('Error: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching submissions:', error);
-            ELC.showNotification('Failed to load submissions. Please try again.', 'error');
-        });
+
+    fetch(`/api/assignments/${assignmentId}/submissions`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response body:', text);
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Received data:', JSON.stringify(data, null, 2));
+        
+        if (data.success) {
+            // Ensure assignment ID is passed to the modal
+            const modalData = {
+                ...data.data,
+                id: assignmentId
+            };
+            displayGradingModal(modalData);
+        } else {
+            throw new Error(data.message || 'Failed to load submissions');
+        }
+        console.groupEnd();
+    })
+    .catch(error => {
+        console.error('Error in gradeAssignment:', error);
+        console.groupEnd();
+        
+        ELC.showNotification(`Failed to load submissions: ${error.message}`, 'error');
+    });
 }
 // Function to load materials from database for teacher's courses only
 async function loadMaterialsFromDatabase() {
@@ -2980,116 +3231,131 @@ document.addEventListener('DOMContentLoaded', function() {
     // Log initialization complete
     console.log('Page initialization complete');
 });
-// Function to display grading modal
 function displayGradingModal(assignmentData) {
-    // Clear any existing modals
-    clearExistingModals();
+    console.group('Display Grading Modal Debug');
     
-    // Create modal HTML
-    let modalHTML = `
-        <div id="grading-modal" class="modal">
+    // Remove any existing modal
+    const existingModal = document.getElementById('grading-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    try {
+        // Ensure submissions is an array
+        const submissions = Array.isArray(assignmentData.submissions) 
+            ? assignmentData.submissions 
+            : [];
+
+        // Create a full div element instead of using innerHTML
+        const modal = document.createElement('div');
+        modal.id = 'grading-modal';
+        modal.className = 'modal';
+
+        // Create modal content
+        modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Grade: ${assignmentData.title}</h2>
+                    <h2>Grade: ${assignmentData.title || 'Untitled Assignment'}</h2>
                     <span class="close">&times;</span>
                 </div>
                 <div class="modal-body">
                     <div class="assignment-info">
-                        <p><strong>Class:</strong> ${assignmentData.className}</p>
-                        <p><strong>Due Date:</strong> ${new Date(assignmentData.dueDate).toLocaleDateString()}</p>
-                        <p><strong>Total Points:</strong> ${assignmentData.totalPoints}</p>
-                        <p><strong>Submissions:</strong> ${assignmentData.submissions.length}/${assignmentData.totalStudents}</p>
+                        <p><strong>Class:</strong> ${assignmentData.className || 'Unknown'}</p>
+                        <p><strong>Due Date:</strong> ${assignmentData.dueDate ? new Date(assignmentData.dueDate).toLocaleDateString() : 'Not specified'}</p>
+                        <p><strong>Total Points:</strong> ${assignmentData.totalPoints || 100}</p>
+                        <p><strong>Submissions:</strong> ${submissions.length}/${assignmentData.totalStudents || 0}</p>
                     </div>
                     <div class="submissions-list">
-    `;
-    
-    // Add submissions to modal
-    if (assignmentData.submissions.length === 0) {
-        modalHTML += `<p class="empty-state">No submissions yet.</p>`;
-    } else {
-        assignmentData.submissions.forEach(submission => {
-            modalHTML += `
-                <div class="submission-card">
-                    <div class="submission-header">
-                        <h3>${submission.studentName}</h3>
-                        <p>Submitted: ${new Date(submission.submittedAt).toLocaleString()}</p>
-                    </div>
-                    <div class="submission-content">
-                        ${submission.fileUrl ? 
-                            `<p><a href="${submission.fileUrl}" target="_blank"><i class="fas fa-file"></i> ${submission.fileName}</a></p>` : ''}
-                        <div class="submission-text">
-                            ${submission.content || 'No text content submitted.'}
-                        </div>
-                    </div>
-                    <div class="grading-form">
-                        <div class="form-group">
-                            <label for="grade-${submission.studentId}">Grade (out of ${assignmentData.totalPoints})</label>
-                            <input type="number" id="grade-${submission.studentId}" class="form-control" 
-                                min="0" max="${assignmentData.totalPoints}" value="${submission.grade || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label for="feedback-${submission.studentId}">Feedback</label>
-                            <textarea id="feedback-${submission.studentId}" class="form-control" rows="3">${submission.feedback || ''}</textarea>
-                        </div>
-                        <button type="button" class="btn btn-primary save-grade-btn" 
-                                data-student-id="${submission.studentId}" 
-                                data-assignment-id="${assignmentData.id}">
-                            Save Grade
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    // Close modal HTML
-    modalHTML += `
+                        ${submissions.length === 0 
+                            ? '<p class="empty-state">No submissions yet.</p>' 
+                            : submissions.map(submission => `
+                                <div class="submission-card">
+                                    <div class="submission-header">
+                                        <h3>${submission.studentName || 'Unknown Student'}</h3>
+                                        <p>Submitted: ${submission.submittedAt ? new Date(submission.submittedAt).toLocaleString() : 'N/A'}</p>
+                                    </div>
+                                    <div class="submission-content">
+                                        ${submission.fileUrl ? 
+                                            `<p><a href="${submission.fileUrl}" target="_blank"><i class="fas fa-file"></i> ${submission.fileName || 'Submitted File'}</a></p>` : ''}
+                                        <div class="submission-text">
+                                            ${submission.content || 'No text content submitted.'}
+                                        </div>
+                                    </div>
+                                    <div class="grading-form">
+                                        <div class="form-group">
+                                            <label for="grade-${submission.studentId}">Grade (out of ${assignmentData.totalPoints || 100})</label>
+                                            <input type="number" id="grade-${submission.studentId}" class="form-control" 
+                                                min="0" max="${assignmentData.totalPoints || 100}" value="${submission.grade || ''}">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="feedback-${submission.studentId}">Feedback</label>
+                                            <textarea id="feedback-${submission.studentId}" class="form-control" rows="3">${submission.feedback || ''}</textarea>
+                                        </div>
+                                        <button type="button" class="btn btn-primary save-grade-btn" 
+                                                data-student-id="${submission.studentId}" 
+                                                data-assignment-id="${assignmentData.id || assignmentData._id || ''}">
+                                            Save Grade
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary close-modal-btn">Close</button>
                 </div>
             </div>
-        </div>
-    `;
-    
-    // Add modal to the page
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = modalHTML;
-    document.body.appendChild(modalContainer.firstChild);
-    
-    // Get modal element
-    const modal = document.getElementById('grading-modal');
-    
-    // Set up close button event
-    const closeButtons = modal.querySelectorAll('.close, .close-modal-btn');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            modal.remove();
-        });
-    });
-    
-    // Set up save grade button events
-    const saveButtons = modal.querySelectorAll('.save-grade-btn');
-    saveButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const studentId = this.getAttribute('data-student-id');
-            const assignmentId = this.getAttribute('data-assignment-id');
-            const grade = document.getElementById(`grade-${studentId}`).value;
-            const feedback = document.getElementById(`feedback-${studentId}`).value;
-            
-            saveGrade(assignmentId, studentId, grade, feedback, this);
-        });
-    });
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            modal.remove();
-        }
-    });
-}
+        `;
 
+        // Add event listeners
+        const closeButton = modal.querySelector('.close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        const closeModalBtn = modal.querySelector('.close-modal-btn');
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        // Set up save grade buttons
+        const saveButtons = modal.querySelectorAll('.save-grade-btn');
+        saveButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const studentId = this.getAttribute('data-student-id');
+                const assignmentId = this.getAttribute('data-assignment-id');
+                
+                const gradeInput = document.getElementById(`grade-${studentId}`);
+                const feedbackInput = document.getElementById(`feedback-${studentId}`);
+                
+                const grade = gradeInput ? gradeInput.value : '';
+                const feedback = feedbackInput ? feedbackInput.value : '';
+                
+                if (studentId && assignmentId) {
+                    saveGrade(assignmentId, studentId, grade, feedback, this);
+                } else {
+                    console.error('Missing studentId or assignmentId');
+                    ELC.showNotification('Error: Invalid student or assignment', 'error');
+                }
+            });
+        });
+
+        // Append to body
+        document.body.appendChild(modal);
+
+        console.log('Modal successfully created');
+        console.groupEnd();
+
+    } catch (error) {
+        console.error('Error creating modal:', error);
+        console.groupEnd();
+        ELC.showNotification(`Failed to create grading modal: ${error.message}`, 'error');
+    }
+}
 // Function to save grade
 function saveGrade(assignmentId, studentId, grade, feedback, button) {
     // Show loading state
@@ -3134,134 +3400,246 @@ function saveGrade(assignmentId, studentId, grade, feedback, button) {
     });
 }
 
-// Function to handle editing an assignment
+// Update editAssignment function
 function editAssignment(assignmentId) {
+    console.group('Edit Assignment Debug');
+    console.log('Assignment ID:', assignmentId);
+
+    // Validate assignmentId
+    if (!assignmentId) {
+        console.error('Invalid assignment ID');
+        console.groupEnd();
+        ELC.showNotification('Invalid assignment ID', 'error');
+        return;
+    }
+
     // Show loading notification
     ELC.showNotification('Loading assignment details...', 'info');
     
-    // Fetch assignment details from API
-    fetch(`/api/assignments/${assignmentId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                displayEditModal(data.data);
-            } else {
-                ELC.showNotification('Error: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching assignment details:', error);
-            ELC.showNotification('Failed to load assignment details. Please try again.', 'error');
-        });
-}
+    // Get authentication token
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.error('No authentication token');
+        console.groupEnd();
+        ELC.showNotification('Authentication required', 'error');
+        return;
+    }
 
-// Function to display edit modal
+    // Fetch assignment details from API
+    fetch(`/api/assignments/${assignmentId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.error('Error response body:', text);
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Received data:', JSON.stringify(data, null, 2));
+        
+        if (data.success) {
+            displayEditModal(data.data);
+        } else {
+            throw new Error(data.message || 'Failed to load assignment details');
+        }
+        console.groupEnd();
+    })
+    .catch(error => {
+        console.error('Error fetching assignment details:', error);
+        console.groupEnd();
+        ELC.showNotification('Failed to load assignment details. Please try again.', 'error');
+    });
+}
 function displayEditModal(assignment) {
-    // Clear any existing modals
-    clearExistingModals();
-    
-    // Format date for input (YYYY-MM-DD)
-    const dueDate = new Date(assignment.dueDate);
-    const formattedDate = dueDate.toISOString().split('T')[0];
-    
-    // Create modal HTML
-    let modalHTML = `
-        <div id="edit-modal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Edit Assignment</h2>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <form id="edit-assignment-form">
-                        <div class="form-group">
-                            <label for="edit-title">Title</label>
-                            <input type="text" id="edit-title" class="form-control" value="${assignment.title}" required>
+    // Comprehensive logging
+    console.group('Display Edit Modal Debug');
+    console.log('Assignment Data:', assignment);
+
+    // Remove any existing modal
+    const existingModal = document.getElementById('edit-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Safely handle date conversion
+    let formattedDate = '';
+    try {
+        const dueDate = assignment.dueDate 
+            ? new Date(assignment.dueDate) 
+            : null;
+        
+        if (dueDate && !isNaN(dueDate.getTime())) {
+            formattedDate = dueDate.toISOString().split('T')[0];
+        } else {
+            const today = new Date();
+            formattedDate = today.toISOString().split('T')[0];
+            console.warn('Invalid due date, using current date');
+        }
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        const today = new Date();
+        formattedDate = today.toISOString().split('T')[0];
+    }
+
+    // Create modal element
+    const modal = document.createElement('div');
+    modal.id = 'edit-modal';
+    modal.className = 'modal';
+
+    // Escape HTML utility
+    const escapeHtml = (unsafe) => {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    // Create modal content
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Assignment</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="edit-assignment-form">
+                    <div class="form-group">
+                        <label for="edit-title">Title</label>
+                        <input type="text" id="edit-title" class="form-control" 
+                            value="${assignment.title ? escapeHtml(assignment.title) : ''}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-description">Description</label>
+                        <textarea id="edit-description" class="form-control" rows="4" required>
+                            ${assignment.description ? escapeHtml(assignment.description) : ''}
+                        </textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="edit-due-date">Due Date</label>
+                            <input type="date" id="edit-due-date" class="form-control" 
+                                value="${formattedDate}" required>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="edit-description">Description</label>
-                            <textarea id="edit-description" class="form-control" rows="4" required>${assignment.description}</textarea>
+                        <div class="form-group half-width">
+                            <label for="edit-points">Total Points</label>
+                            <input type="number" id="edit-points" class="form-control" 
+                                min="1" max="100" 
+                                value="${assignment.totalPoints || 100}" required>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group half-width">
-                                <label for="edit-due-date">Due Date</label>
-                                <input type="date" id="edit-due-date" class="form-control" value="${formattedDate}" required>
-                            </div>
-                            
-                            <div class="form-group half-width">
-                                <label for="edit-points">Total Points</label>
-                                <input type="number" id="edit-points" class="form-control" min="1" max="100" value="${assignment.totalPoints || 100}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-course">Course</label>
-                            <select id="edit-course" class="form-control" required>
-                                <option value="">Select a course</option>
-                                <!-- Courses will be loaded dynamically -->
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary close-modal-btn">Cancel</button>
-                    <button class="btn btn-primary" id="save-edit-btn" data-id="${assignment._id}">Save Changes</button>
-                </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="edit-course">Course</label>
+                        <select id="edit-course" class="form-control" required>
+                            <option value="">Select a course</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal-btn">Cancel</button>
+                <button class="btn btn-primary" id="save-edit-btn" 
+                        data-id="${assignment._id}">Save Changes</button>
             </div>
         </div>
     `;
-    
-    // Add modal to the page
-    const modalContainer = document.createElement('div');
-    modalContainer.innerHTML = modalHTML;
-    document.body.appendChild(modalContainer.firstChild);
-    
-    // Get modal element
-    const modal = document.getElementById('edit-modal');
-    
-    // Load courses into dropdown
-    loadCoursesForDropdown(assignment.course);
-    
-    // Set up close button event
-    const closeButtons = modal.querySelectorAll('.close, .close-modal-btn');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            modal.remove();
-        });
-    });
-    
-    // Set up save button event
-    const saveButton = document.getElementById('save-edit-btn');
-    saveButton.addEventListener('click', function() {
-        const assignmentId = this.getAttribute('data-id');
-        const title = document.getElementById('edit-title').value;
-        const description = document.getElementById('edit-description').value;
-        const dueDate = document.getElementById('edit-due-date').value;
-        const totalPoints = document.getElementById('edit-points').value;
-        const courseId = document.getElementById('edit-course').value;
-        
-        if (!title || !description || !dueDate || !totalPoints || !courseId) {
-            ELC.showNotification('Please fill in all required fields', 'error');
-            return;
+
+    // Append to body
+    document.body.appendChild(modal);
+
+    // Safely add event listeners
+    try {
+        // Close button
+        const closeButton = modal.querySelector('.close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        } else {
+            console.warn('Close button not found');
         }
-        
-        updateAssignment(assignmentId, {
-            title,
-            description,
-            dueDate,
-            totalPoints,
-            course: courseId
-        });
-    });
-    
+
+        // Close modal button
+        const closeModalBtn = modal.querySelector('.close-modal-btn');
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        } else {
+            console.warn('Close modal button not found');
+        }
+
+        // Save button
+        const saveButton = modal.querySelector('#save-edit-btn');
+        if (saveButton) {
+            saveButton.addEventListener('click', function() {
+                const assignmentId = this.getAttribute('data-id');
+                const title = document.getElementById('edit-title').value;
+                const description = document.getElementById('edit-description').value;
+                const dueDate = document.getElementById('edit-due-date').value;
+                const totalPoints = document.getElementById('edit-points').value;
+                const courseId = document.getElementById('edit-course').value;
+                
+                if (!title || !description || !dueDate || !totalPoints || !courseId) {
+                    ELC.showNotification('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                updateAssignment(assignmentId, {
+                    title,
+                    description,
+                    dueDate,
+                    totalPoints,
+                    course: courseId
+                });
+            });
+        } else {
+            console.warn('Save button not found');
+        }
+
+        // Load courses into dropdown
+        loadCoursesForDropdown(assignment.course);
+
+    } catch (error) {
+        console.error('Error setting up modal event listeners:', error);
+        ELC.showNotification('Failed to set up modal. Please try again.', 'error');
+    }
+
     // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
+    const outsideClickHandler = (event) => {
         if (event.target === modal) {
-            modal.remove();
+            document.body.removeChild(modal);
+            // Remove the event listener to prevent memory leaks
+            window.removeEventListener('click', outsideClickHandler);
         }
-    });
+    };
+    window.addEventListener('click', outsideClickHandler);
+
+    console.groupEnd();
+}
+// Utility function to escape HTML to prevent XSS
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 function loadCoursesIntoDropdown() {
     const courseDropdown = document.getElementById('materialClass');
@@ -3598,4 +3976,1308 @@ function deleteAssignment(assignmentId) {
         console.error('Error deleting assignment:', error);
         ELC.showNotification('Failed to delete assignment. Please try again.', 'error');
     });
+    
 }
+// Function to setup progress reports filtering and displaying
+function setupProgressReportsFiltering() {
+    // Get the filter elements
+    const classFilter = document.querySelector('#progress-section select:first-child, #class-filter');
+    const typeFilter = document.querySelector('#progress-section select:nth-child(2), #type-filter');
+    const reportsContainer = document.querySelector('.reports-list') || document.getElementById('reports-container');
+    const emptyStateContainer = document.querySelector('.empty-state') || document.querySelector('#progress-section .empty-state');
+    
+    // Check if reports container exists
+    if (!reportsContainer) {
+        console.error('Reports list container not found');
+        return;
+    }
+
+    // Load teacher's courses for the filter dropdown
+    async function loadTeacherCoursesForFilter() {
+        if (!classFilter) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            
+            // Show loading state
+            classFilter.innerHTML = '<option value="">Loading your courses...</option>';
+            classFilter.disabled = true;
+            
+            // Fetch teacher's courses from API
+            const response = await fetch('/api/teachers/my-courses', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Teacher courses loaded for reports filter:', data);
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Start with "All Classes" option
+                classFilter.innerHTML = '<option value="">All Classes</option>';
+                
+                // Add each course to the filter
+                data.data.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course._id;
+                    option.textContent = `${course.name} (${course.level})`;
+                    classFilter.appendChild(option);
+                });
+            } else {
+                classFilter.innerHTML = '<option value="">No courses assigned to you</option>';
+            }
+        } catch (error) {
+            console.error('Error loading teacher courses for filter:', error);
+            classFilter.innerHTML = '<option value="">Error loading courses</option>';
+        } finally {
+            classFilter.disabled = false;
+        }
+    }
+
+    // Populate type filter with report types
+    if (typeFilter) {
+        typeFilter.innerHTML = `
+            <option value="">All Report Types</option>
+            <option value="individual">Individual Reports</option>
+            <option value="class">Class Reports</option>
+        `;
+    }
+
+    // Function to load reports with filtering
+    async function loadReports(filters = {}) {
+        // Show loading indicator
+        reportsContainer.innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading reports...</p>
+            </div>
+        `;
+        
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            
+            // Build query string from filters
+            const queryParams = new URLSearchParams();
+            
+            // Add course filter if specified
+            if (filters.class) {
+                queryParams.append('courseIds', filters.class);
+            }
+            
+            // Add type filter if specified
+            if (filters.type) {
+                queryParams.append('type', filters.type);
+            }
+            
+            console.log('Reports filter query params:', queryParams.toString());
+            
+            // Use the teacher's reports API endpoint with filters
+            const apiUrl = `/api/reports/teacher${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+            console.log('Fetching reports from:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Reports data received:', data);
+            
+            // Clear loading indicator
+            reportsContainer.innerHTML = '';
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Hide empty state if visible
+                if (emptyStateContainer) {
+                    emptyStateContainer.style.display = 'none';
+                }
+                
+                // Add each report to the list
+                data.data.forEach(report => {
+                    addReportToList(report);
+                });
+            } else {
+                // Show empty state if no reports found
+                showEmptyState(true);
+            }
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            reportsContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Error loading reports</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    }
+
+    // Function to add a report to the list
+    function addReportToList(report) {
+        // Format date
+        const createdDate = new Date(report.createdAt).toLocaleDateString();
+        
+        // Get course name
+        let courseName = 'Unknown Course';
+        if (report.course) {
+            if (typeof report.course === 'object' && report.course.name) {
+                courseName = report.course.name;
+            } else if (typeof report.course === 'string') {
+                // Try to find course name from dropdown
+                const courseOption = classFilter.querySelector(`option[value="${report.course}"]`);
+                if (courseOption) {
+                    courseName = courseOption.textContent;
+                }
+            }
+        }
+        
+        // Create report item element
+        const reportItem = document.createElement('div');
+        reportItem.className = 'report-item';
+        reportItem.setAttribute('data-id', report._id);
+        
+        // Set icon based on report type
+        const typeIcon = report.type === 'individual' ? 'fa-user' : 'fa-users';
+        const typeText = report.type === 'individual' ? 'Individual Report' : 'Class Report';
+        
+        // Build HTML content
+        reportItem.innerHTML = `
+            <div class="report-info">
+                <div class="report-title">${report.title}</div>
+                <div class="report-details">
+                    <div><i class="fas fa-book"></i> ${courseName}</div>
+                    <div><i class="fas fa-calendar"></i> Generated: ${createdDate}</div>
+                    <div><i class="fas ${typeIcon}"></i> ${typeText}</div>
+                </div>
+            </div>
+            <div class="report-actions">
+                <button class="btn btn-primary view-report-btn" data-id="${report._id}">
+                    <i class="fas fa-eye"></i> View Report
+                </button>
+                <button class="btn btn-secondary download-pdf-btn" data-id="${report._id}">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+            </div>
+        `;
+        
+        // Add to container
+        reportsContainer.appendChild(reportItem);
+        
+        // Add button event listeners
+        setupReportButtons(reportItem);
+    }
+
+    // Function to setup report action buttons
+    function setupReportButtons(reportItem) {
+        if (!reportItem) return;
+        
+        const viewBtn = reportItem.querySelector('.view-report-btn');
+        const downloadBtn = reportItem.querySelector('.download-pdf-btn');
+        
+        if (viewBtn) {
+            viewBtn.addEventListener('click', function() {
+                const reportId = this.getAttribute('data-id');
+                viewReport(reportId);
+            });
+        }
+        
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const reportId = this.getAttribute('data-id');
+                downloadReport(reportId);
+            });
+        }
+    }
+// Function to view a report
+function viewReport(reportId) {
+    if (!reportId) return;
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+        ELC.showNotification('Authentication required. Please log in again.', 'error');
+        return;
+    }
+    
+    // Show loading notification
+    ELC.showNotification('Loading report...', 'info');
+    
+    // Fetch report details with authentication token
+    fetch(`/api/reports/${reportId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        // Check if response indicates authentication issues
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Authentication failed. Please log in again.');
+        }
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Show report in modal
+            showReportModal(data.data);
+        } else {
+            ELC.showNotification('Error: ' + data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching report:', error);
+        
+        // Check if error is authentication related
+        if (error.message.includes('Authentication')) {
+            ELC.showNotification(error.message, 'error');
+        } else {
+            ELC.showNotification('Failed to load report: ' + error.message, 'error');
+        }
+    });
+}
+// Function to show a report modal
+function showReportModal(report) {
+    // Check if report exists
+    if (!report) {
+        console.error('No report data provided to showReportModal');
+        ELC.showNotification('Error loading report data', 'error');
+        return;
+    }
+
+    try {
+        // Clear any existing modals
+        const existingModals = document.querySelectorAll('.modal');
+        existingModals.forEach(modal => modal.remove());
+        
+        // Format date
+        const createdDate = new Date(report.createdAt).toLocaleString();
+        
+        // Get course name
+        let courseName = 'Unknown Course';
+        if (report.course) {
+            if (typeof report.course === 'object' && report.course.name) {
+                courseName = report.course.name;
+            }
+        }
+        
+        // Create a new modal element directly (instead of using innerHTML)
+        const modal = document.createElement('div');
+        modal.id = 'report-modal';
+        modal.className = 'modal';
+        modal.style.display = 'block'; // Ensure it's visible
+        
+        // Set the modal content directly
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>${report.title || 'Report Details'}</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="report-info" style="margin-bottom: 20px; padding: 15px; background-color: #f9fafc; border-radius: 8px;">
+                        <p><strong>Type:</strong> ${report.type === 'individual' ? 'Individual Report' : 'Class Report'}</p>
+                        <p><strong>Course:</strong> ${courseName}</p>
+                        <p><strong>Generated:</strong> ${createdDate}</p>
+                    </div>
+                    
+                    <div class="report-content">
+                        ${report.description || 'No description provided.'}
+                    </div>
+                    
+                    ${report.file ? `
+                        <div class="report-attachment" style="margin-top: 20px; padding: 15px; background-color: #f9fafc; border-radius: 8px;">
+                            <p><strong>Attachment:</strong></p>
+                            <a href="/api/reports/${report._id}/file" class="btn btn-secondary" target="_blank">
+                                <i class="fas fa-download"></i> Download Attachment
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary close-btn">Close</button>
+                    <a href="/api/reports/${report._id}/pdf" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Append the modal to body
+        document.body.appendChild(modal);
+        
+        console.log('Modal appended to DOM with ID:', modal.id);
+        
+        // Double-check that the modal exists in the DOM
+        const modalCheck = document.getElementById('report-modal');
+        if (!modalCheck) {
+            throw new Error('Modal not found in DOM after direct append');
+        }
+        
+        // Add close event listeners
+        const closeButtons = modal.querySelectorAll('.close, .close-btn');
+        if (closeButtons.length > 0) {
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    modal.remove();
+                });
+            });
+        } else {
+            console.warn('No close buttons found in modal');
+        }
+        
+        // Close when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+        
+        console.log('Modal created and displayed successfully');
+    } catch (error) {
+        console.error('Error creating modal:', error);
+        ELC.showNotification('Could not display report. Please try again.', 'error');
+    }
+}
+// Similarly for downloadReport
+function downloadReport(reportId) {
+    // Get token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+        ELC.showNotification('Authentication required. Please login again.', 'error');
+        return;
+    }
+    
+    // Create download link
+    const downloadLink = document.createElement('a');
+    downloadLink.href = `/api/reports/${reportId}/pdf?token=${token}`;
+    downloadLink.target = '_blank';
+    
+    // Append to body, click, and remove
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    ELC.showNotification('Downloading report...', 'success');
+}
+
+    // Function to show/hide empty state - revised with prioritized hiding
+function showEmptyState(show) {
+    const emptyStateContainer = document.querySelector('#progress-section .empty-state');
+    const reportsContainer = document.querySelector('.reports-list') || document.getElementById('reports-container');
+    
+    // First, check if there are any visible reports
+    const visibleReports = reportsContainer.querySelectorAll('.report-item');
+    
+    // If we have visible reports, always hide the empty state regardless of the 'show' parameter
+    if (visibleReports && visibleReports.length > 0) {
+        if (emptyStateContainer) {
+            emptyStateContainer.style.display = 'none';
+        }
+        return;
+    }
+    
+    // If we get here, there are no visible reports, so handle the empty state
+    if (emptyStateContainer) {
+        emptyStateContainer.style.display = show ? 'block' : 'none';
+        return;
+    }
+    
+    // Create empty state if it doesn't exist and we need to show it
+    if (show) {
+        const emptyStateHTML = `
+            <div class="empty-state">
+                <i class="fas fa-chart-line"></i>
+                <h3>No reports available</h3>
+                <p>There are no progress reports matching your filter criteria.</p>
+                <button class="btn btn-primary create-report-btn">
+                    <i class="fas fa-plus"></i> Create New Report
+                </button>
+            </div>
+        `;
+        
+        // Add the empty state after the reports container
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        emptyState.innerHTML = emptyStateHTML;
+        
+        // Try to append after reports container
+        if (reportsContainer.parentNode) {
+            reportsContainer.parentNode.insertBefore(emptyState, reportsContainer.nextSibling);
+        } else {
+            // Fallback: append to reports container
+            reportsContainer.appendChild(emptyState);
+        }
+        
+        // Add create report button event
+        const createReportBtn = emptyState.querySelector('.create-report-btn');
+        if (createReportBtn) {
+            createReportBtn.addEventListener('click', function() {
+                // Switch to dashboard tab to create report
+                const dashboardTab = document.querySelector('.menu-item[data-section="dashboard"]');
+                if (dashboardTab) {
+                    dashboardTab.click();
+                    
+                    // Scroll to report form after tab switch
+                    setTimeout(() => {
+                        const reportForm = document.getElementById('writeReportForm');
+                        if (reportForm) {
+                            reportForm.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }, 300);
+                }
+            });
+        }
+    }
+}
+    // Function to apply filters
+    function applyFilters() {
+        const classValue = classFilter ? classFilter.value : '';
+        const typeValue = typeFilter ? typeFilter.value : '';
+        
+        console.log('Applying report filters:', { class: classValue, type: typeValue });
+        
+        // Load filtered reports
+        loadReports({
+            class: classValue,
+            type: typeValue
+        });
+    }
+
+    // Add event listeners for filtering
+    if (classFilter) {
+        classFilter.addEventListener('change', applyFilters);
+    }
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', applyFilters);
+    }
+
+    // Initialize: load teacher's courses for filter and initial reports
+    loadTeacherCoursesForFilter();
+    setTimeout(() => loadReports(), 500); // Slight delay to ensure courses load first
+    
+    // Return public methods
+    return {
+        refresh: loadReports,
+        refreshCourses: loadTeacherCoursesForFilter
+    };
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const progressReportsModule = setupProgressReportsFiltering();
+    
+    // Add tab change handler to reload when switching to progress tab
+    const progressTab = document.querySelector('.menu-item[data-section="progress"]');
+    if (progressTab) {
+        progressTab.addEventListener('click', function() {
+            console.log('Progress tab clicked, refreshing reports');
+            if (progressReportsModule && typeof progressReportsModule.refresh === 'function') {
+                progressReportsModule.refresh();
+            }
+        });
+    }
+});
+// Initialize report form handling with robust duplicate submission prevention
+function initializeReportForm() {
+    const reportForm = document.getElementById('writeReportForm');
+    const classDropdown = document.getElementById('selectedClass');
+    let isSubmitting = false; // Flag to track submission state
+    let submissionTimeout = null; // Timeout reference for resetting the flag
+    let formSubmitted = false; // Flag to track if form has been successfully submitted
+    
+    // Load teacher's courses for the class dropdown
+    loadTeacherCoursesForReport();
+    
+    if (reportForm) {
+        // Create a clean clone of the form to remove any existing event listeners
+        const newForm = reportForm.cloneNode(true);
+        reportForm.parentNode.replaceChild(newForm, reportForm);
+        
+        // Update the reference to the new form
+        const cleanReportForm = document.getElementById('writeReportForm');
+        
+        cleanReportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Absolutely prevent duplicate submissions
+            if (isSubmitting || formSubmitted) {
+                console.log('Preventing duplicate submission. isSubmitting:', isSubmitting, 'formSubmitted:', formSubmitted);
+                return false;
+            }
+            
+            // Set submitting flag immediately
+            isSubmitting = true;
+            
+            // Set a timeout to reset the flag after 10 seconds (failsafe)
+            submissionTimeout = setTimeout(() => {
+                console.log('Submission timeout reached, resetting submission state');
+                isSubmitting = false;
+            }, 10000);
+            
+            // Show loading state on button
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            // Get form values
+            const reportType = document.getElementById('reportType').value;
+            const courseId = document.getElementById('selectedClass').value;
+            const title = document.getElementById('reportTitle').value;
+            const description = document.getElementById('reportDescription').value;
+            
+            // Validate required fields
+            if (!reportType || !courseId || !title) {
+                ELC.showNotification('Please fill in all required fields', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                
+                // Reset submission state
+                clearTimeout(submissionTimeout);
+                isSubmitting = false;
+                return;
+            }
+            
+            // Generate a unique ID for this submission
+            const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2, 15);
+            
+            // Collect form data
+            const formData = new FormData();
+            formData.append('type', reportType);
+            formData.append('course', courseId);
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('clientId', uniqueId); // Add unique ID to form data
+            
+            const reportFile = document.getElementById('reportFile').files[0];
+            if (reportFile) {
+                formData.append('file', reportFile);
+            }
+            
+            // Get authentication token
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                ELC.showNotification('Authentication required. Please login again.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                
+                // Reset submission state
+                clearTimeout(submissionTimeout);
+                isSubmitting = false;
+                return;
+            }
+            
+            // Log what we're sending
+            console.log('Sending report data with unique ID:', uniqueId);
+            
+            // Send to API with robust duplicate prevention headers
+            fetch('/api/reports', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-Client-ID': uniqueId,
+                    'X-Request-Time': Date.now().toString()
+                },
+                body: formData
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                
+                // Clear timeout and handle submission state
+                clearTimeout(submissionTimeout);
+                isSubmitting = false;
+                formSubmitted = true; // Mark form as successfully submitted
+                
+                // Disable the form to prevent resubmission
+                cleanReportForm.querySelectorAll('input, select, textarea, button').forEach(element => {
+                    element.disabled = true;
+                });
+                
+                if (data.success) {
+                    // Show success notification
+                    ELC.showNotification('Report generated successfully!', 'success');
+                    
+                    // Optional: Switch to reports tab to see the new report
+                    setTimeout(() => {
+                        const reportsTab = document.querySelector('.menu-item[data-section="progress"]');
+                        if (reportsTab) {
+                            // Reset form before switching tabs
+                            cleanReportForm.reset();
+                            resetReportFileUpload();
+                            
+                            // Re-enable form elements for future submissions
+                            cleanReportForm.querySelectorAll('input, select, textarea, button').forEach(element => {
+                                element.disabled = false;
+                            });
+                            
+                            // Reset form submitted flag for new submissions
+                            formSubmitted = false;
+                            
+                            // Switch tab
+                            reportsTab.click();
+                        }
+                    }, 1000); // Delay switching to ensure notification is seen
+                } else {
+                    // Show error notification
+                    ELC.showNotification('Error: ' + (data.message || 'Failed to generate report'), 'error');
+                    
+                    // Re-enable form elements for retry
+                    cleanReportForm.querySelectorAll('input, select, textarea, button').forEach(element => {
+                        element.disabled = false;
+                    });
+                    
+                    // Reset form submitted flag for retry
+                    formSubmitted = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error generating report:', error);
+                
+                // Reset form state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+                
+                // Clear timeout and reset submission state
+                clearTimeout(submissionTimeout);
+                isSubmitting = false;
+                
+                // Show error notification
+                ELC.showNotification('Failed to generate report: ' + error.message, 'error');
+                
+                // Re-enable form elements for retry
+                cleanReportForm.querySelectorAll('input, select, textarea, button').forEach(element => {
+                    element.disabled = false;
+                });
+            });
+        });
+        
+        // Rest of your file upload handling code...
+        
+        // File upload browse trigger for report file
+        const reportFileUpload = cleanReportForm.querySelector('.file-upload');
+        if (reportFileUpload) {
+            reportFileUpload.addEventListener('click', function(e) {
+                // Don't trigger if clicking on a child element
+                if (e.target !== reportFileUpload && e.target.tagName !== 'P' && e.target.tagName !== 'I') {
+                    return;
+                }
+                
+                document.getElementById('reportFile').click();
+            });
+            
+            // Setup drag and drop functionality
+            setupReportFileDragAndDrop(reportFileUpload);
+            
+            // Show file name when selected
+            const reportFileInput = document.getElementById('reportFile');
+            if (reportFileInput) {
+                reportFileInput.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        updateReportFileDisplay(this.files[0]);
+                    }
+                });
+            }
+        }
+    }
+}
+// Function to load teacher's courses for report dropdown
+async function loadTeacherCoursesForReport() {
+    const classDropdown = document.getElementById('selectedClass');
+    if (!classDropdown) return;
+    
+    try {
+        // Show loading state
+        classDropdown.innerHTML = '<option value="">Loading your courses...</option>';
+        classDropdown.disabled = true;
+        
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // Fetch teacher's courses from API
+        const response = await fetch('/api/teachers/my-courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Courses loaded:', data);
+        
+        if (data.success && data.data && data.data.length > 0) {
+            // Start with placeholder option
+            classDropdown.innerHTML = '<option value="">Choose a class</option>';
+            
+            // Add each course to the dropdown
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level})`;
+                classDropdown.appendChild(option);
+            });
+        } else {
+            classDropdown.innerHTML = '<option value="">No courses assigned to you</option>';
+        }
+    } catch (error) {
+        console.error('Error loading courses for report:', error);
+        classDropdown.innerHTML = '<option value="">Error loading courses</option>';
+    } finally {
+        // Make sure to re-enable the dropdown regardless of outcome
+        classDropdown.disabled = false;
+    }
+}
+
+// Setup drag and drop functionality for report file upload
+function setupReportFileDragAndDrop(fileUploadArea) {
+    if (!fileUploadArea) return;
+    
+    // Add event listeners for drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, function() {
+            fileUploadArea.classList.add('highlight');
+        }, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileUploadArea.addEventListener(eventName, function() {
+            fileUploadArea.classList.remove('highlight');
+        }, false);
+    });
+    
+    // Add drop handler
+    fileUploadArea.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        if (!dt || !dt.files || dt.files.length === 0) return;
+        
+        const currentFileInput = document.getElementById('reportFile');
+        if (currentFileInput) {
+            // For modern browsers supporting DataTransfer
+            try {
+                // Create a new DataTransfer object
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(dt.files[0]);
+                currentFileInput.files = dataTransfer.files;
+                
+                // Update the display
+                updateReportFileDisplay(dt.files[0]);
+                
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                currentFileInput.dispatchEvent(event);
+            } catch (err) {
+                console.error('Error setting files:', err);
+                // Fallback for older browsers
+                ELC.showNotification('Please select a file using the browse button instead.', 'warning');
+            }
+        }
+    }, false);
+}
+
+// Prevents default behavior for drag and drop events
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Update file display when a file is selected
+function updateReportFileDisplay(file) {
+    const fileUploadArea = document.querySelector('#writeReportForm .file-upload');
+    if (!fileUploadArea) return;
+    
+    const icon = fileUploadArea.querySelector('i');
+    const text = fileUploadArea.querySelector('p');
+    
+    if (icon) {
+        icon.className = 'fas fa-check-circle';
+        icon.style.color = '#4CAF50';
+    }
+    
+    if (text) {
+        // Format file size
+        let fileSize = formatFileSize(file.size);
+        text.innerHTML = `Selected: <strong>${file.name}</strong> (${fileSize})`;
+    }
+    
+    fileUploadArea.classList.add('file-selected');
+}
+
+// Reset file upload display for report form
+function resetReportFileUpload() {
+    const fileUploadArea = document.querySelector('#writeReportForm .file-upload');
+    if (!fileUploadArea) return;
+    
+    const icon = fileUploadArea.querySelector('i');
+    const text = fileUploadArea.querySelector('p');
+    
+    if (icon) {
+        icon.className = 'fas fa-cloud-upload-alt';
+        icon.style.color = ''; // Reset color
+    }
+    
+    if (text) {
+        text.innerHTML = 'Drag & drop files here or click to browse';
+    }
+    
+    fileUploadArea.classList.remove('file-selected', 'highlight');
+    
+    // Reset the file input by replacing it
+    const fileInput = document.getElementById('reportFile');
+    if (fileInput) {
+        const newInput = document.createElement('input');
+        newInput.type = 'file';
+        newInput.id = fileInput.id;
+        newInput.name = fileInput.name;
+        newInput.className = fileInput.className;
+        newInput.style.display = 'none';
+        
+        // Replace the original
+        fileInput.parentNode.replaceChild(newInput, fileInput);
+        
+        // Attach event listener
+        newInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                updateReportFileDisplay(this.files[0]);
+            }
+        });
+    }
+}
+
+// Filter progress reports based on selected criteria
+function filterProgressReports() {
+    const classFilter = document.querySelector('#progress-section select:first-child');
+    const typeFilter = document.querySelector('#progress-section select:nth-child(2)');
+    
+    const classValue = classFilter ? classFilter.value.toLowerCase() : '';
+    const typeValue = typeFilter ? typeFilter.value.toLowerCase() : '';
+    
+    // Get all report items
+    const reportItems = document.querySelectorAll('.report-item');
+    let visibleCount = 0;
+    
+    reportItems.forEach(item => {
+        // Get report details
+        const reportTitle = item.querySelector('.report-title')?.textContent.toLowerCase() || '';
+        
+        // Determine report type (class or individual)
+        const isClassReport = reportTitle.includes('class');
+        const reportType = isClassReport ? 'class' : 'individual';
+        
+        // Check if report matches filters
+        const matchesClass = !classValue || reportTitle.includes(classValue);
+        const matchesType = !typeValue || reportType === typeValue;
+        
+        // Show or hide based on filters
+        if (matchesClass && matchesType) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show empty state if no results
+    const emptyState = document.querySelector('#progress-section .empty-state');
+    if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+}
+
+// Add to the existing DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize report form handling
+    initializeReportForm();
+
+    loadTeacherCoursesForReport();
+
+    
+    // Set up filtering for progress reports section
+    const classFilter = document.querySelector('#progress-section select:first-child');
+    const typeFilter = document.querySelector('#progress-section select:nth-child(2)');
+    
+    if (classFilter) classFilter.addEventListener('change', filterProgressReports);
+    if (typeFilter) typeFilter.addEventListener('change', filterProgressReports);
+    
+    // Add progress tab change handler to load reports
+    const progressTab = document.querySelector('.menu-item[data-section="progress"]');
+    if (progressTab) {
+        progressTab.addEventListener('click', function() {
+            loadProgressReports();
+        });
+    }
+});
+// Function to load and display progress reports with client-side filtering
+async function loadProgressReports() {
+    const reportsContainer = document.querySelector('.reports-list') || document.getElementById('reports-container');
+    const emptyStateContainer = document.querySelector('.empty-state') || document.getElementById('empty-state-container');
+    
+    if (!reportsContainer) {
+        console.error('Reports container element not found');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        reportsContainer.innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading reports...</p>
+            </div>
+        `;
+        
+        // Get filter values
+        const classFilter = document.querySelector('#progress-section select:first-child, #class-filter');
+        const typeFilter = document.querySelector('#progress-section select:nth-child(2), #type-filter');
+        
+        const classValue = classFilter ? classFilter.value : '';
+        const typeValue = typeFilter ? typeFilter.value.toLowerCase() : '';
+        
+        console.log('Filtering reports - Class:', classValue, 'Type:', typeValue);
+        
+        // Get authentication token
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // Build query parameters
+        let apiUrl = '/api/reports/teacher';
+        const queryParams = new URLSearchParams();
+        
+        if (classValue) {
+            queryParams.append('courseIds', classValue);
+        }
+        
+        if (typeValue && typeValue !== 'all report types') {
+            const normalizedType = typeValue === 'individual reports' ? 'individual' : 
+                                   typeValue === 'class reports' ? 'class' : typeValue;
+            queryParams.append('type', normalizedType);
+        }
+        
+        // Add query parameters if any exist
+        if (queryParams.toString()) {
+            apiUrl += '?' + queryParams.toString();
+        }
+        
+        console.log('Fetching reports from:', apiUrl);
+        
+        // Fetch filtered reports from API
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Reports data received:', data);
+        
+        // Clear loading indicator
+        reportsContainer.innerHTML = '';
+        
+        if (data.success && data.data && data.data.length > 0) {
+            // Hide empty state
+            if (emptyStateContainer) {
+                emptyStateContainer.style.display = 'none';
+            }
+            
+            // Add each report to the list
+            data.data.forEach(report => {
+                addReportToList(report, reportsContainer);
+            });
+        } else {
+            // Show empty state
+            reportsContainer.innerHTML = '';
+            
+            // If we have an existing empty state container, show it
+            if (emptyStateContainer) {
+                emptyStateContainer.style.display = 'block';
+            } else {
+                // Create empty state if it doesn't exist
+                reportsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3>No reports available</h3>
+                        <p>There are no progress reports matching your filter criteria.</p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading progress reports:', error);
+        
+        // Show error state
+        reportsContainer.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h3>Error loading reports</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+// Function to properly display each report in the list
+function addReportToList(report, container) {
+    // Create report element
+    const reportElement = document.createElement('div');
+    reportElement.className = 'report-item';
+    reportElement.setAttribute('data-id', report._id);
+    
+    // Format date
+    const createdDate = new Date(report.createdAt).toLocaleDateString();
+    
+    // Get course name
+    let courseName = 'Unknown Course';
+    if (report.course) {
+        if (typeof report.course === 'object') {
+            courseName = report.course.name;
+        } else if (typeof report.course === 'string') {
+            // Try to find course name from dropdown
+            const courseDropdown = document.querySelector('#progress-section select:first-child, #class-filter');
+            if (courseDropdown) {
+                const option = courseDropdown.querySelector(`option[value="${report.course}"]`);
+                if (option) {
+                    courseName = option.textContent;
+                }
+            }
+        }
+    }
+    
+    // Set icon based on report type
+    const typeIcon = report.type === 'individual' ? 'fa-user' : 'fa-users';
+    const typeText = report.type === 'individual' ? 'Individual Report' : 'Class Report';
+    
+    // Build HTML content
+    reportElement.innerHTML = `
+        <div class="report-info">
+            <div class="report-title">${report.title}</div>
+            <div class="report-details">
+                <div><i class="fas fa-book"></i> ${courseName}</div>
+                <div><i class="fas fa-calendar"></i> Generated: ${createdDate}</div>
+                <div><i class="fas ${typeIcon}"></i> ${typeText}</div>
+            </div>
+        </div>
+        <div class="report-actions">
+            <button class="btn btn-primary view-report-btn" data-id="${report._id}">
+                <i class="fas fa-eye"></i> View Report
+            </button>
+            <button class="btn btn-secondary download-pdf-btn" data-id="${report._id}">
+                <i class="fas fa-download"></i> Download PDF
+            </button>
+        </div>
+    `;
+    
+    // Add to container
+    container.appendChild(reportElement);
+    
+    // When adding event listeners to your view/download buttons
+    const viewBtn = reportElement.querySelector('.view-report-btn');
+    const downloadBtn = reportElement.querySelector('.download-pdf-btn');
+
+    if (viewBtn) {
+        viewBtn.addEventListener('click', function() {
+            const reportId = this.getAttribute('data-id');
+            // Call the viewReport function directly without window prefix
+            viewReport(reportId);
+        });
+    }
+
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            const reportId = this.getAttribute('data-id');
+            // Call the downloadReport function directly without window prefix
+            downloadReport(reportId);
+        });
+    }
+}
+// Function to load teacher's courses for report filter dropdown - matches Create Report form
+async function loadTeacherCoursesForReportFilter() {
+    const classFilter = document.querySelector('#progress-section select:first-child, #class-filter');
+    if (!classFilter) {
+        console.error('Class filter dropdown not found');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        classFilter.innerHTML = '<option value="">Loading your courses...</option>';
+        classFilter.disabled = true;
+        
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+        
+        // Fetch teacher's courses from API - same endpoint as used in the Create Report form
+        const response = await fetch('/api/teachers/my-courses', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Teacher courses loaded for report filter:', data);
+        
+        // Update dropdown options in the same format as the Create Report form
+        if (data.success && data.data && data.data.length > 0) {
+            // Start with "All Classes" option for the filter (slightly different than Create form)
+            classFilter.innerHTML = '<option value="">All Classes</option>';
+            
+            // Add each course to the filter - same format as Create Report form
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level})`;
+                classFilter.appendChild(option);
+            });
+        } else {
+            classFilter.innerHTML = '<option value="">No courses assigned to you</option>';
+        }
+    } catch (error) {
+        console.error('Error loading teacher courses for filter:', error);
+        classFilter.innerHTML = '<option value="">Error loading courses</option>';
+    } finally {
+        classFilter.disabled = false;
+    }
+}
+
+// Keep the type filter dropdown simple with fixed options
+function setupTypeFilterDropdown() {
+    const typeFilter = document.querySelector('#progress-section select:nth-child(2), #type-filter');
+    if (!typeFilter) {
+        console.error('Type filter dropdown not found');
+        return;
+    }
+    
+    // Set fixed options for report type
+    typeFilter.innerHTML = `
+        <option value="">All Report Types</option>
+        <option value="individual">Individual Reports</option>
+        <option value="class">Class Reports</option>
+    `;
+}
+
+
+// Function to download a report as PDF
+function downloadReport(reportId) {
+    // Get token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+        alert('Authentication required. Please login again.');
+        return;
+    }
+    
+    // Open download URL in new tab
+    window.open(`/api/reports/${reportId}/pdf?token=${token}`, '_blank');
+}
+
+// Setup filter handlers
+function setupProgressReportFilters() {
+    const classFilter = document.querySelector('#progress-section select:first-child, .filter-bar select:first-child, #class-filter');
+    const typeFilter = document.querySelector('#progress-section select:nth-child(2), .filter-bar select:nth-child(2), #type-filter');
+    
+    if (classFilter) {
+        classFilter.addEventListener('change', function() {
+            console.log('Class filter changed to:', this.value);
+            loadProgressReports();
+        });
+    }
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            console.log('Type filter changed to:', this.value);
+            loadProgressReports();
+        });
+    }
+}
+
+// Updated initialization function
+function initializeProgressReportsPage() {
+    console.log('Initializing progress reports page');
+    
+    // Load courses into filter dropdown - same as Create Report form
+    loadTeacherCoursesForReportFilter();
+    
+    // Setup type filter dropdown
+    setupTypeFilterDropdown();
+    
+    // Setup filter event handlers
+    setupProgressReportFilters();
+    
+    // Load reports with initial filters
+    loadProgressReports();
+}
+
+// Call this when the page loads or when the progress tab is clicked
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize page when progress tab is clicked
+    const progressTab = document.querySelector('.menu-item[data-section="progress"]');
+    if (progressTab) {
+        progressTab.addEventListener('click', function() {
+            console.log('Progress tab clicked, initializing page');
+            initializeProgressReportsPage();
+        });
+    }
+    
+    // Check if we're already on the progress page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/progress') || currentPath.includes('/reports')) {
+        console.log('Already on progress page, initializing');
+        initializeProgressReportsPage();
+    }
+});

@@ -19,6 +19,8 @@ const studentRoutes = require('./server/routes/students');
 const teacherRoutes = require('./server/routes/teachers');
 const assignmentRoutes = require('./server/routes/assignments'); 
 const materialRoutes = require('./server/routes/materials');
+const reports = require('./server/routes/reports');
+
 
 // Initialize Express app
 const app = express();
@@ -55,6 +57,8 @@ app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/assignments', assignmentRoutes); 
 app.use('/api/materials', materialRoutes); 
+app.use('/api/reports', reports);
+
 
 // Add this after your routes
 app.use((err, req, res, next) => {
@@ -219,7 +223,10 @@ app.use((err, req, res, next) => {
     // Return HTML error for web requests
     res.status(500).send('Something went wrong. Please try again later.');
 });
-
+const uploadDir = path.join(__dirname, '../uploads/reports');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
 // Start server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
