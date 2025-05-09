@@ -366,8 +366,7 @@ exports.updateMaterial = async (req, res) => {
         });
     }
 };
-
-// Delete material
+// Update in materialController.js
 exports.deleteMaterial = async (req, res) => {
     try {
         const materialId = req.params.id;
@@ -395,101 +394,63 @@ exports.deleteMaterial = async (req, res) => {
         }
         
         console.log('Material found:', material._id);
-        console.log('Request user:', req.user);
-        console.log('Material uploadedBy:', material.uploadedBy);
-        console.log('User role:', req.user.role);
         
-        // Extract user ID
-        const userId = extractUserId(req.user);
-        
-        if (!userId) {
-            return res.status(403).json({
-                success: false,
-                message: 'User ID not found in request'
-            });
-        }
-        
-        console.log('Extracted user ID:', userId);
-        
-        // Check authorization
-        let isAuthorized = false;
-        
-        // Check if user is admin or manager
-        if (req.user.role === 'admin' || req.user.role === 'manager') {
-            isAuthorized = true;
-        }
-        // Check if user is the owner (if uploadedBy exists)
-        else if (material.uploadedBy) {
-            const uploadedById = material.uploadedBy.toString();
-            const userIdString = userId.toString();
-            isAuthorized = uploadedById === userIdString;
-            console.log('Owner check:', uploadedById, '===', userIdString, ':', isAuthorized);
-        }
-        
-        if (!isAuthorized) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to delete this material'
-            });
-        }
-        
-        // Delete file from storage if exists
-        if (material.file) {
-            try {
-                const filePath = path.join(__dirname, '../../uploads/materials', material.file);
-                console.log('Attempting to delete file at path:', filePath);
-                
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath);
-                    console.log('File deleted successfully');
-                } else {
-                    console.log('File not found at path:', filePath);
+        // IMPORTANT FIX: Allow teachers to delete materials
+        // Skip the authorization check if the user is a teacher
+        if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin' || req.user.role === 'manager')) {
+            console.log('User is authorized, proceeding with deletion');
+            
+            // Delete file from storage if exists
+            if (material.file) {
+                try {
+                    const filePath = path.join(__dirname, '../../uploads/materials', material.file);
+                    console.log('Attempting to delete file at path:', filePath);
+                    
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                        console.log('File deleted successfully');
+                    } else {
+                        console.log('File not found at path:', filePath);
+                    }
+                } catch (unlinkError) {
+                    console.error('Error deleting file:', unlinkError);
+                    // Continue with deletion even if file deletion fails
                 }
-            } catch (unlinkError) {
-                console.error('Error deleting file:', unlinkError);
-                // Continue with deletion even if file deletion fails
-            }
-        }
-        
-        // Remove from database
-        try {
-            const result = await Material.deleteOne({ _id: materialId });
-            
-            if (result.deletedCount === 0) {
-                console.log('No document was deleted');
-                // Still return success since the material doesn't exist
-                return res.status(200).json({
-                    success: true,
-                    message: 'Material already deleted',
-                    data: {}
-                });
             }
             
-            console.log('Material deleted successfully from database');
-            
-            // Send success response
-            res.status(200).json({
-                success: true,
-                message: 'Material deleted successfully',
-                data: {}
-            });
-            
-        } catch (dbError) {
-            console.error('Database deletion error:', dbError);
-            
-            // Check if the material still exists
-            const stillExists = await Material.findById(materialId);
-            if (!stillExists) {
-                // Material was deleted despite the error
+            // Remove from database
+            try {
+                const result = await Material.deleteOne({ _id: materialId });
+                
+                if (result.deletedCount === 0) {
+                    console.log('No document was deleted');
+                    // Still return success since the material doesn't exist
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Material already deleted',
+                        data: {}
+                    });
+                }
+                
+                console.log('Material deleted successfully from database');
+                
+                // Send success response
                 return res.status(200).json({
                     success: true,
                     message: 'Material deleted successfully',
                     data: {}
                 });
+                
+            } catch (dbError) {
+                console.error('Database deletion error:', dbError);
+                throw dbError;
             }
-            
-            // If we get here, there was a genuine error
-            throw dbError;
+        } else {
+            // User is not authorized
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to delete this material. Must be a teacher, admin, or manager.'
+            });
         }
         
     } catch (error) {
@@ -501,51 +462,36 @@ exports.deleteMaterial = async (req, res) => {
         });
     }
 };
-
-// Download material
+// In your materialController.js
 exports.downloadMaterial = async (req, res) => {
     try {
-        const material = await Material.findById(req.params.id);
+        const materialId = req.params.id;
         
-        if (!material) {
-            return res.status(404).json({
-                success: false,
-                message: 'Material not found'
-            });
+        // Find material without validation
+        const material = await Material.findById(materialId).lean();
+        
+        if (!material || !material.file) {
+            return res.status(404).send('File not found');
         }
         
-        // Check if file exists
-        if (!material.file) {
-            return res.status(404).json({
-                success: false,
-                message: 'File not found'
-            });
-        }
-        
-        // Increment download count
-        material.downloadCount += 1;
-        await material.save();
-        
-        // Get file path
+        // Get the full file path
         const filePath = path.join(__dirname, '../../uploads/materials', material.file);
         
-        // Check if file exists on disk
+        // Check if file exists
         if (!fs.existsSync(filePath)) {
-            return res.status(404).json({
-                success: false,
-                message: 'File not found on server'
-            });
+            return res.status(404).send('File not found on server');
         }
         
-        // Send file
-        res.download(filePath);
+        // Send the file
+        res.download(filePath, material.file);
+        
+        // Increment the download count asynchronously (doesn't block the download)
+        Material.updateOne({ _id: materialId }, { $inc: { downloadCount: 1 } })
+            .catch(err => console.error('Failed to update download count:', err));
+            
     } catch (error) {
-        console.error('Error downloading material:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server Error',
-            error: error.message
-        });
+        console.error('Download error:', error);
+        res.status(500).send('Server error');
     }
 };
 

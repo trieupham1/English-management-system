@@ -4,14 +4,17 @@
     "name": "Business Communication",
     "level": "5.5-6.5",
     "category": "Business English",
-    "teacher": "681333f573460c095068d8a7",
-    "maxStudents": 12,
+    "maxStudents": 13,
     "status": "Active",
     "students": [
-      "681333f473460c095068d89b"
+      "681333f473460c095068d89b",
+      "681333f473460c095068d899",
+      "681bb51c7089b718aeaf946d"
     ],
     "createdAt": "2025-05-01T07:38:22.520Z",
-    "__v": 0
+    "__v": 2,
+    "teacher": "681333f573460c095068d8a8",
+    "description": ""
   },
   {
     "_id": "681324ee882466c61f8985ef",
@@ -22,35 +25,46 @@
     "maxStudents": 8,
     "status": "Active",
     "students": [
-      "681333f473460c095068d899"
+      "681333f473460c095068d899",
+      "681333f473460c095068d89b",
+      "681333f473460c095068d89a"
     ],
     "createdAt": "2025-05-01T07:38:22.521Z",
-    "__v": 0
+    "__v": 2,
+    "description": ""
   },
   {
     "_id": "681324ee882466c61f8985ec",
     "name": "Conversational English 101",
     "level": "0-3",
     "category": "General English",
-    "teacher": "681333f573460c095068d8a7",
     "maxStudents": 15,
     "status": "Active",
     "students": [
-      "681333f473460c095068d89a"
+      "681333f473460c095068d89a",
+      "681bb51c7089b718aeaf946d"
     ],
     "createdAt": "2025-05-01T07:38:22.520Z",
-    "__v": 0
+    "__v": 1,
+    "teacher": "681333f573460c095068d8a7",
+    "description": ""
   },
   {
     "_id": "681324ee882466c61f8985ee",
     "name": "IELTS Academic Preparation",
     "level": "6.5+",
     "category": "IELTS Preparation",
-    "teacher": "681333f573460c095068d8a6",
     "maxStudents": 10,
     "status": "Active",
-    "students": [],
+    "students": [
+      "681bb51c7089b718aeaf946d",
+      "681333f473460c095068d89a",
+      "681333f473460c095068d899",
+      "681333f473460c095068d89b"
+    ],
     "createdAt": "2025-05-01T07:38:22.521Z",
-    "__v": 0
+    "__v": 4,
+    "teacher": "681333f573460c095068d8a7",
+    "description": ""
   }
 ]

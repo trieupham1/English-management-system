@@ -5,9 +5,9 @@
     "address": "123 Education Street, City, Country",
     "phone": "+84 123 456 789",
     "email": "info@englishcenter.com",
-    "workingHours": "Monday-Friday: 8:00 AM - 8:00 PM, Saturday: 9:00 AM - 5:00 PM",
+    "workingHours": "",
     "logoUrl": "/images/logo.png",
-    "currencySymbol": "₫",
+    "currencySymbol": "$",
     "language": "en",
     "maxStudentsPerClass": 20,
     "enableChatbot": true,
@@ -28,7 +28,7 @@
       "maxBackups": 5
     },
     "updatedBy": "6804a0a6f64bd127fdce709c",
-    "updatedAt": "2025-04-20T07:22:19.229Z",
+    "updatedAt": "2025-05-08T10:17:57.188Z",
     "__v": 0
   }
 ]

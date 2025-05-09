@@ -241,31 +241,6 @@
                     </form>
                 </div>
                 
-                <script>
-                document.getElementById('writeReportForm').addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Collect form data
-                    const formData = {
-                        reportType: document.getElementById('reportType').value,
-                        selectedClass: document.getElementById('selectedClass').value,
-                        reportTitle: document.getElementById('reportTitle').value,
-                        reportDescription: document.getElementById('reportDescription').value,
-                        reportFile: document.getElementById('reportFile').files[0]
-                    };
-                
-                    // You would typically send this data to a server
-                    console.log('Report Data:', formData);
-                
-                    // Optional: Show a success toast or notification
-                    alert('Report generated successfully!');
-                });
-                
-                // File upload browse trigger
-                document.querySelector('.file-upload').addEventListener('click', function() {
-                    document.getElementById('reportFile').click();
-                });
-                </script>
             </section>
             
             <!-- Materials Section -->

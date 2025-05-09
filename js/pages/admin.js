@@ -2069,39 +2069,42 @@ function getCourseName(course, courseMap = {}) {
     }
     return 'Unnamed Course';
 }
-// Function to load students
+// Function to load students with complete course information
 function loadStudents() {
     console.log("Loading students...");
     
-    // Fetch students from API
-    ELC.apiRequest('/admin/students', 'GET')
-        .then(response => {
-            if (response.success) {
-                // Fetch courses to ensure we can map course names
-                return ELC.apiRequest('/admin/courses', 'GET')
-                    .then(coursesResponse => {
-                        if (coursesResponse.success) {
-                            // Create a map of course IDs to course names
-                            const courseMap = coursesResponse.data.reduce((map, course) => {
-                                map[course._id] = course.name || course.title || 'Unnamed Course';
-                                return map;
-                            }, {});
-                        
-                            // Populate students table with course mapping
-                            populateStudentsTable(response.data, courseMap);
+    // First fetch all courses to get complete course data including levels
+    ELC.apiRequest('/admin/courses', 'GET')
+        .then(coursesResponse => {
+            if (coursesResponse.success) {
+                // Create a map with full course objects
+                const courseMap = coursesResponse.data.reduce((map, course) => {
+                    map[course._id] = course; // Store the whole course object
+                    return map;
+                }, {});
+                
+                // Now fetch students
+                return ELC.apiRequest('/admin/students', 'GET')
+                    .then(studentsResponse => {
+                        if (studentsResponse.success) {
+                            // Populate students table with full course data
+                            populateStudentsTable(studentsResponse.data, courseMap);
+                        } else {
+                            console.error('Error loading students:', studentsResponse.message);
+                            ELC.showNotification('Error loading students', 'error');
                         }
                     });
             } else {
-                console.error('Error loading students:', response.message);
-                ELC.showNotification('Error loading students', 'error');
+                console.error('Error loading courses:', coursesResponse.message);
+                ELC.showNotification('Failed to load courses', 'error');
             }
         })
         .catch(error => {
-            console.error('Error fetching students:', error);
-            ELC.showNotification('Failed to load students', 'error');
+            console.error('Error in loadStudents:', error);
+            ELC.showNotification('Failed to load data', 'error');
         });
 }
-// Populate students table with dynamic action buttons
+// Populate students table with dynamic action buttons and course levels
 function populateStudentsTable(students, courseMap = {}) {
     const tableBody = document.querySelector('#student-placements-table tbody');
     if (!tableBody) return;
@@ -2109,16 +2112,32 @@ function populateStudentsTable(students, courseMap = {}) {
     // Clear existing rows
     tableBody.innerHTML = '';
     
+    // First, ensure courseMap has complete course objects with levels
+    const enhancedCourseMap = { ...courseMap };
+    
     students.forEach(student => {
         const row = document.createElement('tr');
         
-        // Determine student status and current course
-        const currentCourse = student.studentInfo?.course 
-            ? courseMap[student.studentInfo.course] || 'Unnamed Course'
+        // Get student's course ID
+        const courseId = student.studentInfo?.course;
+        
+        // Determine student status and current course name
+        const currentCourse = courseId 
+            ? (enhancedCourseMap[courseId]?.name || enhancedCourseMap[courseId] || 'Unnamed Course')
             : '-';
         
+        // Get course level directly from the course, not from the student
+        let displayLevel = 'Not enrolled';
+        if (courseId && enhancedCourseMap[courseId]) {
+            // If we have the full course object
+            if (typeof enhancedCourseMap[courseId] === 'object' && enhancedCourseMap[courseId].level) {
+                displayLevel = enhancedCourseMap[courseId].level;
+            } 
+            // If we only have the course name, we need to look up the level
+            // This would require another API call if not already available
+        }
+        
         const status = student.studentInfo?.status || 'unplaced';
-        const level = student.studentInfo?.currentLevel || 'Unknown';
         
         // Set status badge
         let statusBadgeClass = 'badge-warning';
@@ -2128,22 +2147,21 @@ function populateStudentsTable(students, courseMap = {}) {
             statusBadgeClass = 'badge-danger';
         }
         
-        // Set level badge
+        // Set level badge class
         let levelBadgeClass = 'badge-info';
         
         row.innerHTML = `
             <td>${student.studentInfo?.studentId || 'N/A'}</td>
             <td>${student.fullName}</td>
             <td>${student.email}</td>
-            <td><span class="badge ${levelBadgeClass}">${level}</span></td>
+            <td><span class="badge ${levelBadgeClass}">${displayLevel}</span></td>
             <td>${currentCourse}</td>
             <td><span class="badge ${statusBadgeClass}">${status}</span></td>
             <td>
-                ${status === 'unplaced' || !currentCourse || currentCourse === '-' 
+                ${status === 'unplaced' || !courseId || currentCourse === '-' 
                     ? `<button class="action-btn place-student" 
                         data-student-id="${student._id}" 
                         data-student-name="${student.fullName}" 
-                        data-student-level="${level}" 
                         data-current-course="${currentCourse}">
                         <i class="fas fa-plus"></i>
                     </button>`
@@ -2151,7 +2169,6 @@ function populateStudentsTable(students, courseMap = {}) {
                     <button class="action-btn change-course" 
                         data-student-id="${student._id}" 
                         data-student-name="${student.fullName}" 
-                        data-student-level="${level}" 
                         data-current-course="${currentCourse}">
                         <i class="fas fa-exchange-alt"></i>
                     </button>
@@ -2344,7 +2361,6 @@ function attachStudentActionListeners() {
         }
     });
 }
-
 // Handle student placement form submission
 function handleStudentPlacement(event) {
     event.preventDefault();
@@ -2352,62 +2368,59 @@ function handleStudentPlacement(event) {
     const modal = document.getElementById('student-placement-modal');
     const studentIdInput = modal.querySelector('input[name="studentId"]');
     const courseSelect = modal.querySelector('#select-course');
-    const levelDisplay = modal.querySelector('#student-level-display');
     
-    if (!studentIdInput || !courseSelect || !levelDisplay) {
+    if (!studentIdInput || !courseSelect) {
         console.error('Required elements not found');
         return;
     }
     
     const studentId = studentIdInput.value;
     const courseId = courseSelect.value;
-    const newLevel = levelDisplay.textContent;
     
-    console.log('Attempting to place student:', { 
-        studentId, 
-        courseId, 
-        newLevel 
-    });
+    // Get the selected course to access its level
+    const selectedCourseOption = courseSelect.options[courseSelect.selectedIndex];
+    const courseName = selectedCourseOption.textContent;
     
-    if (!courseId) {
-        ELC.showNotification('Please select a course', 'error');
-        return;
-    }
-    
-    // Update student's course assignment
-    ELC.apiRequest(`/admin/students/${studentId}/course`, 'PUT', {
-        courseId: courseId,
-        level: newLevel
-    })
-    .then(response => {
-        if (response.success) {
-            ELC.showNotification('Student course placement updated', 'success');
-            
-            // Close modal
-            modal.style.display = 'none';
-            
-            // Reload students table
-            loadStudents();
-        } else {
-            // Log the specific error message
-            console.error('Course placement error:', response);
-            
-            // Show more detailed error message
-            const errorMsg = response.error || response.message || 'Error updating placement';
-            ELC.showNotification(errorMsg, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error updating student placement:', error);
-        
-        // Show detailed error message
-        const errorMsg = error.responseData?.error || 
-                         error.responseData?.message || 
-                         error.message || 
-                         'Error updating student placement';
-        
-        ELC.showNotification(errorMsg, 'error');
-    });
+    // Find the course in the courses data to get its level
+    ELC.apiRequest('/admin/courses/' + courseId, 'GET')
+        .then(response => {
+            if (response.success && response.data) {
+                const course = response.data;
+                const courseLevel = course.level; // Get the level from the course
+                
+                console.log('Assigning student to course with level:', courseLevel);
+                
+                // Update student's course assignment AND level at the same time
+                ELC.apiRequest(`/admin/students/${studentId}/course`, 'PUT', {
+                    courseId: courseId,
+                    level: courseLevel // This is the important part - update level to match course
+                })
+                .then(updateResponse => {
+                    if (updateResponse.success) {
+                        ELC.showNotification('Student course placement updated', 'success');
+                        
+                        // Close modal
+                        modal.style.display = 'none';
+                        
+                        // Reload students table
+                        loadStudents();
+                    } else {
+                        console.error('Course placement error:', updateResponse);
+                        ELC.showNotification(updateResponse.message || 'Error updating placement', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating student placement:', error);
+                    ELC.showNotification('Error updating student placement', 'error');
+                });
+            } else {
+                ELC.showNotification('Could not load course details', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching course details:', error);
+            ELC.showNotification('Error loading course details', 'error');
+        });
 }
 // Remove student from current course
 function removeStudentFromCourse(studentId) {

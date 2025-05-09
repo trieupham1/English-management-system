@@ -357,7 +357,7 @@ function filterMaterials(courseId) {
             }
         });
 }
-// Keep the updateMaterialsUI function as it is
+// Update the updateMaterialsUI function to correctly set material IDs
 function updateMaterialsUI(materials) {
     const materialsContainer = document.querySelector('.materials-container');
     if (!materialsContainer) return;
@@ -374,7 +374,7 @@ function updateMaterialsUI(materials) {
     materials.forEach(material => {
         // Get icon based on material type
         let iconClass = 'fas fa-file';
-        switch (material.type) {
+        switch (material.type.toLowerCase()) {
             case 'document':
                 iconClass = 'fas fa-file-word';
                 break;
@@ -383,6 +383,7 @@ function updateMaterialsUI(materials) {
                 iconClass = 'fas fa-file-powerpoint';
                 break;
             case 'video':
+            case 'video link':
                 iconClass = 'fas fa-file-video';
                 break;
             case 'audio':
@@ -412,7 +413,7 @@ function updateMaterialsUI(materials) {
         // Create material row
         const materialRow = document.createElement('div');
         materialRow.className = 'material-row';
-        materialRow.setAttribute('data-course', material.course);
+        materialRow.setAttribute('data-course', material.course._id || material.course);
         
         materialRow.innerHTML = `
             <div class="material-icon">
@@ -439,30 +440,85 @@ function updateMaterialsUI(materials) {
     // Add download event listeners
     initMaterialDownloads();
 }
-// Add function to handle material downloads
+// Add this function to handle the material downloads initialization
 function initMaterialDownloads() {
     const downloadButtons = document.querySelectorAll('.download-material');
+    
     downloadButtons.forEach(button => {
         button.addEventListener('click', function() {
             const materialId = this.getAttribute('data-id');
-            downloadMaterial(materialId);
+            if (materialId) {
+                downloadMaterial(materialId);
+            } else {
+                console.error('No material ID found on download button');
+                ELC.showNotification('Error: Cannot identify material', 'error');
+            }
         });
     });
 }
-// Add function to download material
+// Extremely simplified direct file download
 function downloadMaterial(materialId) {
+    // Show initial notification
+    ELC.showNotification('Preparing download...', 'info');
+    
+    // First get the material details to get the filename
+    fetch(`/api/materials/${materialId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success || !data.data || !data.data.file) {
+            throw new Error('Material file information not found');
+        }
+        
+        // Get the filename from the response
+        const filename = data.data.file;
+        console.log('Found filename in database:', filename);
+        
+        // Create direct URL to the static file
+        const fileUrl = `/uploads/materials/${filename}`;
+        console.log('Direct file URL:', fileUrl);
+        
+        // Create and click a download link
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.setAttribute('download', filename); // Important: forces download instead of navigation
+        link.setAttribute('target', '_blank'); // Fallback: open in new tab if download doesn't work
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        ELC.showNotification('Download started', 'success');
+    })
+    .catch(error => {
+        console.error('Download error:', error);
+        ELC.showNotification(`Download failed: ${error.message}`, 'error');
+        
+        // Fallback to direct window.open as last resort
+        if (error.message.includes('not found')) {
+            const confirmFallback = confirm('Could not find file details. Try direct download?');
+            if (confirmFallback) {
+                window.open(`/materials/${materialId}/download`, '_blank');
+            }
+        }
+    });
+}
+// Alternative download function using window.open
+function downloadMaterialAlt(materialId) {
     ELC.showNotification('Starting download...', 'info');
     
-    // Create a link element and trigger download
-    const downloadUrl = `${ELC.getApiUrl()}/materials/${materialId}/download`;
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.setAttribute('download', '');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Create the direct download URL
+    const downloadUrl = `/materials/${materialId}/download`;
     
-    ELC.showNotification('Download started', 'success');
+    console.log('Attempting to download from:', downloadUrl);
+    
+    // Open in a new window/tab to download
+    window.open(downloadUrl, '_blank');
+    
+    ELC.showNotification('Download request sent', 'success');
 }
 
 function initAssignmentFiltering() {

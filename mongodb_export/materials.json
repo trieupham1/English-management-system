@@ -2,45 +2,74 @@
   {
     "_id": "681324ef882466c61f89860b",
     "title": "IELTS Speaking Practice",
-    "course": "681324ee882466c61f8985ee",
-    "type": "Audio",
     "description": "Sample IELTS speaking test with examiner feedback",
+    "type": "audio",
+    "course": "681324ee882466c61f8985ee",
     "file": "ielts_speaking.mp3",
-    "createdBy": "681324ee882466c61f8985e9",
+    "uploadedBy": "681324ee882466c61f8985e9",
+    "tags": [
+      "speaking",
+      "practice",
+      "ielts"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
     "createdAt": "2025-05-01T07:38:23.385Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   },
   {
     "_id": "681324ef882466c61f89860c",
     "title": "TOEFL Structure Tutorial",
-    "course": "681324ee882466c61f8985ef",
-    "type": "Video Link",
     "description": "A comprehensive overview of the TOEFL test structure",
-    "file": "https://example.com/toefl-tutorial",
-    "createdBy": "681324ee882466c61f8985e9",
+    "type": "video",
+    "course": "681324ee882466c61f8985ef",
+    "url": "https://example.com/toefl-tutorial",
+    "uploadedBy": "681324ee882466c61f8985e9",
+    "tags": [
+      "toefl",
+      "tutorial"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
     "createdAt": "2025-05-01T07:38:23.385Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   },
   {
     "_id": "681324ef882466c61f898609",
     "title": "Conversation Basics Slides",
-    "course": "681324ee882466c61f8985ec",
-    "type": "Slides",
     "description": "Introduction to basic conversation structures and greetings",
+    "type": "slides",
+    "course": "681324ee882466c61f8985ec",
     "file": "conversation_basics.pdf",
-    "createdBy": "681324ee882466c61f8985e8",
+    "uploadedBy": "681324ee882466c61f8985e8",
+    "tags": [
+      "conversation",
+      "slides"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
     "createdAt": "2025-05-01T07:38:23.385Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   },
   {
     "_id": "681324ef882466c61f89860a",
     "title": "Business Vocabulary List",
-    "course": "681324ee882466c61f8985ed",
-    "type": "Document",
     "description": "Essential vocabulary for business communications",
+    "type": "document",
+    "course": "681324ee882466c61f8985ed",
     "file": "business_vocab.docx",
-    "createdBy": "681324ee882466c61f8985e8",
+    "uploadedBy": "681324ee882466c61f8985e8",
+    "tags": [
+      "business",
+      "vocabulary"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
     "createdAt": "2025-05-01T07:38:23.385Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   },
   {
@@ -58,6 +87,60 @@
     "viewCount": 0,
     "createdAt": "2025-05-04T14:43:22.786Z",
     "updatedAt": "2025-05-04T14:43:22.786Z",
+    "__v": 0
+  },
+  {
+    "_id": "681dbfe842d5a7ee3659859c",
+    "title": "Vocabulary List",
+    "description": "Complete IELTS vocabulary list",
+    "type": "document",
+    "course": "681324ee882466c61f8985ee",
+    "file": "22099-vocabulary-list.pdf",
+    "uploadedBy": "681324ee882466c61f8985e9",
+    "tags": [
+      "vocabulary",
+      "ielts"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
+    "createdAt": "2025-05-09T08:42:16.209Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
+    "__v": 0
+  },
+  {
+    "_id": "681dbfe842d5a7ee3659859d",
+    "title": "Everyday Dialogues",
+    "description": "Common conversational dialogues for everyday situations",
+    "type": "document",
+    "course": "681324ee882466c61f8985ee",
+    "file": "b_dialogues_everyday_conversations.pdf",
+    "uploadedBy": "681324ee882466c61f8985e9",
+    "tags": [
+      "dialogues",
+      "conversation"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
+    "createdAt": "2025-05-09T08:42:16.209Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
+    "__v": 0
+  },
+  {
+    "_id": "681dbfe842d5a7ee3659859e",
+    "title": "ITP Practice Test",
+    "description": "ITP Practice Test Level 1",
+    "type": "document",
+    "course": "681324ee882466c61f8985ee",
+    "file": "itp-practice-test-level-1-volume-1.pdf",
+    "uploadedBy": "681324ee882466c61f8985e9",
+    "tags": [
+      "test",
+      "practice"
+    ],
+    "downloadCount": 0,
+    "viewCount": 0,
+    "createdAt": "2025-05-09T08:42:16.209Z",
+    "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   }
 ]
