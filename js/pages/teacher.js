@@ -3139,8 +3139,6 @@ function addAssignmentToList(assignment) {
     
     // Determine status badge class
     let statusClass = 'badge-success';
-    if (status === 'upcoming') statusClass = 'badge-primary';
-    if (status === 'closed') statusClass = 'badge-secondary';
     
     // Create assignment HTML
     const assignmentHTML = `
@@ -3399,7 +3397,6 @@ function saveGrade(assignmentId, studentId, grade, feedback, button) {
         ELC.showNotification('Failed to save grade. Please try again.', 'error');
     });
 }
-
 // Update editAssignment function
 function editAssignment(assignmentId) {
     console.group('Edit Assignment Debug');
@@ -3522,9 +3519,9 @@ function displayEditModal(assignment) {
                     </div>
                     
                     <div class="form-group">
-                        <label for="edit-description">Description</label>
-                        <textarea id="edit-description" class="form-control" rows="4" required>
-                            ${assignment.description ? escapeHtml(assignment.description) : ''}
+                        <label for="edit-instructions">Instructions</label>
+                        <textarea id="edit-instructions" class="form-control" rows="4" required>
+                            ${assignment.instructions ? escapeHtml(assignment.instructions) : ''}
                         </textarea>
                     </div>
                     
@@ -3542,13 +3539,6 @@ function displayEditModal(assignment) {
                                 value="${assignment.totalPoints || 100}" required>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="edit-course">Course</label>
-                        <select id="edit-course" class="form-control" required>
-                            <option value="">Select a course</option>
-                        </select>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -3561,6 +3551,37 @@ function displayEditModal(assignment) {
 
     // Append to body
     document.body.appendChild(modal);
+
+    // Track changes to form fields in real-time
+    const formFields = {
+        title: document.getElementById('edit-title'),
+        instructions: document.getElementById('edit-instructions'),
+        dueDate: document.getElementById('edit-due-date'),
+        totalPoints: document.getElementById('edit-points')
+    };
+
+    // Create an updatedAssignment object that will store changes
+    const updatedAssignment = { ...assignment };
+
+    // Add event listeners to track changes on each field
+    Object.keys(formFields).forEach(field => {
+        if (formFields[field]) {
+            formFields[field].addEventListener('change', function() {
+                let value = this.value;
+                
+                // Convert values to appropriate types
+                if (field === 'totalPoints') {
+                    value = parseInt(value, 10);
+                } else if (field === 'dueDate') {
+                    value = new Date(value);
+                }
+                
+                // Update our tracking object
+                updatedAssignment[field] = value;
+                console.log(`Field ${field} updated to:`, value);
+            });
+        }
+    });
 
     // Safely add event listeners
     try {
@@ -3589,31 +3610,44 @@ function displayEditModal(assignment) {
         if (saveButton) {
             saveButton.addEventListener('click', function() {
                 const assignmentId = this.getAttribute('data-id');
-                const title = document.getElementById('edit-title').value;
-                const description = document.getElementById('edit-description').value;
-                const dueDate = document.getElementById('edit-due-date').value;
-                const totalPoints = document.getElementById('edit-points').value;
-                const courseId = document.getElementById('edit-course').value;
                 
-                if (!title || !description || !dueDate || !totalPoints || !courseId) {
+                // Get final values from form
+                const title = document.getElementById('edit-title').value.trim();
+                const instructions = document.getElementById('edit-instructions').value.trim();
+                const dueDate = document.getElementById('edit-due-date').value;
+                const totalPoints = parseInt(document.getElementById('edit-points').value, 10);
+                
+                // Validate required fields
+                if (!title || !instructions || !dueDate || isNaN(totalPoints)) {
                     ELC.showNotification('Please fill in all required fields', 'error');
                     return;
                 }
                 
-                updateAssignment(assignmentId, {
+                // Create update data object following the model structure
+                const updateData = {
                     title,
-                    description,
+                    instructions,
                     dueDate,
                     totalPoints,
-                    course: courseId
-                });
+                    isActive: assignment.isActive, // Keep the original active status
+                    course: assignment.course, // Keep the original course
+                    // Keep existing data that wasn't edited
+                    submissions: assignment.submissions || [],
+                    attachments: assignment.attachments || [],
+                    createdBy: assignment.createdBy,
+                    updatedAt: new Date()
+                };
+                
+                // Show loading state
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                
+                // Call the update function
+                updateAssignment(assignmentId, updateData);
             });
         } else {
             console.warn('Save button not found');
         }
-
-        // Load courses into dropdown
-        loadCoursesForDropdown(assignment.course);
 
     } catch (error) {
         console.error('Error setting up modal event listeners:', error);
@@ -3632,6 +3666,7 @@ function displayEditModal(assignment) {
 
     console.groupEnd();
 }
+
 // Utility function to escape HTML to prevent XSS
 function escapeHtml(unsafe) {
     return unsafe
@@ -3641,129 +3676,35 @@ function escapeHtml(unsafe) {
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
 }
-function loadCoursesIntoDropdown() {
-    const courseDropdown = document.getElementById('materialClass');
-    if (!courseDropdown) {
-        console.error('Could not find the course dropdown element');
-        return;
-    }
-    
-    // Show loading state
-    courseDropdown.innerHTML = '<option value="">Loading courses...</option>';
-    courseDropdown.disabled = true;
-    
-    // Debug log
-    console.log('Fetching courses from API...');
-    
-    // Fetch courses
-    fetch('/api/courses/dropdown')
-        .then(response => {
-            console.log('API response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Courses data received:', data);
-            if (data.success) {
-                // Clear loading option
-                courseDropdown.innerHTML = '<option value="">Select a Course</option>';
-                
-                // Add each course to dropdown
-                data.data.forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course._id;
-                    option.textContent = `${course.name} (${course.category || course.level})`;
-                    courseDropdown.appendChild(option);
-                });
-                
-                // If no courses found
-                if (data.data.length === 0) {
-                    courseDropdown.innerHTML = '<option value="">No courses available</option>';
-                }
-            } else {
-                ELC.showNotification('Error loading courses: ' + (data.message || 'Unknown error'), 'error');
-                courseDropdown.innerHTML = '<option value="">Failed to load courses</option>';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching courses:', error);
-            ELC.showNotification('Failed to load courses: ' + error.message, 'error');
-            courseDropdown.innerHTML = '<option value="">Failed to load courses</option>';
-        })
-        .finally(() => {
-            courseDropdown.disabled = false;
-        });
-}
 
-// Make sure to call this function when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded, calling loadCoursesIntoDropdown');
-    loadCoursesIntoDropdown();
-});
-
-// Function to load courses for edit assignment dropdown
-function loadCoursesForDropdown(selectedCourseId) {
-    const courseDropdown = document.getElementById('edit-course');
-    if (!courseDropdown) return;
-    
-    // Show loading state
-    courseDropdown.innerHTML = '<option value="">Loading courses...</option>';
-    
-    // Fetch courses
-    fetch('/api/courses/dropdown')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Clear loading option
-                courseDropdown.innerHTML = '<option value="">Select a course</option>';
-                
-                // Add each course to dropdown
-                data.data.forEach(course => {
-                    const option = document.createElement('option');
-                    option.value = course._id;
-                    
-                    // Format option text
-                    let displayText = course.name;
-                    if (course.category) {
-                        displayText += ` (${course.category})`;
-                    }
-                    
-                    option.textContent = displayText;
-                    
-                    // Select current course
-                    if (course._id === selectedCourseId) {
-                        option.selected = true;
-                    }
-                    
-                    courseDropdown.appendChild(option);
-                });
-            } else {
-                courseDropdown.innerHTML = '<option value="">Error loading courses</option>';
-                console.error('Failed to load courses:', data.message);
-            }
-        })
-        .catch(error => {
-            courseDropdown.innerHTML = '<option value="">Error loading courses</option>';
-            console.error('Error fetching courses:', error);
-        });
-}
-
-// Function to update assignment
 function updateAssignment(assignmentId, data) {
     // Show loading notification
     ELC.showNotification('Updating assignment...', 'info');
+    
+    // Get token for authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+        ELC.showNotification('Authentication required', 'error');
+        return;
+    }
     
     // Send to API
     fetch(`/api/assignments/${assignmentId}`, {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Show success notification
@@ -3773,19 +3714,59 @@ function updateAssignment(assignmentId, data) {
             const modal = document.getElementById('edit-modal');
             if (modal) modal.remove();
             
-            // Reload assignments to show updated data
-            loadAssignmentsData();
+            // Update UI to reflect changes
+            updateAssignmentInUI(assignmentId, data.data || data);
+            
+            // Optional: Reload assignments list
+            if (typeof loadAssignments === 'function') {
+                loadAssignments();
+            }
         } else {
             // Show error notification
-            ELC.showNotification('Error: ' + data.message, 'error');
+            ELC.showNotification('Error: ' + (data.message || 'Failed to update assignment'), 'error');
         }
     })
     .catch(error => {
         console.error('Error updating assignment:', error);
-        ELC.showNotification('Failed to update assignment. Please try again.', 'error');
+        ELC.showNotification('Failed to update assignment: ' + error.message, 'error');
     });
 }
 
+// Function to update assignment item in the UI
+function updateAssignmentInUI(assignmentId, data) {
+    const assignmentItem = document.querySelector(`.assignment-item[data-id="${assignmentId}"]`);
+    if (!assignmentItem) return;
+    
+    // Update title
+    const titleElement = assignmentItem.querySelector('.assignment-title');
+    if (titleElement) titleElement.textContent = data.title;
+    
+    // Update due date
+    const dueDateElement = assignmentItem.querySelector('.assignment-details div:nth-child(2)');
+    if (dueDateElement) {
+        const formattedDate = new Date(data.dueDate).toLocaleDateString();
+        dueDateElement.innerHTML = `<i class="fas fa-calendar"></i> Due: ${formattedDate}`;
+    }
+    
+    // Update status badge
+    const statusBadge = assignmentItem.querySelector('.badge');
+    if (statusBadge) {
+        // Determine status text and class
+        let status = data.isActive ? 'active' : 'closed';
+        if (data.isActive && new Date(data.dueDate) > new Date()) {
+            status = 'upcoming';
+        }
+        
+        // Update badge class
+        statusBadge.className = 'badge';
+        if (status === 'active') statusBadge.classList.add('badge-success');
+        else if (status === 'upcoming') statusBadge.classList.add('badge-primary');
+        else statusBadge.classList.add('badge-secondary');
+        
+        // Update badge text
+        statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    }
+}
 // Function to load assignments data
 function loadAssignmentsData() {
     // Show loading indicator
@@ -3939,17 +3920,34 @@ function setupAssignmentButtons() {
         });
     });
 }
-
 // Function to delete assignment
 function deleteAssignment(assignmentId) {
     // Show loading notification
     ELC.showNotification('Deleting assignment...', 'info');
     
+    // Get token for authentication
+    const token = localStorage.getItem('token');
+    if (!token) {
+        ELC.showNotification('Authentication required', 'error');
+        return;
+    }
+    
     // Send to API
     fetch(`/api/assignments/${assignmentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Show success notification
@@ -3965,18 +3963,21 @@ function deleteAssignment(assignmentId) {
             const assignmentItems = document.querySelectorAll('.assignment-item');
             if (assignmentItems.length === 0) {
                 // Reload to show empty state
-                loadAssignmentsData();
+                if (typeof loadAssignmentsData === 'function') {
+                    loadAssignmentsData();
+                } else if (typeof loadAssignments === 'function') {
+                    loadAssignments();
+                }
             }
         } else {
             // Show error notification
-            ELC.showNotification('Error: ' + data.message, 'error');
+            ELC.showNotification('Error: ' + (data.message || 'Failed to delete assignment'), 'error');
         }
     })
     .catch(error => {
         console.error('Error deleting assignment:', error);
-        ELC.showNotification('Failed to delete assignment. Please try again.', 'error');
+        ELC.showNotification('Failed to delete assignment: ' + error.message, 'error');
     });
-    
 }
 // Function to setup progress reports filtering and displaying
 function setupProgressReportsFiltering() {

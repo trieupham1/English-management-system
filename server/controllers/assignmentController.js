@@ -190,7 +190,6 @@ exports.updateAssignment = async (req, res) => {
         });
     }
 };
-
 // Delete an assignment
 exports.deleteAssignment = async (req, res) => {
     try {
@@ -211,7 +210,8 @@ exports.deleteAssignment = async (req, res) => {
             });
         }
 
-        await assignment.remove();
+        // Use deleteOne instead of remove
+        await Assignment.deleteOne({ _id: req.params.id });
 
         res.status(200).json({
             success: true,

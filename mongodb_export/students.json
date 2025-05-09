@@ -17,7 +17,7 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-06T05:30:44.069Z",
+    "lastLogin": "2025-05-07T09:26:21.453Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.771Z",
     "updatedAt": "2025-05-01T08:42:28.771Z",
@@ -41,7 +41,7 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-04T07:42:47.973Z",
+    "lastLogin": "2025-05-07T09:16:20.923Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.773Z",
     "updatedAt": "2025-05-01T08:42:28.773Z",
@@ -65,10 +65,33 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-04T13:21:59.893Z",
+    "lastLogin": "2025-05-07T09:11:10.344Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.772Z",
     "updatedAt": "2025-05-01T08:42:28.772Z",
+    "__v": 0
+  },
+  {
+    "_id": "681b8ae85b43607a931009ee",
+    "username": "heli",
+    "password": "$2b$10$RwPEBBOFh7fTsVTAs3XYsO34iYeNTcIndIjyfZniZnFtKe.db08cm",
+    "fullName": "Heli",
+    "email": "whats@gmail.com",
+    "phone": "1234567890",
+    "avatar": "default-student-avatar.png",
+    "studentInfo": {
+      "studentId": "S2523",
+      "currentLevel": "beginner",
+      "status": "active",
+      "enrollmentDate": "2025-05-07T16:31:36.971Z",
+      "course": null,
+      "attendance": 0,
+      "progress": 0
+    },
+    "lastLogin": null,
+    "isActive": true,
+    "createdAt": "2025-05-07T16:31:36.971Z",
+    "updatedAt": "2025-05-07T16:31:36.971Z",
     "__v": 0
   }
 ]

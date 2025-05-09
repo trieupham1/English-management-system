@@ -20,6 +20,8 @@ const teacherRoutes = require('./server/routes/teachers');
 const assignmentRoutes = require('./server/routes/assignments'); 
 const materialRoutes = require('./server/routes/materials');
 const reports = require('./server/routes/reports');
+const adminRoutes = require('./server/routes/admin');
+
 
 
 // Initialize Express app
@@ -58,6 +60,7 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/assignments', assignmentRoutes); 
 app.use('/api/materials', materialRoutes); 
 app.use('/api/reports', reports);
+app.use('/api/admin', adminRoutes);
 
 
 // Add this after your routes

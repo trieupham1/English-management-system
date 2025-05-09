@@ -1,14 +1,14 @@
 [
   {
     "_id": "681324ef882466c61f898605",
-    "title": "IELTS Writing Task 2 Practice",
+    "title": "IELTS Writing Task 2 Practicesssssss",
     "course": "681324ee882466c61f8985ee",
-    "instructions": "Write an essay responding to the following IELTS question...",
+    "instructions": "Làm bài đi djt me",
     "attachments": [],
     "createdBy": "681324ee882466c61f8985e9",
     "createdAt": "2025-05-01T07:38:23.326Z",
     "__v": 5,
-    "isActive": true,
+    "isActive": false,
     "submissions": [
       {
         "student": "681333f473460c095068d899",
@@ -19,8 +19,9 @@
         "_id": "6816fcc3b47c2fca6e80e7e8"
       }
     ],
-    "totalPoints": 100,
-    "updatedAt": "2025-05-02T20:20:37.816Z"
+    "totalPoints": 1,
+    "updatedAt": "2025-05-07T08:42:04.125Z",
+    "dueDate": "2025-05-09T00:00:00.000Z"
   },
   {
     "_id": "681324ef882466c61f898603",
@@ -61,49 +62,40 @@
         "file": "uploads\\assignments\\file-1746217188577-409856918.docx",
         "submittedAt": "2025-05-02T20:19:48.648Z",
         "isLate": false,
-        "_id": "681528e48e2379e0501ce6af"
+        "_id": "681528e48e2379e0501ce6af",
+        "gradedAt": "2025-05-07T09:31:28.365Z",
+        "gradedBy": "681333f573460c095068d8a7"
       }
     ],
     "totalPoints": 100,
-    "updatedAt": "2025-05-02T20:19:48.648Z"
+    "updatedAt": "2025-05-07T09:25:52.588Z"
   },
   {
     "_id": "6818615ad82b5f2cda603261",
-    "title": "Vãi ò",
-    "course": "681324ee882466c61f8985ef",
-    "instructions": "dssadass",
-    "dueDate": "2025-05-07T00:00:00.000Z",
-    "totalPoints": 12,
-    "isActive": true,
-    "attachments": [],
-    "submissions": [],
-    "createdBy": "681333f573460c095068d8a6",
-    "createdAt": "2025-05-05T06:57:30.623Z",
-    "updatedAt": "2025-05-05T06:57:30.623Z",
-    "__v": 0
-  },
-  {
-    "_id": "68186f16a57a181131c16e7f",
-    "title": "Du95 má m",
-    "course": "681324ee882466c61f8985ef",
-    "instructions": "sass",
-    "dueDate": "2025-05-02T00:00:00.000Z",
-    "totalPoints": 100,
+    "title": "Chấn thương háng",
+    "course": "681324ee882466c61f8985ed",
+    "instructions": "Halamadrid",
+    "dueDate": "2025-05-06T00:00:00.000Z",
+    "totalPoints": 13,
     "isActive": true,
     "attachments": [],
     "submissions": [
       {
-        "student": "681333f473460c095068d899",
+        "student": "681333f473460c095068d89b",
         "content": "",
-        "file": "uploads\\assignments\\file-1746454814001-429790572.jpg",
-        "submittedAt": "2025-05-05T14:20:14.064Z",
+        "file": "uploads\\assignments\\file-1746608388936-594122399.docx",
+        "submittedAt": "2025-05-07T08:59:48.994Z",
         "isLate": true,
-        "_id": "6818c91e91bab254752f061b"
+        "_id": "681b2104534e887a367dd30d",
+        "feedback": "-Làm bài ít thôi đụ má m",
+        "grade": 1,
+        "gradedAt": "2025-05-07T09:00:36.328Z",
+        "gradedBy": "681333f573460c095068d8a7"
       }
     ],
     "createdBy": "681333f573460c095068d8a6",
-    "createdAt": "2025-05-05T07:56:06.263Z",
-    "updatedAt": "2025-05-05T07:56:06.263Z",
+    "createdAt": "2025-05-05T06:57:30.623Z",
+    "updatedAt": "2025-05-07T08:44:07.649Z",
     "__v": 1
   }
 ]

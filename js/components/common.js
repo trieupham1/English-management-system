@@ -42,6 +42,14 @@ async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = t
             headers
         };
 
+        // Log request details for debugging
+        console.log('API Request:', {
+            url,
+            method,
+            headers,
+            body: body ? (isFormData ? 'FormData' : JSON.stringify(body)) : null
+        });
+
         if (body) {
             if (isFormData) {
                 // Don't stringify FormData
@@ -52,7 +60,25 @@ async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = t
         }
 
         const response = await fetch(url, options);
-        const data = await response.json();
+        
+        // Log full response for debugging
+        console.log('API Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+
+        // Try to parse response
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            throw new Error('Unable to parse server response');
+        }
+
+        // Log parsed data
+        console.log('Parsed Response Data:', data);
 
         if (!response.ok) {
             // Handle authentication errors
@@ -64,14 +90,40 @@ async function apiRequest(endpoint, method = 'GET', body = null, includeAuth = t
                 return;
             }
             
-            // Handle other errors
-            throw new Error(data.message || 'An error occurred with the API request');
+            // Construct detailed error message
+            const errorMessage = data.message || 
+                                 data.errorDetails || 
+                                 `HTTP error! status: ${response.status}`;
+            
+            // Log detailed error information
+            console.error('API Error Response:', {
+                status: response.status,
+                message: errorMessage,
+                fullResponse: data
+            });
+            
+            // Throw an error with detailed message
+            const error = new Error(errorMessage);
+            error.status = response.status;
+            error.responseData = data;
+            throw error;
         }
 
         return data;
     } catch (error) {
-        console.error('API Request Error:', error);
-        showNotification(error.message || 'An error occurred. Please try again.', 'error');
+        // Enhanced error logging
+        console.error('Detailed API Request Error:', {
+            message: error.message,
+            status: error.status,
+            responseData: error.responseData,
+            stack: error.stack
+        });
+
+        // Show user-friendly notification
+        const errorMessage = error.message || 'An unexpected error occurred';
+        showNotification(errorMessage, 'error');
+        
+        // Re-throw the error for further handling
         throw error;
     }
 }

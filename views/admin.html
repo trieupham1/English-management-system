@@ -172,23 +172,13 @@
                     <label for="course-level">Level</label>
                     <select id="course-level" class="form-control" required>
                         <option value="">Select Level</option>
-                        <option value="beginner">Beginner</option>
-                        <option value="intermediate">Intermediate</option>
-                        <option value="upper-intermediate">Upper-intermediate</option>
-                        <option value="advanced">Advanced</option>
+                        <option value="beginner">0-3</option>
+                        <option value="intermediate">3-5.5</option>
+                        <option value="upper-intermediate">5.5-7</option>
+                        <option value="advanced">7+</option>
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="course-category">Category</label>
-                    <select id="course-category" class="form-control" required>
-                        <option value="">Select Category</option>
-                        <option value="general">General English</option>
-                        <option value="business">Business English</option>
-                        <option value="ielts">IELTS Preparation</option>
-                        <option value="toefl">TOEFL Preparation</option>
-                    </select>
-                </div>
                 
                 <div class="form-group">
                     <label for="course-max-students">Max Students</label>
@@ -808,80 +798,6 @@
             </section>
         </div>
     </div>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Authentication check
-            if (typeof ELC !== 'undefined' && (!ELC.isAuthenticated())) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            // Initialize user profile
-            if (typeof ELC !== 'undefined') {
-                const user = ELC.getCurrentUser();
-                if (user) {
-                    document.getElementById('user-name').textContent = user.fullName;
-                    document.getElementById('admin-name').textContent = user.fullName.split(' ')[0];
-                    document.querySelector('.user-avatar').textContent = user.fullName.charAt(0);
-                }
-            }
-            
-            // Tab navigation
-            const menuItems = document.querySelectorAll('.menu-item[data-section]');
-            const sections = document.querySelectorAll('.content-section');
-            
-            menuItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    const targetSection = this.getAttribute('data-section');
-                    
-                    // Toggle active class on menu items
-                    menuItems.forEach(mi => mi.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Toggle visibility of sections
-                    sections.forEach(section => {
-                        if (section.id === `${targetSection}-section`) {
-                            section.style.display = 'block';
-                        } else {
-                            section.style.display = 'none';
-                        }
-                    });
-                });
-            });
-            
-            // Form submission handlers
-            document.getElementById('create-user-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Add user creation logic here
-                alert('User created successfully!');
-            });
-            
-            document.getElementById('create-course-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Add course creation logic here
-                alert('Course created successfully!');
-            });
-            
-            // Settings form
-            document.getElementById('system-settings-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Save settings logic here
-                alert('Settings saved successfully!');
-            });
-            
-            // Logout functionality
-            document.getElementById('logout-btn').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (typeof ELC !== 'undefined') {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                }
-                window.location.href = 'login.html';
-            });
-        });
-    </script>
+
 </body>
 </html>

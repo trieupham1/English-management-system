@@ -1047,6 +1047,8 @@ function viewAssignmentSubmission(assignmentId, title, description) {
     // Load submission data
     loadSubmissionData(assignmentId);
 }
+
+// Now update the student side to show the correct total points
 function loadSubmissionData(assignmentId) {
     // Show loading notification
     ELC.showNotification('Loading submission...', 'info');
@@ -1073,6 +1075,7 @@ function loadSubmissionData(assignmentId) {
                 }
                 
                 if (userSubmission) {
+                    console.log("User submission found:", userSubmission);
                     // Extract file details if available
                     submissionFiles = [];
                     if (userSubmission.file) {
@@ -1084,14 +1087,17 @@ function loadSubmissionData(assignmentId) {
                         });
                     }
                     
-                    // Create submission data object
+                    // Create submission data object including grade information and total points
                     const submissionData = {
                         submittedAt: new Date(userSubmission.submittedAt),
                         status: 'submitted',
                         gradingStatus: userSubmission.grade ? 'graded' : 'not_graded',
                         grade: userSubmission.grade,
-                        feedback: userSubmission.feedback
+                        feedback: userSubmission.feedback,
+                        totalPoints: assignment.totalPoints || 100  // Pass the assignment's total points
                     };
+                    
+                    console.log("Submission data with grade info:", submissionData);
                     
                     // Update the UI with submission data
                     showSubmissionStatus(submissionData);
@@ -1296,6 +1302,7 @@ function updateAssignmentStatus(assignmentId, newStatus) {
         }
     }
 }
+// Student view: Update the showSubmissionStatus function to show correct total points
 function showSubmissionStatus(data) {
     // Get the file upload and status sections
     const fileUploadSection = document.getElementById('file-upload-section');
@@ -1304,6 +1311,10 @@ function showSubmissionStatus(data) {
     // Get date elements
     const submissionDate = document.getElementById('submission-date');
     const submittedFilesList = document.getElementById('submitted-files-list');
+    
+    // Get status table elements
+    const submissionStatusBadge = document.querySelector('.status-table .status-badge.badge-submitted');
+    const gradingStatusBadge = document.querySelector('.status-table .status-badge.badge-not-graded');
     
     // Format current date for display
     const date = data.submittedAt || new Date();
@@ -1349,17 +1360,69 @@ function showSubmissionStatus(data) {
         });
     }
     
-    // Update status badges
-    const statusBadge = submissionStatus.querySelector('.status-badge.badge-submitted');
-    if (statusBadge) {
-        statusBadge.textContent = 'Submitted for grading';
+    // Update submission status
+    if (submissionStatusBadge) {
+        // If graded, change the submission status badge
+        if (data.grade !== null && data.grade !== undefined) {
+            submissionStatusBadge.className = 'status-badge badge-graded'; 
+            submissionStatusBadge.textContent = 'Graded';
+        } else {
+            submissionStatusBadge.className = 'status-badge badge-submitted';
+            submissionStatusBadge.textContent = 'Submitted for grading';
+        }
     }
     
-    // IMPORTANT: Hide upload section and show status section
+    // Update grading status - Use totalPoints from the assignment data
+    const totalPoints = data.totalPoints || 100; // Make sure we use the correct total
+    
+    if (gradingStatusBadge) {
+        if (data.grade !== null && data.grade !== undefined) {
+            gradingStatusBadge.className = 'status-badge badge-graded';
+            gradingStatusBadge.textContent = `${data.grade}/${totalPoints} points`;
+        } else {
+            gradingStatusBadge.className = 'status-badge badge-not-graded';
+            gradingStatusBadge.textContent = 'Not graded';
+        }
+    }
+    
+    // Add feedback toggle functionality
+    const feedbackToggle = document.getElementById('feedback-toggle');
+    const feedbackContent = document.getElementById('feedback-content');
+    
+    if (feedbackToggle && feedbackContent) {
+        // Update the feedback count in the toggle
+        const feedbackCount = data.feedback ? 1 : 0;
+        const feedbackSpan = feedbackToggle.querySelector('span');
+        if (feedbackSpan) {
+            feedbackSpan.textContent = `Feedback (${feedbackCount})`;
+        }
+        
+        // Update the feedback content
+        if (data.feedback) {
+            feedbackContent.innerHTML = `<p class="feedback-text">${data.feedback}</p>`;
+        } else {
+            feedbackContent.innerHTML = '<p class="feedback-empty">No feedback has been provided yet.</p>';
+        }
+        
+        // Make sure the toggle works
+        feedbackToggle.addEventListener('click', function() {
+            const icon = this.querySelector('.feedback-toggle-icon');
+            const isHidden = feedbackContent.style.display === 'none' || !feedbackContent.style.display;
+            
+            feedbackContent.style.display = isHidden ? 'block' : 'none';
+            
+            if (icon) {
+                icon.className = isHidden ? 
+                    'fas fa-chevron-down feedback-toggle-icon' : 
+                    'fas fa-chevron-right feedback-toggle-icon';
+            }
+        });
+    }
+    
+    // Hide upload section, show status section
     if (fileUploadSection) fileUploadSection.style.display = 'none';
     if (submissionStatus) submissionStatus.style.display = 'block';
 }
-
 function showFileUploadSection() {
     // Get the file upload and status sections
     const fileUploadSection = document.getElementById('file-upload-section');
@@ -1467,62 +1530,5 @@ function removeSubmission() {
         }
         if (fileUploadSection) fileUploadSection.style.display = 'none';
         if (submissionStatus) submissionStatus.style.display = 'block';
-// Update the showSubmissionStatus function to format the file list better
-function showSubmissionStatus(data) {
-    // Get the file upload and status sections
-    const fileUploadSection = document.getElementById('file-upload-section');
-    const submissionStatus = document.getElementById('submission-status');
-    
-    // Get date elements
-    const submissionDate = document.getElementById('submission-date');
-    const submittedFilesList = document.getElementById('submitted-files-list');
-    
-    // Format current date for display
-    const date = data.submittedAt || new Date();
-    const options = {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    const formattedDate = date.toLocaleDateString('en-US', options) + ' at ' + 
-                          date.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
-    
-    // Update the submission date
-    if (submissionDate) submissionDate.textContent = formattedDate;
-    
-    // Update the submitted files list
-    if (submittedFilesList) {
-        submittedFilesList.innerHTML = '';
-        
-        submissionFiles.forEach(file => {
-            // Determine file icon based on file type
-            let fileIconClass = 'fas fa-file';
-            if (file.name.endsWith('.pdf')) {
-                fileIconClass = 'fas fa-file-pdf';
-            } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
-                fileIconClass = 'fas fa-file-word';
-            } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png') || file.name.endsWith('.gif')) {
-                fileIconClass = 'fas fa-file-image';
-            }
-            
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-link';
-            fileItem.innerHTML = `
-                <div class="file-icon">
-                    <i class="${fileIconClass}"></i>
-                </div>
-                <div class="file-name">${file.name}</div>
-                <div class="file-date">${formattedDate}</div>
-            `;
-            submittedFilesList.appendChild(fileItem);
-        });
-    }
-    
-    // Hide upload section, show status section
-    if (fileUploadSection) fileUploadSection.style.display = 'none';
-    if (submissionStatus) submissionStatus.style.display = 'block';
-}
+
 }

@@ -14,6 +14,7 @@ const CourseSchema = new mongoose.Schema({
     level: {
         type: String,
         required: true
+        
     },
     category: {
         type: String,

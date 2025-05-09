@@ -212,19 +212,29 @@ const authController = {
                 });
             }
             
-            // Check active status based on role
-            if (role === 'student' && user.studentInfo?.status !== 'active') {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Your account is not active. Please contact administration.'
-                });
-            } else if (['teacher', 'manager'].includes(role) && user.isActive === false) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Your account is currently inactive.'
-                });
-            }
-            
+            // Enhanced check for active status
+if (role === 'student') {
+    // For students, check both the nested status and the main isActive flag
+    if (user.studentInfo?.status !== 'active' || user.isActive === false) {
+        return res.status(403).json({
+            success: false,
+            message: 'Your account is not active. Please contact administration.'
+        });
+    }
+} else if (['teacher', 'manager'].includes(role)) {
+    // For teachers and managers, check isActive flag
+    if (user.isActive === false) {
+        return res.status(403).json({
+            success: false,
+            message: 'Your account is currently inactive.'
+        });
+    }
+}
+console.log(`User ${username} status check:`, {
+    role,
+    isActive: user.isActive,
+    studentStatus: user.studentInfo?.status
+});
             // Generate JWT token
             const token = jwt.sign(
                 { id: user._id, role },

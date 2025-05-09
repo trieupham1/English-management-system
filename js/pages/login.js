@@ -69,6 +69,16 @@ function login(username, password, role) {
         console.log('Login Response Data:', data);
         
         if (data.success) {
+            // Check for active status again on the frontend (extra security)
+            const userIsActive = 
+                data.data.user.role === 'student' 
+                    ? data.data.user.studentInfo?.status === 'active' 
+                    : data.data.user.isActive !== false;
+                    
+            if (!userIsActive) {
+                return showLoginError('Your account is inactive. Please contact administration.');
+            }
+            
             // Store auth data in localStorage
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
