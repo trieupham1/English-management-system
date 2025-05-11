@@ -71,31 +71,18 @@
     "updatedAt": "2025-05-07T09:25:52.588Z"
   },
   {
-    "_id": "6818615ad82b5f2cda603261",
-    "title": "Chấn thương háng",
-    "course": "681324ee882466c61f8985ed",
-    "instructions": "Halamadrid",
-    "dueDate": "2025-05-06T00:00:00.000Z",
-    "totalPoints": 13,
+    "_id": "681dd35c31d5e76ad8623a67",
+    "title": "Do this test",
+    "course": "681324ee882466c61f8985ef",
+    "instructions": "DO it create full",
+    "dueDate": "2025-05-16T00:00:00.000Z",
+    "totalPoints": 12,
     "isActive": true,
     "attachments": [],
-    "submissions": [
-      {
-        "student": "681333f473460c095068d89b",
-        "content": "",
-        "file": "uploads\\assignments\\file-1746608388936-594122399.docx",
-        "submittedAt": "2025-05-07T08:59:48.994Z",
-        "isLate": true,
-        "_id": "681b2104534e887a367dd30d",
-        "feedback": "-Làm bài ít thôi đụ má m",
-        "grade": 1,
-        "gradedAt": "2025-05-07T09:00:36.328Z",
-        "gradedBy": "681333f573460c095068d8a7"
-      }
-    ],
+    "submissions": [],
     "createdBy": "681333f573460c095068d8a6",
-    "createdAt": "2025-05-05T06:57:30.623Z",
-    "updatedAt": "2025-05-07T08:44:07.649Z",
-    "__v": 1
+    "createdAt": "2025-05-09T10:05:16.767Z",
+    "updatedAt": "2025-05-09T10:05:16.768Z",
+    "__v": 0
   }
 ]

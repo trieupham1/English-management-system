@@ -128,7 +128,7 @@ function createNotificationContainer() {
 document.addEventListener('DOMContentLoaded', function() {
     // First fix tab navigation
     setupTabNavigation();
-    loadCoursesIntoDropdown();
+    
   
     // Remove any existing event listeners from buttons by replacing them
     replaceAllButtons();
@@ -255,7 +255,134 @@ async function loadTeacherCourses() {
         classDropdown.innerHTML = '<option value="">Error loading courses</option>';
         classDropdown.disabled = false;
     }
+
 }
+// Function to load courses for student material selection
+async function loadMaterialCourses() {
+    const materialClassDropdown = document.getElementById('materialClass');
+    if (!materialClassDropdown) return;
+
+    try {
+        // Show loading state
+        materialClassDropdown.innerHTML = '<option value="">Loading courses...</option>';
+        materialClassDropdown.disabled = true;
+
+        // Get authentication token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        // Fetch courses for material selection
+        const response = await fetch('/api/students/my-courses', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Check if response is ok
+        if (!response.ok) {
+            // Try teacher's courses if student courses fail
+            console.warn('Student courses endpoint failed, trying teacher courses');
+            return loadTeacherCoursesForMaterials();
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.data && data.data.length > 0) {
+            // Clear previous options and add default option
+            materialClassDropdown.innerHTML = '<option value="">Select a course</option>';
+
+            // Populate dropdown with courses
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level || 'Level not specified'})`;
+                materialClassDropdown.appendChild(option);
+            });
+        } else {
+            // If no student courses, try teacher courses
+            console.warn('No student courses found, trying teacher courses');
+            return loadTeacherCoursesForMaterials();
+        }
+
+        materialClassDropdown.disabled = false;
+    } catch (error) {
+        console.error('Error loading student courses:', error);
+        
+        // Fallback to teacher courses on any error
+        return loadTeacherCoursesForMaterials();
+    }
+}
+
+// Fallback function to load teacher's courses
+async function loadTeacherCoursesForMaterials() {
+    const materialClassDropdown = document.getElementById('materialClass');
+    if (!materialClassDropdown) return;
+
+    try {
+        // Show loading state
+        materialClassDropdown.innerHTML = '<option value="">Loading courses...</option>';
+        materialClassDropdown.disabled = true;
+
+        // Get authentication token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        // Fetch teacher's courses
+        const response = await fetch('/api/teachers/my-courses', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.data && data.data.length > 0) {
+            // Clear previous options and add default option
+            materialClassDropdown.innerHTML = '<option value="">Select a course</option>';
+
+            // Populate dropdown with courses
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level || 'Level not specified'})`;
+                materialClassDropdown.appendChild(option);
+            });
+        } else {
+            materialClassDropdown.innerHTML = '<option value="">No courses found</option>';
+        }
+
+        materialClassDropdown.disabled = false;
+    } catch (error) {
+        console.error('Error loading teacher courses:', error);
+        materialClassDropdown.innerHTML = '<option value="">Error loading courses</option>';
+        materialClassDropdown.disabled = false;
+
+        // Show notification about loading failure
+        if (typeof ELC !== 'undefined' && ELC.showNotification) {
+            ELC.showNotification('Failed to load courses. Please try again later.', 'error');
+        } else {
+            alert('Failed to load courses. Please try again later.');
+        }
+    }
+}
+
+// Initialize when DOM is loaded
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', loadMaterialCourses);
+
 async function handleAssignmentSubmission(event) {
     event.preventDefault();
     
@@ -1455,7 +1582,8 @@ function previewMaterial(materialId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showMaterialPreviewModal(data.data);
+                showMaterialPreviewModal(data.data);   
+
             } else {
                 ELC.showNotification('Error loading material: ' + data.message, 'error');
             }
@@ -2027,7 +2155,62 @@ async function loadMaterials(filters = {}) {
         refreshCourses: loadTeacherCoursesForFilter
     };
 }
-
+// Function to load courses into material class dropdown
+function loadCoursesIntoDropdown() {
+    const courseDropdown = document.getElementById('materialClass');
+    if (!courseDropdown) return;
+    
+    // Show loading state
+    courseDropdown.innerHTML = '<option value="">Loading courses...</option>';
+    courseDropdown.disabled = true;
+    
+    // Get authentication token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+        courseDropdown.innerHTML = '<option value="">Please login to view courses</option>';
+        courseDropdown.disabled = false;
+        return;
+    }
+    
+    // Fetch teacher's courses from API
+    fetch('/api/teachers/my-courses', {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Courses loaded for dropdown:', data);
+        
+        if (data.success && data.data && data.data.length > 0) {
+            // Start with placeholder option
+            courseDropdown.innerHTML = '<option value="">Select a course</option>';
+            
+            // Add each course to the dropdown
+            data.data.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course._id;
+                option.textContent = `${course.name} (${course.level})`;
+                courseDropdown.appendChild(option);
+            });
+        } else {
+            courseDropdown.innerHTML = '<option value="">No courses available</option>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading courses:', error);
+        courseDropdown.innerHTML = '<option value="">Error loading courses</option>';
+    })
+    .finally(() => {
+        courseDropdown.disabled = false;
+    });
+}
 // Call this when the page is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize materials filtering and loading
@@ -2049,9 +2232,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 // ===== STUDENTS SECTION FILTERING =====
 function setupStudentsFiltering() {
-    // Get filter elements - matching your exact HTML structure
+    // Get filter elements
     const classFilter = document.querySelector('#students-section .filter-bar select');
     const searchInput = document.querySelector('#students-section .search-bar input');
     const searchButton = document.querySelector('#students-section .search-bar button');
@@ -2062,7 +2246,7 @@ function setupStudentsFiltering() {
         if (!classFilter) return;
         
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('token');
             if (!token) {
                 throw new Error('No authentication token found');
             }
@@ -2088,8 +2272,8 @@ function setupStudentsFiltering() {
             
             // Update dropdown options
             if (data.success && data.data && data.data.length > 0) {
-                // Start with "All Classes" option
-                classFilter.innerHTML = '<option value="">All Classes</option>';
+                // Start with "Select a Class" option
+                classFilter.innerHTML = '<option value="">Select a Class</option>';
                 
                 // Add each course to the filter
                 data.data.forEach(course => {
@@ -2098,169 +2282,309 @@ function setupStudentsFiltering() {
                     option.textContent = `${course.name} (${course.level})`;
                     classFilter.appendChild(option);
                 });
+                
+                // If there's only one course, select it automatically
+                if (data.data.length === 1) {
+                    classFilter.value = data.data[0]._id;
+                    // Trigger change event to load students for this course
+                    setTimeout(() => {
+                        applyFilters();
+                    }, 100);
+                }
             } else {
-                // Fallback to default classes if API returns no data
-                classFilter.innerHTML = '<option value="">All Classes</option>';
-                
-                // Add default classes - keeping your original values
-                const defaultClasses = [
-                    { value: 'conversational', text: 'Conversational English' },
-                    { value: 'business', text: 'Business English' },
-                    { value: 'beginner', text: 'Beginner English' },
-                    { value: 'ielts', text: 'IELTS Preparation' }
-                ];
-                
-                defaultClasses.forEach(cls => {
-                    const option = document.createElement('option');
-                    option.value = cls.value;
-                    option.textContent = cls.text;
-                    classFilter.appendChild(option);
-                });
+                classFilter.innerHTML = '<option value="">No courses assigned to you</option>';
             }
         } catch (error) {
             console.error('Error loading teacher courses for filter:', error);
-            
-            // Fallback to default classes on error - keeping your original values
-            classFilter.innerHTML = '<option value="">All Classes</option>';
-            
-            // Add default classes
-            const defaultClasses = [
-                { value: 'conversational', text: 'Conversational English' },
-                { value: 'business', text: 'Business English' },
-                { value: 'beginner', text: 'Beginner English' },
-                { value: 'ielts', text: 'IELTS Preparation' }
-            ];
-            
-            defaultClasses.forEach(cls => {
-                const option = document.createElement('option');
-                option.value = cls.value;
-                option.textContent = cls.text;
-                classFilter.appendChild(option);
-            });
+            classFilter.innerHTML = '<option value="">Error loading courses</option>';
         } finally {
             classFilter.disabled = false;
         }
     }
 
-    // Function to load students data from API with filtering
-async function loadStudents(filters = {}) {
-    // Show loading indicator
-    studentsList.innerHTML = `
-        <div class="loading-indicator">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading students...</p>
-        </div>
-    `;
-    
-    try {
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-        if (!token) {
-            throw new Error('No authentication token found');
+    // Load students with filtering - UPDATED to handle data structure
+    async function loadStudents(filters = {}) {
+        // Show loading indicator
+        if (studentsList) {
+            studentsList.innerHTML = `
+                <div class="loading-indicator">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading students...</p>
+                </div>
+            `;
         }
         
-        // Build query parameters
-        let apiUrl = '/api/students/byteacher';  // Use the correct endpoint
-        const queryParams = new URLSearchParams();
-        
-        // Add course filter if specified
-        if (filters.course) {
-            queryParams.append('courseId', filters.course);
-        }
-        
-        // Add search term if specified
-        if (filters.search) {
-            queryParams.append('search', filters.search);
-        }
-        
-        // Add query parameters if any exist
-        if (queryParams.toString()) {
-            apiUrl += '?' + queryParams.toString();
-        }
-        
-        console.log('Fetching students from:', apiUrl);
-        
-        // Fetch filtered students from API
-        const response = await fetch(apiUrl, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Students data received:', data);
-        
-        // Clear loading indicator
-        studentsList.innerHTML = '';
-        
-        if (data.success && data.data && data.data.length > 0) {
-            // Add each student to the list
-            data.data.forEach(student => {
-                addStudentToList(student);
+            
+            // If no course is selected, show message and return early
+            if (!filters.course) {
+                showSelectCourseMessage();
+                return;
+            }
+            
+            // First, we'll try to get all the teacher's students
+            const timestamp = new Date().getTime();
+            let apiUrl = `/api/students/byteacher?_t=${timestamp}`;
+            
+            // Add search parameter if provided
+            if (filters.search) {
+                apiUrl += `&search=${encodeURIComponent(filters.search)}`;
+            }
+            
+            console.log('Fetching all teacher students from:', apiUrl);
+            
+            // Fetch student data from API
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                }
             });
-        } else {
-            // Show empty state if no students found
-            showStudentsEmptyState(true);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Students data received:', data);
+            
+            // Clear loading indicator
+            if (studentsList) {
+                studentsList.innerHTML = '';
+            }
+            
+            if (data.success && data.data && data.data.length > 0) {
+                // Manually filter students to only show those enrolled in the selected course
+                const selectedCourseId = filters.course;
+                const filteredStudents = data.data.filter(student => {
+                    // Check if the student is enrolled in the selected course
+                    if (student.studentInfo && student.studentInfo.course) {
+                        // If course is a string ID
+                        if (typeof student.studentInfo.course === 'string') {
+                            return student.studentInfo.course === selectedCourseId;
+                        }
+                        // If course is an object
+                        else if (typeof student.studentInfo.course === 'object' && student.studentInfo.course._id) {
+                            return student.studentInfo.course._id === selectedCourseId;
+                        }
+                        // If course is an array
+                        else if (Array.isArray(student.studentInfo.course)) {
+                            return student.studentInfo.course.some(course => {
+                                if (typeof course === 'string') {
+                                    return course === selectedCourseId;
+                                } else if (typeof course === 'object' && course._id) {
+                                    return course._id === selectedCourseId;
+                                }
+                                return false;
+                            });
+                        }
+                    }
+                    return false;
+                });
+                
+                console.log(`Filtered from ${data.data.length} to ${filteredStudents.length} students for course ${selectedCourseId}`);
+                
+                // Display the filtered students
+                if (filteredStudents.length > 0) {
+                    filteredStudents.forEach(student => {
+                        addStudentToList(student);
+                    });
+                } else {
+                    // No students found for this course
+                    showNoStudentsForCourseMessage(selectedCourseId);
+                }
+            } else {
+                // No students found at all
+                showNoStudentsForCourseMessage(filters.course);
+            }
+        } catch (error) {
+            console.error('Error loading students:', error);
+            if (studentsList) {
+                studentsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error loading students</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
         }
-    } catch (error) {
-        console.error('Error loading students:', error);
+    }
+    
+    // Show message for no students in the selected course
+    function showNoStudentsForCourseMessage(courseId) {
+        if (!studentsList) return;
+        
+        // Find the course name from the dropdown
+        let courseName = "this course";
+        if (classFilter) {
+            const selectedOption = classFilter.options[classFilter.selectedIndex];
+            if (selectedOption) {
+                courseName = selectedOption.textContent;
+            }
+        }
+        
         studentsList.innerHTML = `
             <div class="empty-state">
-                <i class="fas fa-exclamation-circle"></i>
-                <h3>Error loading students</h3>
-                <p>${error.message}</p>
+                <i class="fas fa-user-graduate"></i>
+                <h3>No students found</h3>
+                <p>There are no students enrolled in ${courseName}.</p>
             </div>
         `;
     }
-}
 
-    // Function to add a student to the list
-function addStudentToList(student) {
-    // Check if student data is valid
-    if (!student) return;
-    
-    // Get student name - handling possible undefined
-    const fullName = student.fullName || 'Unnamed Student';
-    
-    // Get course name - handling case when course might be null
-    let courseText = 'Classes: None';
-    if (student.studentInfo && student.studentInfo.course) {
-        if (typeof student.studentInfo.course === 'object' && student.studentInfo.course.name) {
-            courseText = `Classes: ${student.studentInfo.course.name}`;
-        } else if (typeof student.studentInfo.course === 'string') {
-            courseText = `Classes: ${student.studentInfo.course}`;
+    // Function to add a student to the student list display
+    function addStudentToList(student) {
+        // Check if student data is valid
+        if (!student) return;
+        
+        // Get student name - handling possible undefined
+        const fullName = student.fullName || 'Unnamed Student';
+        
+        // Get course name - with enhanced handling for course data
+        let courseText = 'No course information available';
+        
+        // Try to get the most accurate course information
+        if (student.studentInfo && student.studentInfo.course) {
+            // Case 1: Course is an object with name property
+            if (typeof student.studentInfo.course === 'object' && student.studentInfo.course.name) {
+                courseText = `Course: ${student.studentInfo.course.name}`;
+            } 
+            // Case 2: Course is an array (multiple courses)
+            else if (Array.isArray(student.studentInfo.course) && student.studentInfo.course.length > 0) {
+                const courseNames = student.studentInfo.course.map(course => {
+                    if (typeof course === 'object' && course.name) {
+                        return course.name;
+                    } else {
+                        return course.toString();
+                    }
+                });
+                courseText = `Courses: ${courseNames.join(', ')}`;
+            }
+            // Case 3: Course is a string (ID or name)
+            else if (typeof student.studentInfo.course === 'string') {
+                // Try to look up the course name from the dropdown
+                const courseDropdown = document.querySelector('.filter-select, #class-filter');
+                if (courseDropdown) {
+                    const option = Array.from(courseDropdown.options).find(opt => 
+                        opt.value === student.studentInfo.course
+                    );
+                    
+                    if (option) {
+                        courseText = `Course: ${option.textContent}`;
+                    } else {
+                        // If not found in dropdown, use the ID and fetch course info if possible
+                        courseText = `Course ID: ${student.studentInfo.course}`;
+                        
+                        // Optionally fetch course name (async)
+                        fetchCourseName(student.studentInfo.course)
+                            .then(name => {
+                                if (name) {
+                                    const courseElement = document.querySelector(`.student-item[data-id="${student._id}"] .student-details div:first-child`);
+                                    if (courseElement) {
+                                        courseElement.innerHTML = `<i class="fas fa-book"></i> Course: ${name}`;
+                                    }
+                                }
+                            })
+                            .catch(err => console.warn('Failed to fetch course name:', err));
+                    }
+                } else {
+                    courseText = `Course ID: ${student.studentInfo.course}`;
+                }
+            }
         }
-    }
-    
-    // Create student HTML
-    const studentHTML = `
-        <div class="student-item" data-id="${student._id}">
-            <div class="student-info">
-                <div class="student-name">${fullName}</div>
-                <div class="student-details">
-                    <div><i class="fas fa-book"></i> ${courseText}</div>
+        
+        // Get enrollment date if available
+        let enrollmentInfo = '';
+        if (student.studentInfo && student.studentInfo.enrollmentDate) {
+            const enrollDate = new Date(student.studentInfo.enrollmentDate);
+            if (!isNaN(enrollDate.getTime())) {
+                enrollmentInfo = `<div><i class="fas fa-calendar-alt"></i> Enrolled: ${enrollDate.toLocaleDateString()}</div>`;
+            }
+        }
+        
+        // Get student level if available
+        let levelInfo = '';
+        if (student.studentInfo && student.studentInfo.currentLevel) {
+            levelInfo = `<div><i class="fas fa-layer-group"></i> Level: ${student.studentInfo.currentLevel}</div>`;
+        }
+        
+        // Create student HTML with improved layout
+        const studentHTML = `
+            <div class="student-item" data-id="${student._id}">
+                <div class="student-info">
+                    <div class="student-name">${fullName}</div>
+                    <div class="student-details">
+                        <div><i class="fas fa-book"></i> ${courseText}</div>
+                        ${enrollmentInfo}
+                        ${levelInfo}
+                    </div>
+                </div>
+                <div class="student-actions">
+                    <button class="btn btn-primary view-profile-btn" data-id="${student._id}">View Profile</button>
                 </div>
             </div>
-            <div class="student-actions">
-                <button class="btn btn-primary view-profile-btn" data-id="${student._id}">View Profile</button>
-                <button class="btn btn-secondary contact-btn" data-id="${student._id}">Contact</button>
-            </div>
-        </div>
-    `;
-    
-    // Add to container
-    const studentsList = document.querySelector('.students-list');
-    if (studentsList) {
-        studentsList.insertAdjacentHTML('beforeend', studentHTML);
+        `;
+        
+        // Add to container
+        const studentsList = document.querySelector('.students-list');
+        if (studentsList) {
+            studentsList.insertAdjacentHTML('beforeend', studentHTML);
+        }
+        
+        // Add button event listeners
+        setupStudentButtons(student._id);
     }
-    
-    // Add button event listeners
-    setupStudentButtons(student._id);
-}
+
+    // Helper function to fetch course name from an ID
+    function fetchCourseName(courseId) {
+        return new Promise((resolve, reject) => {
+            // First check if we already have the name in a dropdown
+            const courseDropdown = document.querySelector('.filter-select, #class-filter');
+            if (courseDropdown) {
+                const option = Array.from(courseDropdown.options).find(opt => opt.value === courseId);
+                if (option) {
+                    resolve(option.textContent);
+                    return;
+                }
+            }
+            
+            // Otherwise fetch from API
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                resolve(null);
+                return;
+            }
+            
+            fetch(`/api/courses/${courseId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch course');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data && data.data.name) {
+                    resolve(data.data.name);
+                } else {
+                    resolve(null);
+                }
+            })
+            .catch(error => {
+                console.warn('Error fetching course:', error);
+                resolve(null);
+            });
+        });
+    }
+
     // Setup student action buttons
     function setupStudentButtons(studentId) {
         const viewProfileBtn = document.querySelector(`.view-profile-btn[data-id="${studentId}"]`);
@@ -2268,134 +2592,147 @@ function addStudentToList(student) {
         
         if (viewProfileBtn) {
             viewProfileBtn.addEventListener('click', function() {
-                viewStudentProfile(studentId);
+                const id = this.getAttribute('data-id');
+                viewStudentProfile(id);
             });
         }
         
         if (contactBtn) {
             contactBtn.addEventListener('click', function() {
-                contactStudent(studentId);
+                const id = this.getAttribute('data-id');
+                ELC.showNotification('Contact functionality coming soon!', 'info');
             });
         }
     }
-// Function to view student profile
-function viewStudentProfile(studentId) {
-    // Show loading notification
-    ELC.showNotification('Loading student profile...', 'info');
-    
-    // Fetch student details from API
-    fetch(`/api/students/${studentId}`, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // We have student data, but need to get course info if it's not populated
-            const student = data.data;
-            
-            if (student.studentInfo && student.studentInfo.course && 
-                typeof student.studentInfo.course === 'string') {
-                
-                // Use the courses dropdown for a course name lookup
-                fetchCourseName(student.studentInfo.course)
-                    .then(courseName => {
-                        // Create a populated course object
-                        student.courseDetails = {
-                            name: courseName
-                        };
-                        // Show modal with all data
-                        showStudentProfileModal(student);
-                    })
-                    .catch(error => {
-                        console.warn('Could not fetch course name:', error);
-                        // Still show modal even if course name fetch fails
-                        showStudentProfileModal(student);
-                    });
-            } else {
-                // Course info already populated or not present
-                showStudentProfileModal(student);
-            }
-        } else {
-            ELC.showNotification('Error: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching student profile:', error);
-        ELC.showNotification('Failed to load student profile. Please try again.', 'error');
-    });
-}
 
-// Helper function to get course name from dropdown or API
-function fetchCourseName(courseId) {
-    return new Promise((resolve, reject) => {
-        // First try to get it from the dropdown
-        const courseSelect = document.querySelector('#class-filter');
-        if (courseSelect) {
-            const courseOption = courseSelect.querySelector(`option[value="${courseId}"]`);
-            if (courseOption) {
-                resolve(courseOption.textContent);
-                return;
-            }
-        }
+    // Function to view student profile
+    function viewStudentProfile(studentId) {
+        // Show loading notification
+        ELC.showNotification('Loading student profile...', 'info');
         
-        // If not in dropdown, fetch from the courses dropdown API
-        fetch(`/api/students/courses/dropdown`, {
+        // Fetch student details from API
+        fetch(`/api/students/${studentId}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 'Content-Type': 'application/json'
             }
         })
         .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch courses');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             return response.json();
         })
         .then(data => {
-            if (data.success && data.data) {
-                // Find the course in the returned data
-                const course = data.data.find(c => c._id === courseId);
-                if (course) {
-                    resolve(course.name);
+            if (data.success) {
+                // We have student data, but need to get course info if it's not populated
+                const student = data.data;
+                
+                if (student.studentInfo && student.studentInfo.course && 
+                    typeof student.studentInfo.course === 'string') {
+                    
+                    // Use the courses dropdown for a course name lookup
+                    fetchCourseName(student.studentInfo.course)
+                        .then(courseName => {
+                            // Create a populated course object
+                            student.courseDetails = {
+                                name: courseName
+                            };
+                            // Show modal with all data
+                            showStudentProfileModal(student);
+                        })
+                        .catch(error => {
+                            console.warn('Could not fetch course name:', error);
+                            // Still show modal even if course name fetch fails
+                            showStudentProfileModal(student);
+                        });
                 } else {
-                    resolve('Unknown Course');
+                    // Course info already populated or not present
+                    showStudentProfileModal(student);
                 }
             } else {
-                resolve('Unknown Course');
+                ELC.showNotification('Error: ' + data.message, 'error');
             }
         })
         .catch(error => {
-            console.warn('Error fetching course dropdown:', error);
-            resolve('Unknown Course');
+            console.error('Error fetching student profile:', error);
+            ELC.showNotification('Failed to load student profile. Please try again.', 'error');
         });
-    });
-}
-
-// Function to display student profile modal
+    }
+// Function to display student profile modal - updated version
 function showStudentProfileModal(student) {
     try {
         // Format dates
         const dob = student.studentInfo.dateOfBirth ? new Date(student.studentInfo.dateOfBirth).toLocaleDateString() : 'Not provided';
-        const enrollmentDate = student.studentInfo.enrollmentDate ? new Date(student.studentInfo.enrollmentDate).toLocaleDateString() : 'Not provided';
         
         // Get course name
         let courseName = 'Not enrolled';
+        let enrollmentDate = 'Not available';
         
         // Try different properties where course info might be stored
         if (student.courseDetails && student.courseDetails.name) {
             courseName = student.courseDetails.name;
+            
+            // We need to fetch course details to get enrollment information
+            fetchCourseDetails(student.studentInfo.course)
+                .then(courseData => {
+                    if (courseData) {
+                        // Find this student in the course's student array
+                        const studentInCourse = courseData.students.find(s => 
+                            typeof s === 'object' ? s.student === student._id : s === student._id
+                        );
+                        
+                        if (studentInCourse && studentInCourse.enrollmentDate) {
+                            // Update enrollment date in the modal if found
+                            const enrollmentElem = document.querySelector('#enrollment-date-display');
+                            if (enrollmentElem) {
+                                const formattedDate = new Date(studentInCourse.enrollmentDate).toLocaleDateString();
+                                enrollmentElem.textContent = formattedDate;
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.warn('Could not fetch enrollment details from course:', err));
         } else if (student.studentInfo && student.studentInfo.course) {
             if (typeof student.studentInfo.course === 'object' && student.studentInfo.course.name) {
                 courseName = student.studentInfo.course.name;
             } else {
                 courseName = 'Enrolled in course';
+                
+                // Fetch course details if we only have the ID
+                if (typeof student.studentInfo.course === 'string') {
+                    fetchCourseDetails(student.studentInfo.course)
+                        .then(courseData => {
+                            if (courseData) {
+                                // Update course name
+                                const courseElem = document.querySelector('#course-name-display');
+                                if (courseElem && courseData.name) {
+                                    courseElem.textContent = courseData.name;
+                                }
+                                
+                                // Find this student in the course's student array
+                                const studentInCourse = courseData.students.find(s => 
+                                    typeof s === 'object' ? s.student === student._id : s === student._id
+                                );
+                                
+                                if (studentInCourse && studentInCourse.enrollmentDate) {
+                                    // Update enrollment date in the modal if found
+                                    const enrollmentElem = document.querySelector('#enrollment-date-display');
+                                    if (enrollmentElem) {
+                                        const formattedDate = new Date(studentInCourse.enrollmentDate).toLocaleDateString();
+                                        enrollmentElem.textContent = formattedDate;
+                                    }
+                                }
+                            }
+                        })
+                        .catch(err => console.warn('Could not fetch course details:', err));
+                }
             }
+        }
+        
+        // Use student's enrollment date as a fallback if available
+        if (student.studentInfo && student.studentInfo.enrollmentDate) {
+            enrollmentDate = new Date(student.studentInfo.enrollmentDate).toLocaleDateString();
         }
         
         // Create modal element directly
@@ -2404,7 +2741,7 @@ function showStudentProfileModal(student) {
         modal.className = 'modal';
         modal.style.display = 'block';
         
-        // Set the modal content - without Performance section
+        // Set the modal content - without Edit button
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
@@ -2424,16 +2761,13 @@ function showStudentProfileModal(student) {
                     <div class="enrollment-section">
                         <h3>Enrollment Information</h3>
                         <p><strong>Current Level:</strong> ${student.studentInfo.currentLevel}</p>
-                        <p><strong>Course:</strong> ${courseName}</p>
-                        <p><strong>Enrollment Date:</strong> ${enrollmentDate}</p>
+                        <p><strong>Course:</strong> <span id="course-name-display">${courseName}</span></p>
+                        <p><strong>Enrollment Date:</strong> <span id="enrollment-date-display">${enrollmentDate}</span></p>
                         <p><strong>Status:</strong> <span class="status-badge ${student.studentInfo.status}">${student.studentInfo.status.toUpperCase()}</span></p>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary close-btn">Close</button>
-                    <button class="btn btn-primary edit-student-btn" data-id="${student._id}">
-                        <i class="fas fa-edit"></i> Edit Profile
-                    </button>
                 </div>
             </div>
         `;
@@ -2454,14 +2788,6 @@ function showStudentProfileModal(student) {
             });
         }
         
-        // Add edit button event listener
-        const editButton = modal.querySelector('.edit-student-btn');
-        if (editButton) {
-            editButton.addEventListener('click', function() {
-                ELC.showNotification('Edit functionality coming soon!', 'info');
-            });
-        }
-        
         // Close when clicking outside
         window.addEventListener('click', function(e) {
             if (e.target === modal) {
@@ -2475,40 +2801,76 @@ function showStudentProfileModal(student) {
         ELC.showNotification('Error displaying student profile', 'error');
     }
 }
-// Update the setupStudentButtons function to use the profile view
-function setupStudentButtons(studentId) {
-    const viewProfileBtn = document.querySelector(`.view-profile-btn[data-id="${studentId}"]`);
-    const contactBtn = document.querySelector(`.contact-btn[data-id="${studentId}"]`);
-    
-    if (viewProfileBtn) {
-        viewProfileBtn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            viewStudentProfile(id);
+
+// Helper function to fetch course details including enrollment info
+function fetchCourseDetails(courseId) {
+    return new Promise((resolve, reject) => {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        if (!token) {
+            reject(new Error('No authentication token found'));
+            return;
+        }
+        
+        fetch(`/api/courses/${courseId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.data) {
+                resolve(data.data);
+            } else {
+                reject(new Error('Course data not found'));
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching course details:', error);
+            reject(error);
         });
-    }
-    
-    if (contactBtn) {
-        contactBtn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            ELC.showNotification('Contact functionality coming soon!', 'info');
-        });
-    }
+    });
 }
-    // Function to contact student
-    function contactStudent(studentId) {
-        console.log('Contact student:', studentId);
-        // Implement contact logic here
-        ELC.showNotification('Contact feature coming soon!', 'info');
+    // Function to show a message asking user to select a course
+    function showSelectCourseMessage() {
+        const studentsList = document.querySelector('.students-list');
+        if (!studentsList) return;
+        
+        studentsList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>Select a course to view students</h3>
+                <p>Please select a course from the dropdown to see enrolled students.</p>
+            </div>
+        `;
     }
 
-    // Show empty state when no students match - using your existing HTML
-    function showStudentsEmptyState(show) {
-        const emptyState = document.querySelector('#students-section .empty-state');
-        
-        // Show or hide existing empty state
-        if (emptyState) {
-            emptyState.style.display = show ? 'block' : 'none';
-        }
+    // Add a refresh button to the students section header
+    const studentsHeader = document.querySelector('#students-section .header-with-actions');
+    if (studentsHeader && !studentsHeader.querySelector('.refresh-btn')) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'btn btn-sm btn-outline-primary refresh-btn';
+        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        refreshBtn.addEventListener('click', function() {
+            applyFilters();
+        });
+        studentsHeader.appendChild(refreshBtn);
+    }
+    
+    // Also refresh whenever the students tab is clicked
+    const studentsTab = document.querySelector('.menu-item[data-section="students"]');
+    if (studentsTab) {
+        studentsTab.addEventListener('click', function() {
+            // Only refresh if a course is selected
+            if (classFilter && classFilter.value) {
+                setTimeout(function() { 
+                    applyFilters(); 
+                }, 100); // Short delay to ensure tab is fully loaded
+            }
+        });
     }
 
     // Function to apply filters and load students
@@ -2525,25 +2887,27 @@ function setupStudentButtons(studentId) {
         });
     }
 
-    // Add event listeners
+    // Add event listeners for filtering
     if (classFilter) {
         classFilter.addEventListener('change', applyFilters);
     }
-    
+
     if (searchButton) {
         searchButton.addEventListener('click', applyFilters);
     }
-    
+
     if (searchInput) {
         searchInput.addEventListener('keyup', function(e) {
             if (e.key === 'Enter') applyFilters();
         });
     }
 
-    // Initialize: load teacher's courses for filter and initial students
+    // Initialize: load teacher's courses for filter first
     loadTeacherCoursesForStudentsFilter();
-    setTimeout(() => loadStudents(), 500); // Slight delay to ensure courses load first
-    
+
+    // Instead of loading all students immediately, wait for user to select a course
+    showSelectCourseMessage();
+
     // Return public methods for external use
     return {
         refresh: applyFilters,

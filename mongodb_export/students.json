@@ -13,11 +13,11 @@
       "currentLevel": "beginner",
       "status": "active",
       "enrollmentDate": "2025-05-01T08:42:28.771Z",
-      "course": "681324ee882466c61f8985ee",
+      "course": "681324ee882466c61f8985ed",
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-09T08:21:29.687Z",
+    "lastLogin": "2025-05-10T19:10:53.074Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.771Z",
     "updatedAt": "2025-05-01T08:42:28.771Z",
@@ -41,7 +41,7 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-07T09:16:20.923Z",
+    "lastLogin": "2025-05-10T17:06:18.964Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.773Z",
     "updatedAt": "2025-05-01T08:42:28.773Z",
@@ -65,7 +65,7 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": "2025-05-07T17:58:13.895Z",
+    "lastLogin": "2025-05-10T17:06:43.731Z",
     "isActive": true,
     "createdAt": "2025-05-01T08:42:28.772Z",
     "updatedAt": "2025-05-01T08:42:28.772Z",
@@ -88,10 +88,33 @@
       "attendance": 0,
       "progress": 0
     },
-    "lastLogin": null,
+    "lastLogin": "2025-05-10T17:18:07.135Z",
     "isActive": true,
     "createdAt": "2025-05-07T19:31:40.375Z",
     "updatedAt": "2025-05-07T19:31:40.375Z",
+    "__v": 0
+  },
+  {
+    "_id": "681f8b98ca80f692e1eabc0c",
+    "username": "phamquoctrieu",
+    "password": "$2b$10$Z.s8NPvIflF3a2wYIPPKguAdZZUUQNbIf7d1pFNn5E67riMUQPR7C",
+    "fullName": "Pham Quoc Trieu",
+    "email": "trieup920@gmail.com",
+    "phone": "1234567890",
+    "avatar": "default-student-avatar.png",
+    "studentInfo": {
+      "studentId": "S9772",
+      "currentLevel": "beginner",
+      "status": "active",
+      "enrollmentDate": "2025-05-10T17:23:36.718Z",
+      "course": "681324ee882466c61f8985ee",
+      "attendance": 0,
+      "progress": 0
+    },
+    "lastLogin": "2025-05-10T17:26:57.959Z",
+    "isActive": true,
+    "createdAt": "2025-05-10T17:23:36.718Z",
+    "updatedAt": "2025-05-10T17:23:36.718Z",
     "__v": 0
   }
 ]

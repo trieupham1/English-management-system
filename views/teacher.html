@@ -83,7 +83,10 @@
                             
                             <div class="form-group">
                                 <label for="materialClass">Select Class</label>
-                                <select id="materialClass" class="form-control" required></select>
+                                <select id="materialClass" class="form-control" required>
+                                    <!-- Options will be loaded dynamically -->
+                                    <option value="">Loading courses...</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
@@ -188,11 +191,6 @@
                         <div class="form-group">
                             <label for="selectedClass">Select Class</label>
                             <select id="selectedClass" class="form-control" required>
-                                <option value="">Choose a class</option>
-                                <option value="conversational">Conversational English</option>
-                                <option value="business">Business English</option>
-                                <option value="beginner">Beginner English</option>
-                                <option value="ielts">IELTS Preparation</option>
                             </select>
                         </div>
                 

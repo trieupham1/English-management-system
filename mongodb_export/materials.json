@@ -13,7 +13,7 @@
       "ielts"
     ],
     "downloadCount": 0,
-    "viewCount": 0,
+    "viewCount": 20,
     "createdAt": "2025-05-01T07:38:23.385Z",
     "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
@@ -31,25 +31,7 @@
       "tutorial"
     ],
     "downloadCount": 0,
-    "viewCount": 0,
-    "createdAt": "2025-05-01T07:38:23.385Z",
-    "updatedAt": "2025-05-09T08:42:16.209Z",
-    "__v": 0
-  },
-  {
-    "_id": "681324ef882466c61f898609",
-    "title": "Conversation Basics Slides",
-    "description": "Introduction to basic conversation structures and greetings",
-    "type": "slides",
-    "course": "681324ee882466c61f8985ec",
-    "file": "conversation_basics.pdf",
-    "uploadedBy": "681324ee882466c61f8985e8",
-    "tags": [
-      "conversation",
-      "slides"
-    ],
-    "downloadCount": 0,
-    "viewCount": 0,
+    "viewCount": 8,
     "createdAt": "2025-05-01T07:38:23.385Z",
     "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
@@ -73,23 +55,6 @@
     "__v": 0
   },
   {
-    "_id": "68177d0af764d6965c60ded7",
-    "title": "Up uop",
-    "description": "Up ",
-    "type": "document",
-    "course": "681324ee882466c61f8985ef",
-    "file": "file-1746369802729-355180273.docx",
-    "uploadedBy": "681333f573460c095068d8a6",
-    "tags": [
-      "worksheet"
-    ],
-    "downloadCount": 0,
-    "viewCount": 0,
-    "createdAt": "2025-05-04T14:43:22.786Z",
-    "updatedAt": "2025-05-04T14:43:22.786Z",
-    "__v": 0
-  },
-  {
     "_id": "681dbfe842d5a7ee3659859c",
     "title": "Vocabulary List",
     "description": "Complete IELTS vocabulary list",
@@ -101,46 +66,40 @@
       "vocabulary",
       "ielts"
     ],
-    "downloadCount": 0,
-    "viewCount": 0,
+    "downloadCount": 1,
+    "viewCount": 19,
     "createdAt": "2025-05-09T08:42:16.209Z",
     "updatedAt": "2025-05-09T08:42:16.209Z",
     "__v": 0
   },
   {
-    "_id": "681dbfe842d5a7ee3659859d",
-    "title": "Everyday Dialogues",
-    "description": "Common conversational dialogues for everyday situations",
-    "type": "document",
-    "course": "681324ee882466c61f8985ee",
-    "file": "b_dialogues_everyday_conversations.pdf",
-    "uploadedBy": "681324ee882466c61f8985e9",
-    "tags": [
-      "dialogues",
-      "conversation"
-    ],
+    "_id": "681f86af858584184b66976e",
+    "title": "Bài test",
+    "description": "Hel",
+    "type": "audio",
+    "course": "681324ee882466c61f8985ec",
+    "file": "file-1746896559002-452543894.mp3",
+    "uploadedBy": "681333f573460c095068d8a7",
+    "tags": [],
     "downloadCount": 0,
-    "viewCount": 0,
-    "createdAt": "2025-05-09T08:42:16.209Z",
-    "updatedAt": "2025-05-09T08:42:16.209Z",
+    "viewCount": 6,
+    "createdAt": "2025-05-10T17:02:39.253Z",
+    "updatedAt": "2025-05-10T17:02:39.253Z",
     "__v": 0
   },
   {
-    "_id": "681dbfe842d5a7ee3659859e",
-    "title": "ITP Practice Test",
-    "description": "ITP Practice Test Level 1",
-    "type": "document",
-    "course": "681324ee882466c61f8985ee",
-    "file": "itp-practice-test-level-1-volume-1.pdf",
-    "uploadedBy": "681324ee882466c61f8985e9",
-    "tags": [
-      "test",
-      "practice"
-    ],
+    "_id": "681f8771ca80f692e1eaba40",
+    "title": "Lmà bài",
+    "description": "Helo",
+    "type": "audio",
+    "course": "681324ee882466c61f8985ec",
+    "file": "file-1746896752000-607162336.mp3",
+    "uploadedBy": "681333f573460c095068d8a7",
+    "tags": [],
     "downloadCount": 0,
-    "viewCount": 0,
-    "createdAt": "2025-05-09T08:42:16.209Z",
-    "updatedAt": "2025-05-09T08:42:16.209Z",
+    "viewCount": 1,
+    "createdAt": "2025-05-10T17:05:53.762Z",
+    "updatedAt": "2025-05-10T17:05:53.762Z",
     "__v": 0
   }
 ]

@@ -4,7 +4,7 @@
     "name": "Business Communication",
     "level": "5.5-6.5",
     "category": "Business English",
-    "maxStudents": 13,
+    "maxStudents": 15,
     "status": "Active",
     "students": [
       "681333f473460c095068d89b",
@@ -13,15 +13,14 @@
     ],
     "createdAt": "2025-05-01T07:38:22.520Z",
     "__v": 2,
-    "teacher": "681333f573460c095068d8a8",
-    "description": ""
+    "description": "",
+    "teacher": "6820423c9015a925d38d332a"
   },
   {
     "_id": "681324ee882466c61f8985ef",
     "name": "TOEFL Speaking and Writing",
     "level": "5.5-6.5",
     "category": "TOEFL Preparation",
-    "teacher": "681333f573460c095068d8a6",
     "maxStudents": 8,
     "status": "Active",
     "students": [
@@ -31,7 +30,8 @@
     ],
     "createdAt": "2025-05-01T07:38:22.521Z",
     "__v": 2,
-    "description": ""
+    "description": "",
+    "teacher": "681333f573460c095068d8a8"
   },
   {
     "_id": "681324ee882466c61f8985ec",
@@ -42,12 +42,13 @@
     "status": "Active",
     "students": [
       "681333f473460c095068d89a",
-      "681bb51c7089b718aeaf946d"
+      "681bb51c7089b718aeaf946d",
+      "681333f473460c095068d899"
     ],
     "createdAt": "2025-05-01T07:38:22.520Z",
-    "__v": 1,
-    "teacher": "681333f573460c095068d8a7",
-    "description": ""
+    "__v": 2,
+    "description": "",
+    "teacher": "681333f573460c095068d8a6"
   },
   {
     "_id": "681324ee882466c61f8985ee",
@@ -60,11 +61,11 @@
       "681bb51c7089b718aeaf946d",
       "681333f473460c095068d89a",
       "681333f473460c095068d899",
-      "681333f473460c095068d89b"
+      "681333f473460c095068d89b",
+      "681f8b98ca80f692e1eabc0c"
     ],
     "createdAt": "2025-05-01T07:38:22.521Z",
-    "__v": 4,
-    "teacher": "681333f573460c095068d8a7",
+    "__v": 5,
     "description": ""
   }
 ]

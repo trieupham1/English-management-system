@@ -802,7 +802,15 @@ function showEditUserModal(userData, userType) {
     });
 
 }
-
+/**
+ * Close the course details modal
+ */
+function closeCourseDetailsModal() {
+    const modal = document.getElementById('course-details-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 /**
  * Close the edit user modal
  */
@@ -2518,184 +2526,235 @@ document.addEventListener('DOMContentLoaded', function() {
     attachStudentActionListeners();
 
 });
-// Function to load reports with optional filtering
 function loadReports(filters = {}) {
-    // Fetch courses, teachers, and reports
-    Promise.all([
-        ELC.apiRequest('/admin/courses', 'GET'),
-        ELC.apiRequest('/admin/teachers', 'GET'),
-        ELC.apiRequest('/admin/reports', 'GET')
-    ])
-    .then(([coursesResponse, teachersResponse, reportsResponse]) => {
-        // Create maps for easy lookup
-        const courseMap = coursesResponse.success 
-            ? coursesResponse.data.reduce((map, course) => {
-                map[course._id] = course.name || course.title;
-                return map;
-            }, {}) 
-            : {};
-        
-        const teacherMap = teachersResponse.success
-            ? teachersResponse.data.reduce((map, teacher) => {
-                map[teacher._id] = teacher.fullName;
-                return map;
-            }, {})
-            : {};
-        
-        // Process reports
-        if (reportsResponse.success) {
-            // Populate course filter with ALL courses
-            updateIndividualReportFilters(coursesResponse.data, courseMap);
-            
-            // Apply filters
-            let filteredReports = reportsResponse.data;
-            
-            if (filters.type) {
-                filteredReports = filteredReports.filter(report => report.type === filters.type);
-            }
-            
-            if (filters.course) {
-                filteredReports = filteredReports.filter(report => report.course === filters.course);
-            }
-            
-            // Separate and populate reports
-            const individualReports = filteredReports.filter(report => report.type === 'individual');
-            const classReports = filteredReports.filter(report => report.type === 'class');
-            
-            // Populate reports
-            populateIndividualReports(individualReports, courseMap, teacherMap, courseMap);
-            populateClassReports(classReports, courseMap, teacherMap);
+    // Show loading indicator
+    const individualReportsContainer = document.getElementById('individual-reports');
+    const classReportsContainer = document.getElementById('class-reports');
+    
+    if (individualReportsContainer) {
+        individualReportsContainer.querySelector('.reports-list').innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading reports...</p>
+            </div>
+        `;
+    }
+    
+    if (classReportsContainer) {
+        classReportsContainer.querySelector('.reports-list').innerHTML = `
+            <div class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading reports...</p>
+            </div>
+        `;
+    }
+
+    // Attempt multiple endpoints with precise query params
+    const reportEndpoints = [
+        '/admin/reports',
+        '/reports',
+        '/api/reports',
+        '/admin/teachers/reports'  // Additional potential endpoint
+    ];
+
+    // Function to try endpoints sequentially
+    const tryReportEndpoints = (endpoints, index = 0) => {
+        if (index >= endpoints.length) {
+            throw new Error('Could not fetch reports from any endpoint');
         }
-    })
-    .catch(error => {
-        console.error('Error loading reports:', error);
-        ELC.showNotification('Failed to load reports', 'error');
-    });
+
+        const endpoint = endpoints[index];
+        
+        // Build query parameters matching your backend structure
+        const queryParams = new URLSearchParams();
+        if (filters.type) {
+            queryParams.append('type', filters.type);
+        }
+        if (filters.course) {
+            queryParams.append('courseIds', filters.course);
+        }
+        if (filters.period) {
+            queryParams.append('academicPeriod', filters.period);
+        }
+
+        // Enhanced logging for debugging
+        console.log(`Attempting to fetch reports from: ${endpoint}`);
+        console.log('Query Parameters:', Object.fromEntries(queryParams));
+
+        // Get authentication token with fallback
+        const token = localStorage.getItem('token') || 
+                      sessionStorage.getItem('token') || 
+                      '';
+
+        // Enhanced fetch with more comprehensive error handling
+        return fetch(`${endpoint}?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            // Log response details for debugging
+            console.log(`Response from ${endpoint}:`, {
+                status: response.status,
+                statusText: response.statusText
+            });
+
+            // Handle various non-ok responses
+            if (!response.ok) {
+                // Try to get error text for logging
+                return response.text().then(errorText => {
+                    console.error(`Endpoint ${endpoint} returned error:`, errorText);
+                    
+                    // Attempt next endpoint if current one fails
+                    return tryReportEndpoints(endpoints, index + 1);
+                });
+            }
+
+            // Try to parse JSON
+            return response.json().catch(jsonError => {
+                console.error('JSON parsing error:', jsonError);
+                
+                // Try next endpoint if JSON parsing fails
+                return tryReportEndpoints(endpoints, index + 1);
+            });
+        })
+        .catch(fetchError => {
+            console.error(`Fetch error for ${endpoint}:`, fetchError);
+            
+            // Try next endpoint
+            return tryReportEndpoints(endpoints, index + 1);
+        });
+    };
+
+    // Execute endpoint attempts with improved error handling
+    tryReportEndpoints(reportEndpoints)
+        .then(response => {
+            // Enhanced logging
+            console.log('Reports response:', response);
+
+            // Validate response structure
+            if (!response || !response.success) {
+                throw new Error(response?.message || 'Invalid response structure');
+            }
+
+            // Ensure data exists and is an array
+            const reportsData = response.data || [];
+
+            // Validate reports data
+            if (!Array.isArray(reportsData)) {
+                throw new Error('Reports data is not an array');
+            }
+
+            // Separate individual and class reports with additional validation
+            const individualReports = reportsData
+                .filter(report => report.type === 'individual')
+                .map(report => {
+                    // Ensure minimal required fields exist
+                    if (!report._id) {
+                        console.warn('Report missing ID:', report);
+                    }
+                    return report;
+                });
+
+            const classReports = reportsData
+                .filter(report => report.type === 'class')
+                .map(report => {
+                    // Ensure minimal required fields exist
+                    if (!report._id) {
+                        console.warn('Report missing ID:', report);
+                    }
+                    return report;
+                });
+
+            // Log number of reports found
+            console.log(`Found ${individualReports.length} individual reports and ${classReports.length} class reports`);
+
+            // Populate reports with error handling
+            try {
+                populateIndividualReports(individualReports);
+                populateClassReports(classReports);
+            } catch (populationError) {
+                console.error('Error populating reports:', populationError);
+                throw populationError;
+            }
+        })
+        .catch(error => {
+            // Comprehensive error logging
+            console.error('Error loading reports:', error);
+            
+            // Fallback error display
+            const containers = [
+                document.getElementById('individual-reports')?.querySelector('.reports-list'),
+                document.getElementById('class-reports')?.querySelector('.reports-list')
+            ];
+
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : 'An unknown error occurred while loading reports';
+
+            containers.forEach(container => {
+                if (container) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Unable to load reports: ${errorMessage}</p>
+                            <details>
+                                <summary>Show technical details</summary>
+                                <pre>${JSON.stringify(error, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                }
+            });
+
+            // Optional: Show system-wide notification
+            if (typeof ELC !== 'undefined' && ELC.showNotification) {
+                ELC.showNotification(`Reports Error: ${errorMessage}`, 'error');
+            }
+        });
 }
 
-// Update filter options for individual reports
-function updateIndividualReportFilters(courses, courseMap) {
-    const individualCourseFilter = document.getElementById('filter-individual-class');
-    if (!individualCourseFilter) return;
-    
-    // Clear existing options
-    individualCourseFilter.innerHTML = '<option value="">All Classes</option>';
-    
-    // Add ALL courses as options
-    courses.forEach(course => {
-        const option = document.createElement('option');
-        option.value = course._id;
-        option.textContent = course.name || course.title;
-        individualCourseFilter.appendChild(option);
-    });
-}
-// Update filter options for class reports
-function updateClassReportFilters(reports) {
-    const classPeriodFilter = document.getElementById('filter-class-period');
-    if (!classPeriodFilter) return;
-    
-    // Get unique academic periods for class reports
-    const classPeriods = new Set(
-        reports
-            .filter(report => report.type === 'class')
-            .map(report => report.academicPeriod)
-    );
-    
-    // Clear existing options
-    classPeriodFilter.innerHTML = '<option value="">All Periods</option>';
-    
-    // Add periods as options
-    classPeriods.forEach(period => {
-        const option = document.createElement('option');
-        option.value = period;
-        option.textContent = capitalizeFirstLetter(period);
-        classPeriodFilter.appendChild(option);
-    });
-}
-// Modify populateIndividualReports to show reports for selected course or all courses
-function populateIndividualReports(reports, courseMap, teacherMap, allCourses) {
-    const individualReportsContainer = document.getElementById('individual-reports');
-    if (!individualReportsContainer) return;
-    
-    const reportsList = individualReportsContainer.querySelector('.reports-list');
-    if (!reportsList) return;
-    
-    // Clear existing reports
-    reportsList.innerHTML = '';
-    
-    // Sort reports by creation date (most recent first)
-    reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    // If no reports, show "No reports" message
+
+function populateIndividualReports(reports) {
+    const container = document.getElementById('individual-reports')?.querySelector('.reports-list');
+    if (!container) return;
+
+    // Clear existing content
+    container.innerHTML = '';
+
     if (reports.length === 0) {
-        reportsList.innerHTML = `
-            <div class="no-reports-message">
-                <p>No reports available for the selected course.</p>
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>No individual reports found</p>
             </div>
         `;
         return;
     }
-    
-    // Populate reports
-    reports.forEach(report => {
-        const reportItem = document.createElement('div');
-        reportItem.className = 'report-item';
-        
-        reportItem.innerHTML = `
-            <div class="report-header" onclick="toggleReport(this)">
-                <div class="report-info">
-                    <h4>${report.title}</h4>
-                    <div class="report-meta">
-                        <span><i class="fas fa-calendar"></i> Generated: ${ELC.formatDate(report.createdAt)}</span>
-                        <span><i class="fas fa-book"></i> Course: ${courseMap[report.course] || 'Unknown Course'}</span>
-                        <span><i class="fas fa-user"></i> By: ${teacherMap[report.generatedBy] || 'Unknown Teacher'}</span>
-                    </div>
-                </div>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="report-content">
-                <p>${report.description || 'No description available'}</p>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm" onclick="viewReport('${report._id}')">View Report</button>
-                    <button class="btn btn-secondary btn-sm" onclick="downloadReport('${report._id}')">Download PDF</button>
-                </div>
-                <div class="report-stats">
-                    <span><i class="fas fa-eye"></i> Views: ${report.viewCount}</span>
-                    <span><i class="fas fa-download"></i> Downloads: ${report.downloadCount}</span>
-                </div>
-            </div>
-        `;
-        
-        reportsList.appendChild(reportItem);
-    });
-}
-// Populate class reports (similar to individual reports)
-function populateClassReports(reports, courseMap, teacherMap) {
-    const classReportsContainer = document.getElementById('class-reports');
-    if (!classReportsContainer) return;
-    
-    const reportsList = classReportsContainer.querySelector('.reports-list');
-    if (!reportsList) return;
-    
-    // Clear existing reports
-    reportsList.innerHTML = '';
-    
+
     // Sort reports by creation date (most recent first)
     reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    // Populate reports
+
     reports.forEach(report => {
-        const reportItem = document.createElement('div');
-        reportItem.className = 'report-item';
+        const reportElement = document.createElement('div');
+        reportElement.className = 'report-item';
         
-        reportItem.innerHTML = `
+        // Get course name safely
+        const courseName = report.course && report.course.name 
+            ? report.course.name 
+            : 'Unknown Course';
+
+        reportElement.innerHTML = `
             <div class="report-header" onclick="toggleReport(this)">
                 <div class="report-info">
-                    <h4>${report.title}</h4>
+                    <h4>${report.title || 'Untitled Report'}</h4>
                     <div class="report-meta">
-                        <span><i class="fas fa-calendar"></i> Generated: ${ELC.formatDate(report.createdAt)}</span>
-                        <span><i class="fas fa-book"></i> Course: ${courseMap[report.course] || 'Unknown Course'}</span>
-                        <span><i class="fas fa-user"></i> By: ${teacherMap[report.generatedBy] || 'Unknown Teacher'}</span>
+                        <span><i class="fas fa-calendar"></i> Generated: ${new Date(report.createdAt).toLocaleDateString()}</span>
+                        <span><i class="fas fa-book"></i> ${courseName}</span>
+                        <span><i class="fas fa-user-graduate"></i> ${report.studentCount || 0} students</span>
                     </div>
                 </div>
                 <i class="fas fa-chevron-down"></i>
@@ -2707,29 +2766,80 @@ function populateClassReports(reports, courseMap, teacherMap) {
                     <button class="btn btn-secondary btn-sm" onclick="downloadReport('${report._id}')">Download PDF</button>
                 </div>
                 <div class="report-stats">
-                    <span><i class="fas fa-users"></i> Students: ${report.studentCount}</span>
-                    <span><i class="fas fa-eye"></i> Views: ${report.viewCount}</span>
-                    <span><i class="fas fa-download"></i> Downloads: ${report.downloadCount}</span>
+                    <span><i class="fas fa-eye"></i> Views: ${report.viewCount || 0}</span>
+                    <span><i class="fas fa-download"></i> Downloads: ${report.downloadCount || 0}</span>
                 </div>
             </div>
         `;
-        
-        reportsList.appendChild(reportItem);
+        container.appendChild(reportElement);
     });
 }
 
-// Toggle report content visibility
-function toggleReport(headerElement) {
-    const reportItem = headerElement.closest('.report-item');
-    const reportContent = reportItem.querySelector('.report-content');
-    const chevronIcon = headerElement.querySelector('.fa-chevron-down');
-    
-    reportContent.classList.toggle('active');
-    headerElement.classList.toggle('active');
+function populateClassReports(reports) {
+    const container = document.getElementById('class-reports')?.querySelector('.reports-list');
+    if (!container) return;
+
+    // Clear existing content
+    container.innerHTML = '';
+
+    if (reports.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>No class reports found</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort reports by creation date (most recent first)
+    reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    reports.forEach(report => {
+        const reportElement = document.createElement('div');
+        reportElement.className = 'report-item';
+        
+        // Get course name safely
+        const courseName = report.course && report.course.name 
+            ? report.course.name 
+            : 'Unknown Course';
+
+        const teacherName = report.generatedBy && report.generatedBy.name 
+            ? report.generatedBy.name 
+            : 'Unknown Teacher';
+
+        reportElement.innerHTML = `
+            <div class="report-header" onclick="toggleReport(this)">
+                <div class="report-info">
+                    <h4>${report.title || 'Untitled Report'}</h4>
+                    <div class="report-meta">
+                        <span><i class="fas fa-calendar"></i> Generated: ${new Date(report.createdAt).toLocaleDateString()}</span>
+                        <span><i class="fas fa-book"></i> ${courseName}</span>
+                        <span><i class="fas fa-chalkboard-teacher"></i> ${teacherName}</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="report-content">
+                <p>${report.description || 'No description available'}</p>
+                <div class="report-actions">
+                    <button class="btn btn-primary btn-sm" onclick="viewReport('${report._id}')">View Report</button>
+                    <button class="btn btn-secondary btn-sm" onclick="downloadReport('${report._id}')">Download PDF</button>
+                </div>
+                <div class="report-stats">
+                    <span><i class="fas fa-users"></i> Students: ${report.studentCount || 0}</span>
+                    <span><i class="fas fa-eye"></i> Views: ${report.viewCount || 0}</span>
+                    <span><i class="fas fa-download"></i> Downloads: ${report.downloadCount || 0}</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(reportElement);
+    });
 }
-// Initialize reports section with filter functionality
+
+// Initialize reports section
 function initReportsSection() {
-    // Tab switching functionality
+    // Tab switching
     const reportsTabs = document.querySelectorAll('.reports-tabs .tab-btn');
     reportsTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -2745,15 +2855,16 @@ function initReportsSection() {
             tabContents.forEach(content => {
                 content.classList.remove('active');
             });
+            
             document.getElementById(tabId).classList.add('active');
             
-            // Reload reports based on active tab
+            // Load reports based on active tab
             loadReports({
                 type: tabId === 'individual-reports' ? 'individual' : 'class'
             });
         });
     });
-    
+
     // Course filter for individual reports
     const individualCourseFilter = document.getElementById('filter-individual-class');
     if (individualCourseFilter) {
@@ -2766,141 +2877,410 @@ function initReportsSection() {
             });
         });
     }
-    
+
+    // Period filter for class reports
+    const classPeriodFilter = document.getElementById('filter-class-period');
+    if (classPeriodFilter) {
+        classPeriodFilter.addEventListener('change', function() {
+            const selectedPeriod = this.value;
+            
+            loadReports({
+                type: 'class',
+                period: selectedPeriod || undefined
+            });
+        });
+    }
+
     // Initial reports load
     loadReports({
         type: 'individual'
     });
 }
+
+// Add event listener when DOM is loaded
+document.addEventListener('DOMContentLoaded', initReportsSection);
+
+// Toggle report content visibility
+function toggleReport(headerElement) {
+    const reportItem = headerElement.closest('.report-item');
+    const reportContent = reportItem.querySelector('.report-content');
+    const chevronIcon = headerElement.querySelector('.fa-chevron-down');
+    
+    reportContent.classList.toggle('active');
+    chevronIcon.classList.toggle('fa-chevron-up');
+}
 // View report details
 function viewReport(reportId) {
-    ELC.apiRequest(`/admin/reports/${reportId}`, 'GET')
-        .then(response => {
-            if (response.success) {
-                const report = response.data;
-                
-                // Create report details modal
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Report Details</h3>
-                            <button class="close-modal">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="report-details">
-                                <h4>${report.title}</h4>
-                                <p><strong>Description:</strong> ${report.description || 'No description'}</p>
-                                <div class="report-metadata">
-                                    <p><strong>Type:</strong> ${capitalizeFirstLetter(report.type)}</p>
-                                    <p><strong>Course:</strong> ${report.course?.name || 'No course'}</p>
-                                    <p><strong>Generated By:</strong> ${report.generatedBy?.fullName || 'Unknown'}</p>
-                                    <p><strong>Academic Period:</strong> ${capitalizeFirstLetter(report.academicPeriod)}</p>
-                                    <p><strong>Student Count:</strong> ${report.studentCount || 0}</p>
-                                    <p><strong>Views:</strong> ${report.viewCount || 0}</p>
-                                    <p><strong>Downloads:</strong> ${report.downloadCount || 0}</p>
-                                </div>
-                                ${report.file 
-                                    ? `<div class="report-file">
-                                        <strong>Attached File:</strong> ${report.file}
-                                    </div>` 
-                                    : '<p><em>No file attached</em></p>'}
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary close-modal">Close</button>
-                            ${report.file 
-                                ? `<button class="btn btn-primary" onclick="downloadReport('${reportId}')">Download</button>` 
-                                : ''}
-                        </div>
-                    </div>
-                `;
-                
-                // Add close functionality
-                const closeButtons = modal.querySelectorAll('.close-modal');
-                closeButtons.forEach(button => {
-                    button.addEventListener('click', () => {
-                        document.body.removeChild(modal);
-                    });
-                });
-                
-                // Style the modal
-                modal.style.position = 'fixed';
-                modal.style.top = '0';
-                modal.style.left = '0';
-                modal.style.width = '100%';
-                modal.style.height = '100%';
-                modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                modal.style.display = 'flex';
-                modal.style.justifyContent = 'center';
-                modal.style.alignItems = 'center';
-                modal.style.zIndex = '1000';
-                
-                // Add modal to body
-                document.body.appendChild(modal);
-            } else {
-                ELC.showNotification('Error loading report details', 'error');
+    // Attempt multiple possible endpoints
+    const reportEndpoints = [
+        `/reports/${reportId}`,
+        `/api/reports/${reportId}`,
+        `/admin/reports/${reportId}`
+    ];
+
+    // Function to try endpoints sequentially
+    const tryReportEndpoints = (endpoints, index = 0) => {
+        if (index >= endpoints.length) {
+            throw new Error('Could not fetch report details from any endpoint');
+        }
+
+        const endpoint = endpoints[index];
+        console.log(`Attempting to fetch report details from: ${endpoint}`);
+
+        return fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token') || sessionStorage.getItem('token')}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
+        })
+        .then(response => {
+            console.log(`Response from ${endpoint}:`, {
+                status: response.status,
+                statusText: response.statusText
+            });
+
+            // Handle various non-ok responses
+            if (!response.ok) {
+                return response.text().then(errorText => {
+                    console.error(`Endpoint ${endpoint} returned error:`, errorText);
+                    return tryReportEndpoints(endpoints, index + 1);
+                });
+            }
+
+            return response.json().catch(jsonError => {
+                console.error('JSON parsing error:', jsonError);
+                return tryReportEndpoints(endpoints, index + 1);
+            });
+        })
+        .catch(fetchError => {
+            console.error(`Fetch error for ${endpoint}:`, fetchError);
+            return tryReportEndpoints(endpoints, index + 1);
+        });
+    };
+
+    // Execute endpoint attempts
+    tryReportEndpoints(reportEndpoints)
+        .then(response => {
+            console.log('Report details response:', response);
+
+            // Validate response structure
+            if (!response || !response.success) {
+                throw new Error(response?.message || 'Invalid response structure');
+            }
+
+            // Show report details
+            showReportDetailsModal(response.data);
         })
         .catch(error => {
             console.error('Error viewing report:', error);
-            ELC.showNotification('Error viewing report', 'error');
+            
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : 'An unknown error occurred while loading report details';
+
+            // Show error notification
+            if (typeof ELC !== 'undefined' && ELC.showNotification) {
+                ELC.showNotification(`Report View Error: ${errorMessage}`, 'error');
+            }
+
+            // Redirect to login if authentication fails
+            if (errorMessage.toLowerCase().includes('unauthorized') || 
+                errorMessage.toLowerCase().includes('token')) {
+                window.location.href = '/login';
+            }
         });
 }
-
-// Similarly for downloadReport
 function downloadReport(reportId) {
-    // Get token
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    // Comprehensive error handling function
+    const handleDownloadError = (error) => {
+        console.error('Download error:', error);
+        
+        // Check if error suggests authentication problem
+        const isAuthError = error.message.toLowerCase().includes('unauthorized') || 
+                             error.message.toLowerCase().includes('token');
+        
+        // Use ELC notification if available
+        if (typeof ELC !== 'undefined' && ELC.showNotification) {
+            ELC.showNotification(
+                isAuthError 
+                    ? 'Authentication required. Please log in again.' 
+                    : 'Failed to download report. Please try again.', 
+                'error'
+            );
+        }
+        
+        // Redirect to login for auth errors
+        if (isAuthError) {
+            window.location.href = '/login';
+        }
+    };
+
+    // Get authentication token
+    const token = localStorage.getItem('token') || 
+                  sessionStorage.getItem('token') || 
+                  '';
+
+    // Check if token exists
     if (!token) {
-        ELC.showNotification('Authentication required. Please login again.', 'error');
+        handleDownloadError(new Error('No authentication token'));
         return;
     }
-    
-    // Create download link
-    const downloadLink = document.createElement('a');
-    downloadLink.href = `/api/reports/${reportId}/pdf?token=${token}`;
-    downloadLink.target = '_blank';
-    
-    // Append to body, click, and remove
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    
-    ELC.showNotification('Downloading report...', 'success');
+
+    // Attempt multiple possible download endpoints
+    const downloadEndpoints = [
+        `/reports/${reportId}/pdf`,
+        `/api/reports/${reportId}/pdf`,
+        `/admin/reports/${reportId}/pdf`
+    ];
+
+    // Enhanced fetch with error handling
+    const tryDownloadEndpoints = (endpoints, index = 0) => {
+        if (index >= endpoints.length) {
+            handleDownloadError(new Error('Could not download report from any endpoint'));
+            return;
+        }
+
+        const endpoint = endpoints[index];
+        const downloadUrl = `${endpoint}?token=${token}`;
+
+        console.log(`Attempting to download report from: ${endpoint}`);
+
+        // Use fetch to first check the response
+        fetch(downloadUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json, application/pdf'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            // Check for non-OK responses
+            if (!response.ok) {
+                // Try to get error text
+                return response.text().then(errorText => {
+                    console.error('Error response body:', errorText);
+                    
+                    // If it looks like an HTML error page, try next endpoint
+                    if (errorText.includes('<!DOCTYPE') || errorText.includes('<html>')) {
+                        return tryDownloadEndpoints(endpoints, index + 1);
+                    }
+                    
+                    // Otherwise, throw an error
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+                });
+            }
+
+            // Check content type
+            const contentType = response.headers.get('content-type');
+            
+            // If it's a PDF, open in new window
+            if (contentType && contentType.includes('application/pdf')) {
+                // Create a blob URL
+                return response.blob().then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = `report-${reportId}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+
+                    // Show success notification
+                    if (typeof ELC !== 'undefined' && ELC.showNotification) {
+                        ELC.showNotification('Report downloaded successfully', 'success');
+                    }
+                });
+            }
+
+            // If not PDF, try to parse as JSON
+            return response.json().then(data => {
+                if (data.success) {
+                    // If successful response but no direct file, try next endpoint
+                    return tryDownloadEndpoints(endpoints, index + 1);
+                }
+                throw new Error(data.message || 'Unknown error');
+            });
+        })
+        .catch(error => {
+            console.error(`Download error for ${endpoint}:`, error);
+            
+            // If not the last endpoint, try next
+            if (index < endpoints.length - 1) {
+                return tryDownloadEndpoints(endpoints, index + 1);
+            }
+            
+            // Handle final error
+            handleDownloadError(error);
+        });
+    };
+
+    // Start download attempt
+    tryDownloadEndpoints(downloadEndpoints);
 }
 
 // Show report details modal
-function showReportDetailsModal(reportData) {
+function showReportDetailsModal(report) {
+    // Create modal element
     const modal = document.createElement('div');
     modal.className = 'modal';
+    
+    // Safely extract course name
+    const courseName = report.course && report.course.name 
+        ? report.course.name 
+        : 'Unknown Course';
+    
+    // Safely extract teacher/generated by name
+    const teacherName = report.generatedBy && report.generatedBy.name 
+        ? report.generatedBy.name 
+        : 'Unknown Teacher';
+    
+    // Determine student information based on report type
+    const studentInfo = report.type === 'individual' 
+        ? (report.student ? `Student: ${report.student.name}` : 'No student information')
+        : `Total Students: ${report.studentCount || 0}`;
+
+    // Enhanced modal with more detailed styling and information
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>${reportData.title}</h3>
+                <h3>${report.title}</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="report-details">
-                    <p><strong>Description:</strong> ${reportData.description}</p>
-                    <p><strong>Type:</strong> ${reportData.type}</p>
-                    <p><strong>Academic Period:</strong> ${reportData.academicPeriod}</p>
-                    <p><strong>View Count:</strong> ${reportData.viewCount}</p>
-                    <p><strong>Download Count:</strong> ${reportData.downloadCount}</p>
+                    <div class="detail-section">
+                        <h4>Report Overview</h4>
+                        <p><strong>Course:</strong> ${courseName}</p>
+                        <p><strong>Type:</strong> ${report.type === 'individual' ? 'Individual Report' : 'Class Report'}</p>
+                        <p><strong>Generated By:</strong> ${teacherName}</p>
+                        <p><strong>Date:</strong> ${new Date(report.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>${report.type === 'individual' ? 'Student Details' : 'Class Details'}</h4>
+                        <p>${studentInfo}</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Description</h4>
+                        <p>${report.description || 'No description provided'}</p>
+                    </div>
+                    
+                    <div class="report-stats">
+                        <span><i class="fas fa-eye"></i> Views: ${report.viewCount || 0}</span>
+                        <span><i class="fas fa-download"></i> Downloads: ${report.downloadCount || 0}</span>
+                    </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary close-modal">Close</button>
+                <button class="btn btn-primary" onclick="downloadReport('${report._id}')">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
             </div>
         </div>
     `;
     
-    // Add close functionality
-    const closeButton = modal.querySelector('.close-modal');
-    closeButton.addEventListener('click', () => {
-        document.body.removeChild(modal);
+    // Close modal functionality
+    const closeButtons = modal.querySelectorAll('.close-modal');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
     });
     
-    // Add modal to body
+    // Add click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+    
+    // Add modal to document body
     document.body.appendChild(modal);
+
+    // Optional: Add some basic styling
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80%;
+            overflow-y: auto;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .detail-section {
+            margin-bottom: 20px;
+        }
+        .detail-section h4 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+    `;
+    document.head.appendChild(styleElement);
+}
+function initSettingsForm() {
+    console.log('Initializing settings form...');
+    
+    // Find the settings form
+    const settingsForm = document.getElementById('system-settings-form');
+    
+    // If no form with ID, try to find form by containing 'Save Settings' button
+    const saveButton = document.querySelector('button.btn-primary, button[type="submit"]');
+    let form = settingsForm;
+    
+    if (!form && saveButton) {
+        form = saveButton.closest('form');
+    }
+    
+    // Set up form submission handler
+    if (form) {
+        console.log('Settings form found, setting up event listener');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect settings data
+            const settingsData = {
+                centerName: document.getElementById('center-name')?.value || '',
+                address: document.getElementById('center-address')?.value || '',
+                phone: document.getElementById('center-phone')?.value || '',
+                email: document.getElementById('center-email')?.value || ''
+            };
+            
+            console.log('Submitting settings data:', settingsData);
+            
+            // Update settings
+            updateSystemSettings(settingsData)
+                .then(response => {
+                    console.log('Settings updated successfully:', response);
+                })
+                .catch(error => {
+                    console.error('Error updating settings:', error);
+                });
+        });
+    }
 }
 /**
  * Updates system settings with the provided data using the ELC API utilities

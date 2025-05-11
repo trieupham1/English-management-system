@@ -74,17 +74,34 @@ exports.getTeacherAvailableCourses = async (req, res) => {
         });
     }
 };
-
-// Get a single course
+// Get a single course - MODIFIED TO FIX THE ERROR
 exports.getCourse = async (req, res) => {
     try {
-        const course = await Course.findById(req.params.id)
+        // Check if we should skip certain populates
+        const skipLessons = req.query.nopopulate === 'true';
+        
+        let query = Course.findById(req.params.id)
             .populate('teacher', 'fullName email')
             .populate({
                 path: 'students.student',
                 select: 'fullName email studentInfo.studentId'
-            })
-            .populate('lessons');
+            });
+        
+        // Only populate lessons if not skipped and it's needed
+        if (!skipLessons) {
+            try {
+                // Try to populate lessons but don't fail if it's not possible
+                query = query.populate({ 
+                    path: 'lessons',
+                    strictPopulate: false // Allow populating non-existent fields
+                });
+            } catch (err) {
+                console.warn('Could not populate lessons:', err);
+                // Continue without lessons population
+            }
+        }
+        
+        const course = await query;
         
         if (!course) {
             return res.status(404).json({
