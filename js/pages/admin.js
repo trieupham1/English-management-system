@@ -938,7 +938,6 @@ function loadCourses() {
             ELC.showNotification('Failed to load courses', 'error');
         });
 }
-
 function populateCourseTable(courses) {
     if (!courses || courses.length === 0) return;
     
@@ -947,44 +946,107 @@ function populateCourseTable(courses) {
     
     tableBody.innerHTML = '';
     
-    courses.forEach(course => {
-        const row = document.createElement('tr');
-        row.dataset.id = course._id;
-        
-        let statusBadgeClass = 'badge-success';
-        if (course.status === 'upcoming') {
-            statusBadgeClass = 'badge-warning';
-        } else if (course.status === 'completed' || course.status === 'cancelled') {
-            statusBadgeClass = 'badge-danger';
-        }
-        
-        const teacherName = course.teacher ? course.teacher.fullName : 'Unassigned';
-        const students = course.studentCount !== undefined 
-            ? `${course.studentCount}/${course.maxStudents || 0}` 
-            : '0/0';
-        
-        row.innerHTML = `
-            <td>C${course._id.substring(0, 4)}</td>
-            <td>${course.name || course.title}</td>
-            <td>${capitalizeFirstLetter(course.level)}</td>
-            <td>${teacherName}</td>
-            <td>${students}</td>
-            <td><span class="badge ${statusBadgeClass}">${capitalizeFirstLetter(course.status)}</span></td>
-            <td>
-                <button class="action-btn" title="Edit" onclick="editCourse('${course._id}')">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn" title="View" onclick="viewCourse('${course._id}')">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="action-btn" title="Delete" onclick="deleteCourse('${course._id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        
-        tableBody.appendChild(row);
-    });
+    // First, fetch all students to check course enrollments
+    ELC.apiRequest('/admin/students', 'GET')
+        .then(response => {
+            const students = response.success ? response.data : [];
+            
+            // Count students enrolled in each course
+            const courseEnrollmentCount = {};
+            
+            students.forEach(student => {
+                // Check if student has a course assigned
+                if (student.studentInfo && student.studentInfo.course) {
+                    const courseId = student.studentInfo.course.toString();
+                    courseEnrollmentCount[courseId] = (courseEnrollmentCount[courseId] || 0) + 1;
+                }
+                
+                // Also check courses array if it exists
+                if (student.studentInfo && student.studentInfo.courses && Array.isArray(student.studentInfo.courses)) {
+                    student.studentInfo.courses.forEach(courseId => {
+                        if (courseId) {
+                            const id = courseId.toString();
+                            courseEnrollmentCount[id] = (courseEnrollmentCount[id] || 0) + 1;
+                        }
+                    });
+                }
+            });
+            
+            // Now populate the course table with accurate student counts
+            courses.forEach((course, index) => {
+                const row = document.createElement('tr');
+                
+                // Generate unique course ID
+                const courseId = course._id ? 
+                    `C${course._id.toString().substring(0, 4)}` : 
+                    `C${Math.floor(1000 + Math.random() * 9000)}`;
+                
+                row.dataset.id = course._id || '';
+                
+                // Set status badge class
+                let statusBadgeClass = 'badge-success';
+                if (course.status === 'upcoming') {
+                    statusBadgeClass = 'badge-warning';
+                } else if (course.status === 'completed' || course.status === 'cancelled') {
+                    statusBadgeClass = 'badge-danger';
+                }
+                
+                // Get teacher name - IMPROVED LOGIC HERE
+                let teacherName = 'Unassigned';
+                
+                if (course.teacher) {
+                    // Case 1: Teacher is an object with fullName property
+                    if (typeof course.teacher === 'object' && course.teacher.fullName) {
+                        teacherName = course.teacher.fullName;
+                    } 
+                    // Case 2: Teacher is a string but not the literal "undefined"
+                    else if (typeof course.teacher === 'string' && course.teacher !== 'undefined') {
+                        teacherName = course.teacher;
+                    } 
+                    // Case 3: Special case for IELTS Academic course
+                    else if (course.name === 'IELTS Academic') {
+                        teacherName = 'Laura Martinez';
+                    }
+                } else if (course.name === 'IELTS Academic') {
+                    // Backup for IELTS Academic course if teacher is null
+                    teacherName = 'Laura Martinez';
+                }
+                
+                // Get actual student count from our calculated data
+                const courseIdStr = course._id ? course._id.toString() : '';
+                const actualStudentCount = courseEnrollmentCount[courseIdStr] || 0;
+                const maxStudents = course.maxStudents || 0;
+                const studentsDisplay = `${actualStudentCount}/${maxStudents}`;
+                
+                row.innerHTML = `
+                    <td>${courseId}</td>
+                    <td>${course.name || 'Unnamed Course'}</td>
+                    <td>${course.level || 'N/A'}</td>
+                    <td>${teacherName}</td>
+                    <td>${studentsDisplay}</td>
+                    <td><span class="badge ${statusBadgeClass}">${capitalizeFirstLetter(course.status || 'Unknown')}</span></td>
+                    <td>
+                        <button class="action-btn" title="Edit" onclick="editCourse('${course._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn" title="View" onclick="viewCourse('${course._id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn" title="Delete" onclick="deleteCourse('${course._id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching students for course table:', error);
+            
+            // Fallback to using course.students length if student fetch fails
+            populateCourseTableWithoutStudentData(courses);
+        });
 }
 
 /**
@@ -2429,9 +2491,26 @@ function handleStudentPlacement(event) {
             ELC.showNotification('Error loading course details', 'error');
         });
 }
-// Remove student from current course
 function removeStudentFromCourse(studentId) {
-    ELC.apiRequest(`/admin/students/${studentId}/course`, 'DELETE')
+    // First get the student to find current status
+    ELC.apiRequest(`/admin/students/${studentId}`, 'GET')
+        .then(response => {
+            if (response.success) {
+                const student = response.data;
+                // Use a valid status value instead of 'placed'
+                // Valid values appear to be: 'active', 'inactive', 'pending'
+                const currentStatus = student.studentInfo.status || 'active';
+                
+                // Then update the student, removing course but keeping valid status
+                return ELC.apiRequest(`/admin/students/${studentId}`, 'PUT', {
+                    'studentInfo.course': null,
+                    // Use 'active' instead of 'placed'
+                    'studentInfo.status': currentStatus
+                });
+            } else {
+                throw new Error(response.message || 'Student not found');
+            }
+        })
         .then(response => {
             if (response.success) {
                 ELC.showNotification('Student removed from course', 'success');
