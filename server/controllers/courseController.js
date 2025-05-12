@@ -3,14 +3,13 @@ const Teacher = require('../models/Teacher');
 const Student = require('../models/Student');
 const mongoose = require('mongoose');
 
-// Get all courses
 exports.getAllCourses = async (req, res) => {
     try {
-        // Get courses without using populate
-        const courses = await Course.find().select('-students');
+        // Get courses and include student count
+        const courses = await Course.find().select('_id name level category teacher status maxStudents students');
         
-        // Manually get teacher data if needed
-        const coursesWithTeachers = await Promise.all(courses.map(async (course) => {
+        // Manually get teacher data and student count
+        const coursesWithTeachersAndStudents = await Promise.all(courses.map(async (course) => {
             const courseObj = course.toObject();
             
             try {
@@ -29,6 +28,9 @@ exports.getAllCourses = async (req, res) => {
                         };
                     }
                 }
+                
+                // Add student count
+                courseObj.studentCount = course.students ? course.students.length : 0;
             } catch (err) {
                 console.error('Error fetching teacher for course:', err);
                 // Continue even if teacher data can't be fetched
@@ -39,8 +41,8 @@ exports.getAllCourses = async (req, res) => {
         
         res.status(200).json({
             success: true,
-            count: coursesWithTeachers.length,
-            data: coursesWithTeachers
+            count: coursesWithTeachersAndStudents.length,
+            data: coursesWithTeachersAndStudents
         });
     } catch (error) {
         console.error('Error fetching courses:', error);

@@ -939,9 +939,6 @@ function loadCourses() {
         });
 }
 
-/**
- * Populate course table with data
- */
 function populateCourseTable(courses) {
     if (!courses || courses.length === 0) return;
     
@@ -962,7 +959,9 @@ function populateCourseTable(courses) {
         }
         
         const teacherName = course.teacher ? course.teacher.fullName : 'Unassigned';
-        const students = course.students ? `${course.students.length}/${course.maxStudents}` : '0/0';
+        const students = course.studentCount !== undefined 
+            ? `${course.studentCount}/${course.maxStudents || 0}` 
+            : '0/0';
         
         row.innerHTML = `
             <td>C${course._id.substring(0, 4)}</td>
