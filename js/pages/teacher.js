@@ -44,6 +44,7 @@ const ELC = {
     }
 };
 
+
 // Helper function to create notification container
 function createNotificationContainer() {
     const container = document.createElement('div');
@@ -170,7 +171,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Log initialization complete
     console.log('Page initialization complete');
 });
+// Add this function to your teacher.js file (preferably near the top)
+function initUserInformation() {
+    // Get current user from localStorage (set during login)
+    const userStr = localStorage.getItem('user');
+    
+    if (!userStr) {
+        console.warn('No user data found in localStorage');
+        return;
+    }
+    
+    try {
+        // Parse the user data
+        const user = JSON.parse(userStr);
+        
+        // Update the UI with user information
+        const nameElement = document.getElementById('user-name');
+        const avatarElement = document.getElementById('user-avatar');
+        
+        if (nameElement) {
+            nameElement.textContent = user.fullName || user.name || 'Teacher';
+        }
+        
+        if (avatarElement) {
+            // Set first letter of name as avatar
+            const firstLetter = (user.fullName || user.name || 'T').charAt(0).toUpperCase();
+            avatarElement.textContent = firstLetter;
+        }
+        
+        console.log('User information updated successfully');
+    } catch (error) {
+        console.error('Error updating user information:', error);
+    }
+}
 
+// Then add this line to your existing DOMContentLoaded function
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize user information in the header
+    initUserInformation();
+    
+    // First fix tab navigation
+    setupTabNavigation();
+    
+    // ... rest of your existing initialization code
+});
 
 // Function to setup material type dropdown behavior
 function setupMaterialTypeField() {
