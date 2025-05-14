@@ -1663,7 +1663,7 @@ function showEditCourseModal(courseData) {
  */
 function showCourseDetailsModal(courseData) {
     console.log("Showing details for course:", courseData);
-    
+
     // Create modal if it doesn't exist
     let modalContainer = document.getElementById('course-details-modal');
     if (!modalContainer) {
@@ -1672,7 +1672,32 @@ function showCourseDetailsModal(courseData) {
         modalContainer.className = 'modal';
         document.body.appendChild(modalContainer);
     }
-    
+ // First, fetch all students to check course enrollments
+ ELC.apiRequest('/admin/students', 'GET')
+ .then(response => {
+     const students = response.success ? response.data : [];
+     
+     // Count students enrolled in each course
+     const courseEnrollmentCount = {};
+     
+     students.forEach(student => {
+         // Check if student has a course assigned
+         if (student.studentInfo && student.studentInfo.course) {
+             const courseId = student.studentInfo.course.toString();
+             courseEnrollmentCount[courseId] = (courseEnrollmentCount[courseId] || 0) + 1;
+         }
+         
+         // Also check courses array if it exists
+         if (student.studentInfo && student.studentInfo.courses && Array.isArray(student.studentInfo.courses)) {
+             student.studentInfo.courses.forEach(courseId => {
+                 if (courseId) {
+                     const id = courseId.toString();
+                     courseEnrollmentCount[id] = (courseEnrollmentCount[id] || 0) + 1;
+                 }
+             });
+         }
+     });
+
     // Get teacher name
     let teacherName = 'Unassigned';
     if (courseData.teacher) {
@@ -1682,9 +1707,9 @@ function showCourseDetailsModal(courseData) {
     }
     
     // Format student count
-    const studentCount = Array.isArray(courseData.students) ? courseData.students.length : 0;
     const maxStudents = courseData.maxStudents || 0;
-    
+    const courseIdStr = courseData._id ? courseData._id.toString() : '';
+    const actualStudentCount = courseEnrollmentCount[courseIdStr] || 0;    
     // Create modal content
     modalContainer.innerHTML = `
         <div class="modal-content">
@@ -1718,7 +1743,7 @@ function showCourseDetailsModal(courseData) {
                     
                     <div class="detail-row">
                         <strong>Students:</strong> 
-                        <span>${studentCount}/${maxStudents}</span>
+                        <span>${actualStudentCount}/${maxStudents}</span>
                     </div>
                     
                     <div class="detail-row">
@@ -1796,8 +1821,8 @@ function showCourseDetailsModal(courseData) {
     
     // Show modal
     modalContainer.style.display = 'flex';
+    });
 }
-
 /**
  * Close the edit course modal
  */
@@ -2296,6 +2321,50 @@ function addStudentActionListeners() {
 }
 // Open student placement modal
 function openStudentPlacementModal(studentId, studentName, studentLevel, currentCourse) {
+
+    // First, fetch all students to check course enrollments
+    ELC.apiRequest('/admin/students', 'GET')
+        .then(response => {
+            const students = response.success ? response.data : [];
+            
+            // Count students enrolled in each course
+            const courseEnrollmentCount = {};
+            
+            students.forEach(student => {
+                // Check if student has a course assigned
+                if (student.studentInfo && student.studentInfo.course) {
+                    const courseId = student.studentInfo.course.toString();
+                    courseEnrollmentCount[courseId] = (courseEnrollmentCount[courseId] || 0) + 1;
+                }
+                
+                // Also check courses array if it exists
+                if (student.studentInfo && student.studentInfo.courses && Array.isArray(student.studentInfo.courses)) {
+                    student.studentInfo.courses.forEach(courseId => {
+                        if (courseId) {
+                            const id = courseId.toString();
+                            courseEnrollmentCount[id] = (courseEnrollmentCount[id] || 0) + 1;
+                        }
+                    });
+                }
+            });
+            
+            // Now populate the course table with accurate student counts
+            courses.forEach((course, index) => {
+                const row = document.createElement('tr');
+                
+                // Generate unique course ID
+                const courseId = course._id ? 
+                    `C${course._id.toString().substring(0, 4)}` : 
+                    `C${Math.floor(1000 + Math.random() * 9000)}`;
+                
+                row.dataset.id = course._id || '';
+                
+                // Get actual student count from our calculated data
+                const courseIdStr = course._id ? course._id.toString() : '';
+                const actualStudentCount = courseEnrollmentCount[courseIdStr] || 0;
+                const maxStudents = course.maxStudents || 0;
+        });
+    })
     // Fetch available courses first
     ELC.apiRequest('/admin/courses', 'GET')
         .then(coursesResponse => {
@@ -2342,7 +2411,7 @@ function openStudentPlacementModal(studentId, studentName, studentLevel, current
             coursesResponse.data.forEach(course => {
                 const option = document.createElement('option');
                 option.value = course._id;
-                option.textContent = `${course.name} (${course.students.length}/${course.maxStudents})`;
+                option.textContent = `${course.name}`;
                 courseSelect.appendChild(option);
             });
 
