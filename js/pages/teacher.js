@@ -129,8 +129,10 @@ function createNotificationContainer() {
 document.addEventListener('DOMContentLoaded', function() {
     // First fix tab navigation
     setupTabNavigation();
+
+    // Initialize user information in the header
+    initUserInformation();
     
-  
     // Remove any existing event listeners from buttons by replacing them
     replaceAllButtons();
     
@@ -188,7 +190,8 @@ function initUserInformation() {
         // Update the UI with user information
         const nameElement = document.getElementById('user-name');
         const avatarElement = document.getElementById('user-avatar');
-        
+        const welcomeName = document.getElementById('welcome-name');
+
         if (nameElement) {
             nameElement.textContent = user.fullName || user.name || 'Teacher';
         }
@@ -199,22 +202,16 @@ function initUserInformation() {
             avatarElement.textContent = firstLetter;
         }
         
+        // Update welcome name
+        if (welcomeName && data.firstName) {
+        welcomeName.textContent = user.firstName;
+        }
+
         console.log('User information updated successfully');
     } catch (error) {
         console.error('Error updating user information:', error);
     }
 }
-
-// Then add this line to your existing DOMContentLoaded function
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize user information in the header
-    initUserInformation();
-    
-    // First fix tab navigation
-    setupTabNavigation();
-    
-    // ... rest of your existing initialization code
-});
 
 // Function to setup material type dropdown behavior
 function setupMaterialTypeField() {
